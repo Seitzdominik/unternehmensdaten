@@ -1,0 +1,173 @@
+name: Release
+
+# Ausgeloest durch einen Tag der Form v0.4.0. Der Workflow baut das Archiv,
+# erzeugt die update.json fuer den eingebauten Updater und haengt beides an ein
+# GitHub-Release.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      SLUG: unternehmensdaten
+
+    steps:
+      - name: Repository holen
+        uses: actions/checkout@v4
+
+      - name: PHP bereitstellen
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Versionen abgleichen
+        id: version
+        run: |
+          set -euo pipefail
+
+          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' "$SLUG.php" | sed -E 's/.*Version:[[:space:]]*//' | tr -d '\r' | xargs)
+          STABLE=$(grep -m1 '^Stable tag:' readme.txt | sed -E 's/^Stable tag:[[:space:]]*//' | tr -d '\r' | xargs)
+          TAG="${GITHUB_REF_NAME#v}"
+
+          echo "Tag: $TAG | Header: $HEADER | Stable tag: $STABLE"
+
+          # Auseinanderlaufende Nummern sind die haeufigste Ursache dafuer, dass
+          # ein Update angeboten wird, das sich danach nicht als neu erkennt.
+          if [ "$HEADER" != "$TAG" ]; then
+            echo "::error::Tag $TAG und Version im Plugin-Header $HEADER stimmen nicht überein."
+            exit 1
+          fi
+
+          if [ "$STABLE" != "$TAG" ]; then
+            echo "::error::Tag $TAG und Stable tag in der readme.txt $STABLE stimmen nicht überein."
+            exit 1
+          fi
+
+          {
+            echo "version=$TAG"
+            echo "requires=$(grep -m1 '^Requires at least:' readme.txt | sed -E 's/^[^:]+:[[:space:]]*//' | tr -d '\r' | xargs)"
+            echo "tested=$(grep -m1 '^Tested up to:' readme.txt | sed -E 's/^[^:]+:[[:space:]]*//' | tr -d '\r' | xargs)"
+            echo "php=$(grep -m1 '^Requires PHP:' readme.txt | sed -E 's/^[^:]+:[[:space:]]*//' | tr -d '\r' | xargs)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: PHP-Dateien auf Syntaxfehler prüfen
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
+          echo "Alle PHP-Dateien sind syntaktisch fehlerfrei."
+
+      - name: Archiv bauen
+        run: |
+          set -euo pipefail
+
+          mkdir -p build/"$SLUG"
+
+          # Alles ausser Entwicklungsballast in den Plugin-Ordner spiegeln.
+          rsync -a ./ build/"$SLUG"/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.gitignore' \
+            --exclude 'build' \
+            --exclude 'dev' \
+            --exclude 'node_modules' \
+            --exclude '*.zip' \
+            --exclude 'update.json' \
+            --exclude 'build.ps1'
+
+          ( cd build && zip -rq "../$SLUG.zip" "$SLUG" )
+
+          # Ohne den umschliessenden Ordner macht WordPress beim Aktualisieren
+          # ein zweites, unabhaengiges Plugin daraus.
+          unzip -l "$SLUG.zip" | grep -q " $SLUG/$SLUG.php$" \
+            || { echo "::error::Im Archiv fehlt $SLUG/$SLUG.php"; exit 1; }
+
+          unzip -l "$SLUG.zip" | tail -n 3
+
+      - name: Änderungen aus der readme.txt lesen
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Den Abschnitt "= 0.4.0 =" bis zur naechsten Ueberschrift herausziehen.
+          # Als Datei, nicht als Ausgabewert: mehrzeilige Werte in YAML-Eingaben
+          # und Shell-Aufrufen zu interpolieren geht regelmaessig schief.
+          awk -v ver="= $VERSION =" '
+            $0 == ver { found = 1; next }
+            found && /^= .* =$/ { exit }
+            found { print }
+          ' readme.txt | sed '/^[[:space:]]*$/d' > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "::error::In der readme.txt fehlt ein Changelog-Abschnitt für $VERSION."
+            exit 1
+          fi
+
+          cat release-notes.md
+
+      - name: update.json erzeugen
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ steps.version.outputs.version }}"
+          REPO="${{ github.repository }}"
+
+          # Die Notizen als HTML fuer das Detailfenster von WordPress. Zuerst
+          # maskieren, damit ein kaufmaennisches Und die Auszeichnung nicht bricht.
+          sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' release-notes.md \
+            | sed -E 's|^\* (.*)$|<li>\1</li>|' \
+            > notes.html
+
+          {
+            echo "<h4>$VERSION</h4>"
+            echo "<ul>"
+            grep '^<li>' notes.html || true
+            echo "</ul>"
+            grep -v '^<li>' notes.html | sed -E 's|^(.+)$|<p>\1</p>|' || true
+          } > changelog.html
+
+          jq -n \
+            --arg version   "$VERSION" \
+            --arg slug      "$SLUG" \
+            --arg repo      "$REPO" \
+            --arg requires  "${{ steps.version.outputs.requires }}" \
+            --arg tested    "${{ steps.version.outputs.tested }}" \
+            --arg php       "${{ steps.version.outputs.php }}" \
+            --arg updated   "$(date -u '+%Y-%m-%d %H:%M:%S')" \
+            --rawfile changelog changelog.html \
+            '{
+              name: "Unternehmensdaten",
+              slug: $slug,
+              version: $version,
+              homepage: ("https://github.com/" + $repo),
+              requires: $requires,
+              tested: $tested,
+              requires_php: $php,
+              last_updated: $updated,
+              download_url: ("https://github.com/" + $repo + "/releases/download/v" + $version + "/" + $slug + ".zip"),
+              sections: {
+                description: "Zentrale Verwaltung aller rechtlich erforderlichen Unternehmensangaben mit Shortcodes, Inhaltsbereichen und strukturierten Daten.",
+                changelog: $changelog
+              }
+            }' > update.json
+
+          # Nachpruefen, dass gueltiges JSON entstanden ist.
+          jq empty update.json
+          cat update.json
+
+      - name: Release veröffentlichen
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Version ${{ steps.version.outputs.version }}"
+          body_path: release-notes.md
+          files: |
+            unternehmensdaten.zip
+            update.json

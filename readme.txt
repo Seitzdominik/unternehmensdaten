@@ -1,0 +1,176 @@
+=== Unternehmensdaten ===
+Contributors: seitz
+Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
+Requires at least: 6.4
+Tested up to: 6.4
+Requires PHP: 7.4
+Stable tag: 0.4.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Zentrale Verwaltung aller Unternehmensangaben: rechtliche Pflichtangaben, Öffnungszeiten, Preise, Social, FAQ, Infobanner und strukturierte Daten.
+
+== Description ==
+
+Alle Angaben, die eine Unternehmenswebsite braucht, werden an einer Stelle gepflegt und überall per Shortcode ausgegeben. Ändert sich die Telefonnummer, ändert sie sich überall.
+
+= Rechtliche Angaben =
+
+**Rechtsformabhängige Felder.** Ein Einrichtungsassistent fragt Rechtsform, reglementierten Beruf, Erlaubnispflicht, Verbrauchergeschäft, redaktionelle Inhalte und Umsatzsteuerstatus ab. Angezeigt werden danach nur die Angaben, die tatsächlich gelten. Unterstützt werden 20 Rechtsformen vom Einzelunternehmen über die eGbR bis zur GmbH & Co. KG mit ihren beiden Registereinträgen.
+
+**Prüfung.** Eine Checkliste zeigt fehlende Pflichtangaben mit ihrer Rechtsgrundlage und durchsucht die verknüpften Rechtsseiten nach veralteten Inhalten, etwa dem Link zur abgeschalteten EU-Streitbeilegungsplattform oder der Rechtsgrundlage "§ 5 TMG".
+
+= Inhaltsbereiche =
+
+* **Öffnungszeiten** mit zwei Zeitfenstern pro Tag für Mittagspausen, Sonderöffnungszeiten für Feiertage und Betriebsferien, sowie einer Anzeige, ob gerade geöffnet ist
+* **Preise & Leistungen** als Tabelle mit optionalen Gruppen
+* **Social Media** als benannte Navigation mit rel="me"
+* **FAQ** als aufklappbare Liste ganz ohne JavaScript
+* **Infobanner** mit vier Stufen, optional schließbar
+* **SEO & Schema** mit JSON-LD, das seine Daten aus allen übrigen Bereichen zieht
+
+Jeder Bereich lässt sich unter Einstellungen abschalten. Dann verschwindet er aus dem Menü, seine Shortcodes geben nichts mehr aus und sein CSS entfällt. Die Daten bleiben erhalten.
+
+= Ausgabe =
+
+Die Blöcke erzeugen semantisches HTML mit address-, dl-, table- und nav-Elementen. Es werden weder Schriftart noch Schriftgröße noch Farben gesetzt, damit die Ausgabe die Gestaltung des Themes vollständig erbt. Einzige Ausnahme ist das Infobanner: ein Warnhinweis ohne visuelle Abgrenzung erfüllt seinen Zweck nicht. Dessen Farben hängen an CSS-Variablen und lassen sich überschreiben.
+
+Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe in die Gliederung der Seite einfügt, statt sie zu brechen.
+
+== Shortcodes ==
+
+= Einzelne Felder =
+
+* `[undt key="phone"]` gibt ein Feld aus
+* `[undt key="phone" link="1"]` macht Telefon, E-Mail und URL anklickbar
+* `[undt key="email" obfuscate="1"]` verschleiert die Adresse
+* `[undt key="phone" before="Telefon: "]` ergänzt Text, der nur erscheint, wenn das Feld gefüllt ist
+
+= Rechtliche Blöcke =
+
+* `[undt_impressum]` das vollständige Impressum, Attribut `heading_level`
+* `[undt_footer]` Anschrift, Rechtslinks und Copyright, Attribut `show`
+* `[undt_legal_nav]` nur die Links zu den Rechtsseiten
+* `[undt_address]` die Anschrift, Attribute `inline`, `separator`, `name`
+* `[undt_privacy_block name="controller"]` Datenbausteine für die Datenschutzerklärung, `name` auch `dpo` oder `authority`
+
+= Inhaltsbereiche =
+
+* `[undt_hours]` Tabelle der Öffnungszeiten, Attribute `group`, `short`, `special`, `note`, `heading_level`
+* `[undt_hours_today]` die heute geltende Zeit, Attribute `prefix`, `closed_text`
+* `[undt_open_now]` ob gerade geöffnet ist, Attribute `open_text`, `closed_text`
+* `[undt_prices]` Preisliste, Attribute `group`, `intro`, `footnote`, `heading_level`
+* `[undt_social]` die Profile als Navigation, Attribut `label`
+* `[undt_faq]` Fragen und Antworten, Attribute `group`, `style`, `heading_level`
+* `[undt_banner]` das Infobanner an dieser Stelle
+
+== Page Builder ==
+
+Für Bricks, Breakdance und Etch stehen die Daten zusätzlich als PHP-Funktionen und als Schleifen-Quellen bereit.
+
+= Schleifen-Quellen =
+
+* `undt_hours` — ein Eintrag je Wochentag: day, day_label, day_short, closed, times, slots
+* `undt_hours_grouped` — gleiche Tage zusammengefasst: days, days_label, closed, times, slots
+* `undt_hours_special` — nur künftige Sondertermine: date, date_label, closed, from, to, times, note
+* `undt_prices` — group, label, price, note
+* `undt_faq` — group, question, answer
+* `undt_social` — platform, platform_label, label, url
+
+Jede Zeile enthält neben den Rohwerten ein fertig formatiertes `times`, weil Page Builder mit verschachtelten Arrays wenig anfangen können.
+
+= Funktionen =
+
+* `undt_get( 'phone', $ersatz )` — ein Stammdaten-Feld
+* `undt_has( 'phone' )` — ob das Feld befüllt ist
+* `undt_field( 'hours', 'note' )` — ein Feld eines Inhaltsbereichs
+* `undt_query( 'undt_faq', array( 'group' => '…', 'limit' => 5 ) )` — die Zeilen einer Quelle
+* `undt_loop( 'question' )` — ein Feld der laufenden Bricks-Schleife
+* `undt_is_open()` und `undt_today()` — Öffnungsstatus
+
+= Je nach Builder =
+
+**Bricks** zeigt die Query-Namen im Schleifen-Dialog unter „Unternehmensdaten“. Einzelwerte über `{echo:undt_get('phone')}`, in der Schleife `{echo:undt_loop('question')}`. Bricks muss dafür die Ausführung von Code erlauben.
+
+**Breakdance und Etch** führen PHP in einem Code-Element aus. Eine Schleife entsteht dort direkt über `undt_query()`.
+
+Ein REST-Endpunkt fehlt bewusst: Page Builder laufen auf dem Server und brauchen keinen, und ein öffentlicher Endpunkt wäre zusätzliche Angriffsfläche ohne Gegenwert.
+
+== Bewusste Entscheidungen ==
+
+**Keine Datenschutz- und AGB-Texte.** Deren Inhalt hängt an den tatsächlich eingesetzten Diensten und gehört in die Hand einer Rechtsberatung. Das Plugin liefert stattdessen die Datenbausteine, die in einen solchen Text eingesetzt werden.
+
+**Keine Markenlogos für Social Media.** Plattformlogos sind geschützte Zeichen, die ein Plugin nicht ungefragt mitbringen sollte. Jeder Link trägt stattdessen eine eigene Klasse und ein `data-platform`-Attribut, an die sich ein Icon-Set des Themes per CSS anhängen lässt.
+
+**FAQPage-Auszeichnung standardmäßig aus.** Google hat FAQ-Rich-Results am 07.05.2026 vollständig eingestellt, auch für die bis dahin noch berechtigten Behörden- und Gesundheitsseiten. Die Auszeichnung bleibt gültiges schema.org und kann für die maschinelle Auswertung nützlich sein, ist aber kein SEO-Vorteil mehr.
+
+**`[undt_open_now]` und Seiten-Caches.** Der Status wird auf dem Server in der Zeitzone der Website berechnet. Auf Seiten, die aus einem Seiten-Cache ausgeliefert werden, kann er deshalb veralten. Die Ausgabe trägt ein `data-undt-checked`-Attribut mit dem Zeitpunkt der Berechnung. Wer den Status prominent einsetzt, sollte die betreffende Seite vom Cache ausnehmen oder auf `[undt_hours_today]` ausweichen, das nur tagesgenau sein muss.
+
+**Kein Verweis auf die OS-Plattform der EU.** Die ODR-Verordnung wurde durch die Verordnung (EU) 2024/3228 aufgehoben, die Plattform ist seit dem 20.07.2025 abgeschaltet.
+
+Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturiert aus. Rechtsstand der hinterlegten Hinweise: September 2026.
+
+== Berücksichtigte Rechtsgrundlagen ==
+
+* § 5 DDG, seit 14.05.2024 an Stelle von § 5 TMG
+* § 18 Abs. 2 MStV bei journalistisch-redaktionellen Inhalten
+* § 2 Abs. 1 Nr. 11 DL-InfoV zur Berufshaftpflichtversicherung
+* § 36 VSBG einschließlich der Ausnahme für zehn oder weniger Beschäftigte
+* §§ 35a GmbHG, 80 AktG, 125a HGB zu Pflichtangaben auf Geschäftsbriefen
+* § 27a UStG und § 139c AO zu Umsatzsteuer- und Wirtschafts-Identifikationsnummer
+* Art. 13 DSGVO und § 38 BDSG für die Datenschutz-Bausteine
+* Anlage 3 zu §§ 14, 28 BFSG zur Erklärung über die Barrierefreiheit
+* § 3 PAngV zur Angabe von Gesamtpreisen
+
+== Performance ==
+
+* Keine zusätzliche Datenbankabfrage im Frontend für Stammdaten, Öffnungszeiten, Social, Banner und Schema: diese Optionen sind autoloaded
+* Preise und FAQ sind bewusst nicht autoloaded und kosten nur auf den Seiten etwas, die sie ausgeben
+* Keine Asset-Datei im Frontend. Das CSS wird inline ausgegeben, nur auf Seiten mit einem Block, und enthält ausschließlich die aktiven Bereiche
+* Das einzige Frontend-JavaScript ist das Schließen des Infobanners, rund 300 Byte, nur wenn das Banner aktiv und schließbar ist
+* Backend-Assets ausschließlich auf den eigenen Seiten, die Medienauswahl nur auf der Seite, die sie braucht
+* Keine AJAX-Endpunkte und keine REST-Routen
+
+== Filter ==
+
+* `undt_fields` ergänzt eigene Stammdaten-Felder, die automatisch Sanitisierung, Escaping und Shortcode-Auflösung durchlaufen
+* `undt_modules` ergänzt eigene Inhaltsbereiche
+* `undt_capability` ändert die erforderliche Berechtigung, Standard `manage_options`
+* `undt_css` passt das strukturelle CSS an
+* `undt_inline_css` schaltet das mitgelieferte CSS ab
+* `undt_imprint_html` und `undt_footer_html` bearbeiten die fertige Ausgabe nach
+* `undt_schema_organization` passt die JSON-LD-Auszeichnung an
+* `undt_audit_issues` ergänzt eigene Prüfungen
+* `undt_query` passt die Zeilen einer Schleifen-Quelle an
+
+== Changelog ==
+
+= 0.4.0 =
+* Neu: Aktualisierung über GitHub-Releases, gemeldet im gewohnten Plugin-Bildschirm
+* Der Updater liest eine update.json am Release statt der ratenbegrenzten GitHub-API
+* Paketadressen werden gegen eine Liste erlaubter Hosts geprüft, bevor sie an den Installer gehen
+* Neu: Workflow, der Archiv und update.json baut und dabei Tag, Plugin-Header und Stable tag abgleicht
+
+= 0.3.1 =
+* Neu: Schleifen-Quellen und PHP-Funktionen für Bricks, Breakdance und Etch
+* Die Shortcode-Referenz liegt in Registerkarten, die Suche deckt währenddessen alle auf einmal auf
+* Lesebreite von 700 auf 950 Pixel
+
+= 0.3.0 =
+* Alle Ankreuzfelder sind Schalter, mit role="switch" und unveränderter Tastaturbedienung
+* Hinweise erscheinen als Infobox beim Überfahren, per Klick feststellbar, das Symbol ohne Rahmen
+* Reiter zeigen einen Punkt statt einer Zahl, und nur dort, wo noch Pflichtangaben fehlen
+* Gepaarte Felder stehen in gleich breiten Spalten und damit bündig
+* Der Kopierbutton steht unter dem Eingabefeld
+* Alle Seiten haben eine Lesebreite von 700 Pixeln
+* Behoben: Seiten- und Medienfelder galten mit dem gespeicherten Wert 0 als ausgefüllt, wodurch die Prüfung eine nie ausgewählte Seite für hinterlegt hielt
+* Behoben: Asset-Versionen tragen jetzt die Dateizeit, damit Caches nach einer Änderung an CSS oder JavaScript nicht die alte Datei ausliefern
+
+= 0.2.0 =
+* Neu: Öffnungszeiten mit zwei Zeitfenstern je Tag, Sonderöffnungszeiten und Geöffnet-Status
+* Neu: Preise & Leistungen, Social Media, FAQ und Infobanner
+* Neu: JSON-LD mit Organization, openingHoursSpecification und sameAs, mit Erkennung vorhandener SEO-Plugins
+* Neu: Einstellungsseite zum Ein- und Ausschalten der Bereiche und zum Verhalten beim Deinstallieren
+
+= 0.1.0 =
+* Erste Fassung.

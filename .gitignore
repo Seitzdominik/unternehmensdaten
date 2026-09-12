@@ -1,0 +1,15 @@
+# Bauartefakte
+build/
+*.zip
+update.json
+
+# Entwicklungswerkzeuge, die nicht ausgeliefert werden
+dev/
+build.ps1
+
+# Betriebssystem und Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+node_modules/

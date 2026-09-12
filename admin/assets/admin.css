@@ -1,0 +1,691 @@
+/**
+ * Backend-Stylesheet.
+ *
+ * Ergaenzt die vorhandenen WordPress-Klassen, statt sie zu ersetzen. Es werden
+ * nur Farben aus der Standardpalette des Backends verwendet, damit die Seiten
+ * sich in jedes Farbschema einfuegen.
+ */
+
+/* WordPress setzt im Backend eine Autoren-Regel `h1, h2, h3 … { display: block }`.
+   Die schlaegt die Browser-Regel `[hidden] { display: none }`, weshalb das
+   hidden-Attribut auf Ueberschriften wirkungslos bleibt. Betroffen waeren alle
+   Stellen, an denen das Skript etwas ein- und ausblendet: leere Gruppen in der
+   Suche, Tabs, Hinweise. Diese Zeile stellt das erwartete Verhalten wieder her. */
+.undt-wrap [hidden] {
+	display: none !important;
+}
+
+/* Eine gemeinsame Lesebreite fuer alle Seiten des Plugins. Ueber die volle
+   Bildschirmbreite gezogene Formulare und Fliesstexte werden sonst unlesbar
+   lang, und das Auge verliert beim Zeilenwechsel den Anschluss. */
+.undt-wrap {
+	max-width: 950px;
+}
+
+.undt-wrap .undt-context {
+	font-size: 14px;
+}
+
+.undt-wrap .undt-disclaimer {
+	margin: 1.5em 0;
+}
+
+/* Registerkarten: .nav-tab ist fuer Links gestaltet, Buttons brauchen einen Reset. */
+.undt-tabs .nav-tab {
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.71428571;
+	cursor: pointer;
+}
+
+.undt-tabs .nav-tab:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: -2px;
+	box-shadow: none;
+}
+
+.undt-panel {
+	padding-top: 0.5em;
+}
+
+.undt-section-title {
+	margin: 1.5em 0 0.25em;
+	padding-bottom: 0.35em;
+	border-bottom: 1px solid #dcdcde;
+	font-size: 1.05em;
+}
+
+.undt-section-hint {
+	margin-top: 0.5em;
+}
+
+/* Rechtsgrundlage als unaufdringliche Fussnote unter der Beschriftung. */
+.undt-basis {
+	display: block;
+	margin-top: 2px;
+	color: #646970;
+	font-size: 11px;
+	font-weight: 400;
+}
+
+.undt-required {
+	color: #d63638;
+	font-weight: 700;
+}
+
+/* --------------------------------------------------------------- Schalter */
+
+/* Darunter liegt ein echtes Ankreuzfeld. Es wird nicht ausgeblendet, sondern
+   deckungsgleich und durchsichtig ueber die gezeichnete Schiene gelegt: so
+   bleiben Klickflaeche, Tastaturbedienung und Formularverhalten unveraendert. */
+.undt-switch {
+	position: relative;
+	display: inline-block;
+	width: 36px;
+	height: 20px;
+	vertical-align: middle;
+}
+
+.undt-switch__input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	cursor: pointer;
+	z-index: 1;
+}
+
+.undt-switch__track {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: 10px;
+	background: #8c8f94;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.undt-switch__track::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	transition: transform 0.15s ease-in-out;
+}
+
+.undt-switch__input:checked + .undt-switch__track {
+	background: #2271b1;
+}
+
+.undt-switch__input:checked + .undt-switch__track::after {
+	transform: translateX(16px);
+}
+
+.undt-switch__input:focus-visible + .undt-switch__track {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.undt-switch__input:disabled + .undt-switch__track {
+	opacity: 0.5;
+	cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.undt-switch__track,
+	.undt-switch__track::after {
+		transition: none;
+	}
+}
+
+/* Kopierbutton */
+.undt-copy {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 0.35em;
+	max-width: 100%;
+	height: auto !important;
+	padding: 3px 8px !important;
+	white-space: normal;
+	text-align: left;
+}
+
+.undt-copy code {
+	padding: 0;
+	background: none;
+	font-size: 12px;
+}
+
+.undt-copy .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	flex: 0 0 auto;
+}
+
+.undt-copy--ok {
+	border-color: #00a32a !important;
+	color: #00a32a !important;
+}
+
+.undt-copy--fail {
+	border-color: #d63638 !important;
+	color: #d63638 !important;
+}
+
+/* Schlanke Auspraegung unter der Feldbeschriftung. Randlos und zurueckhaltend,
+   damit nicht bei jedem Feld eine Schaltflaeche um Aufmerksamkeit bittet. */
+/* Blockweise, damit der Button auch dann unter der Beschriftung landet, wenn
+   darueber keine Rechtsgrundlage steht, die ohnehin umbricht. fit-content haelt
+   die Klickflaeche dabei auf der Breite des Shortcodes. */
+.undt-copy--inline {
+	display: flex !important;
+	width: fit-content;
+	align-items: baseline;
+	gap: 0.25em;
+	max-width: 100%;
+	margin: 4px 0 0;
+	padding: 1px 0 !important;
+	border: 0 !important;
+	border-radius: 2px;
+	background: none !important;
+	box-shadow: none !important;
+	color: #787c82 !important;
+	font-weight: 400;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.undt-copy--inline code {
+	overflow-wrap: anywhere;
+	font-size: 11px;
+}
+
+.undt-copy--inline .dashicons {
+	position: relative;
+	top: 2px;
+	width: 13px;
+	height: 13px;
+	font-size: 13px;
+	opacity: 0.7;
+}
+
+.undt-copy--inline:hover,
+.undt-copy--inline:focus-visible {
+	color: #2271b1 !important;
+}
+
+.undt-copy--inline:focus-visible {
+	outline: 1px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.undt-copy--inline.undt-copy--ok {
+	color: #007017 !important;
+}
+
+.undt-copy--inline.undt-copy--fail {
+	color: #d63638 !important;
+}
+
+/* Etwas mehr Platz in der ersten Spalte, damit der Shortcode dort hineinpasst. */
+@media screen and (min-width: 783px) {
+	.undt-wrap .form-table th {
+		width: 190px;
+		padding-right: 16px;
+	}
+}
+
+/* Tabellen */
+.undt-table {
+	margin-bottom: 1.5em;
+}
+
+.undt-table td {
+	vertical-align: top;
+}
+
+.undt-table .description {
+	margin: 0.25em 0 0;
+}
+
+.undt-table .undt-atts {
+	color: #646970;
+	font-size: 12px;
+}
+
+.undt-empty {
+	color: #8c8f94;
+}
+
+.undt-search {
+	margin: 1em 0;
+}
+
+.undt-wrap .undt-list {
+	margin-left: 1.25em;
+	list-style: disc;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-copy code {
+		font-size: 13px;
+	}
+}
+
+/* ------------------------------------------------- Breite Felder */
+
+/* Diese Zelle spannt beide Spalten des form-table-Rasters. */
+.undt-row--wide > td {
+	padding: 20px 0 0;
+}
+
+.undt-field-title {
+	margin: 0 0 0.25em;
+	font-size: 1em;
+	line-height: 1.4;
+}
+
+.undt-basis--block {
+	margin: -0.15em 0 0.5em;
+}
+
+/* --------------------------------------------- Wiederholungsfelder */
+
+.undt-repeater__row {
+	display: flex;
+	align-items: flex-start;
+	gap: 1em;
+	margin: 0 0 8px;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	background: #fff;
+}
+
+.undt-repeater__fields {
+	display: flex;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	gap: 0.75em 1em;
+	min-width: 0;
+}
+
+.undt-repeater__field {
+	flex: 1 1 12em;
+	min-width: 0;
+}
+
+.undt-repeater__field--textarea {
+	flex-basis: 100%;
+}
+
+.undt-repeater__field--checkbox,
+.undt-repeater__field--time,
+.undt-repeater__field--date {
+	flex: 0 0 auto;
+}
+
+.undt-repeater__label {
+	display: block;
+	margin-bottom: 2px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.undt-repeater__field input[type="text"],
+.undt-repeater__field input[type="url"],
+.undt-repeater__field input[type="email"],
+.undt-repeater__field select,
+.undt-repeater__field textarea {
+	width: 100%;
+	max-width: none;
+}
+
+.undt-repeater__help {
+	display: block;
+	margin-top: 2px;
+}
+
+.undt-repeater__controls {
+	display: flex;
+	flex: 0 0 auto;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.undt-repeater__controls button {
+	padding: 2px;
+	color: #646970;
+	cursor: pointer;
+}
+
+.undt-repeater__controls button:hover:not(:disabled) {
+	color: #2271b1;
+}
+
+.undt-repeater__controls button:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.undt-repeater__remove:hover {
+	color: #d63638 !important;
+}
+
+.undt-repeater__actions {
+	margin: 4px 0 0;
+}
+
+/* ---------------------------------------------------- Öffnungszeiten */
+
+.undt-hours-edit {
+	margin-bottom: 0.5em;
+}
+
+.undt-hours-edit th,
+.undt-hours-edit td {
+	padding: 6px 8px;
+	vertical-align: middle;
+}
+
+.undt-hours-edit thead th {
+	font-size: 12px;
+}
+
+/* Geschlossene Tage bleiben bedienbar, treten aber zurück. */
+.undt-hours-edit__row--closed .undt-input-time {
+	opacity: 0.4;
+}
+
+.undt-input-time,
+.undt-input-date {
+	width: auto;
+	min-width: 6.5em;
+	max-width: 100%;
+}
+
+/* ------------------------------------------------------------ Medien */
+
+.undt-media__preview img {
+	display: block;
+	max-width: 150px;
+	height: auto;
+	margin-bottom: 8px;
+	border: 1px solid #dcdcde;
+}
+
+.undt-media__actions {
+	margin: 0;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-repeater__row {
+		flex-wrap: wrap;
+	}
+
+	.undt-repeater__controls {
+		flex-direction: row;
+	}
+}
+
+/* ---------------------------------------------------------------- Hinweis */
+
+.undt-help-wrap {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 1;
+}
+
+/* Nur das Symbol, kein Rahmen: sonst stuenden auf einer Seite drei Dutzend
+   Schaltflaechen, die alle um Aufmerksamkeit bitten. */
+.undt-help-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #a7aaad;
+	cursor: help;
+}
+
+.undt-help-toggle .dashicons {
+	width: 15px;
+	height: 15px;
+	font-size: 15px;
+}
+
+.undt-help-toggle:hover,
+.undt-help-toggle:focus-visible,
+.undt-help-wrap.is-open .undt-help-toggle {
+	color: #2271b1;
+}
+
+.undt-help-toggle:focus-visible {
+	outline: 1px solid #2271b1;
+	outline-offset: 2px;
+	border-radius: 50%;
+}
+
+/* Die Infobox erscheint beim Ueberfahren und beim Tastaturfokus. Ein Klick
+   stellt sie fest, damit der Text markierbar bleibt. */
+.undt-help {
+	display: none;
+	position: absolute;
+	top: calc(100% + 7px);
+	left: -10px;
+	z-index: 120;
+	width: max-content;
+	max-width: 24em;
+	padding: 9px 11px;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	background: #fff;
+	box-shadow: 0 3px 9px rgba(0, 0, 0, 0.13);
+	color: #3c434a;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 1.55;
+	text-align: left;
+	white-space: normal;
+}
+
+/* Kleiner Zeiger zum Symbol hinauf. */
+.undt-help::before {
+	content: "";
+	position: absolute;
+	top: -5px;
+	left: 12px;
+	width: 8px;
+	height: 8px;
+	border-top: 1px solid #c3c4c7;
+	border-left: 1px solid #c3c4c7;
+	background: #fff;
+	transform: rotate(45deg);
+}
+
+.undt-help-wrap:hover > .undt-help,
+.undt-help-wrap:focus-within > .undt-help,
+.undt-help-wrap.is-open > .undt-help {
+	display: block;
+}
+
+/* -------------------------------------------------------- Feldpaare */
+
+/* Gleich breite Spalten statt flex-basis: nur so stehen Beschriftungen und
+   Felder beider Haelften wirklich buendig untereinander. */
+.undt-pair {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75em 1.25em;
+	align-items: start;
+}
+
+.undt-pair__field {
+	min-width: 0;
+}
+
+.undt-pair__field .undt-copy--inline {
+	margin-top: 3px;
+}
+
+@media screen and (max-width: 600px) {
+	.undt-pair {
+		grid-template-columns: 1fr;
+	}
+}
+
+.undt-label-line {
+	display: block;
+}
+
+.undt-pair__label {
+	margin-bottom: 2px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.undt-pair__field input[type="text"],
+.undt-pair__field input[type="url"],
+.undt-pair__field input[type="email"],
+.undt-pair__field input[type="tel"],
+.undt-pair__field select {
+	width: 100%;
+	max-width: none;
+}
+
+.undt-pair__field .undt-basis {
+	margin-top: 0;
+	margin-bottom: 2px;
+}
+
+.undt-pair-title {
+	display: block;
+	font-weight: 600;
+}
+
+/* Die Rechtsgrundlage steht am Abschnitt, wenn alle Felder dieselbe nennen. */
+.undt-basis--section {
+	display: inline;
+	margin-left: 0.6em;
+	font-weight: 400;
+}
+
+.undt-basis--inline {
+	display: inline;
+	margin-left: 0.6em;
+}
+
+/* --------------------------------------------------------- Tab-Zähler */
+
+/* Ein Punkt statt einer Zahl: er sagt „hier fehlt noch etwas“, ohne die
+   Beschriftung des Reiters zu zerreissen. Die Zahl steht im title-Attribut. */
+.undt-tab-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin-left: 6px;
+	border-radius: 50%;
+	background: #d63638;
+	vertical-align: 3px;
+}
+
+/* ---------------------------------------------------------- Prüfseite */
+
+.undt-audit-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em 1.75em;
+	margin: 1em 0;
+}
+
+.undt-audit-tally {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+}
+
+.undt-dot {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #8c8f94;
+	flex: 0 0 auto;
+}
+
+.undt-dot--error {
+	background: #d63638;
+}
+
+.undt-dot--warning {
+	background: #dba617;
+}
+
+.undt-dot--notice {
+	background: #72aee6;
+}
+
+.undt-audit__level {
+	width: 8em;
+	white-space: nowrap;
+}
+
+.undt-audit__level-text {
+	margin-left: 0.4em;
+}
+
+.undt-audit__action {
+	width: 12em;
+}
+
+.undt-audit td {
+	vertical-align: top;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-audit__level,
+	.undt-audit__action {
+		width: auto;
+	}
+}
+
+/* Waehrend einer Suche zaehlen nur die Treffer. Einleitungen und Hinweiskaesten
+   erklaeren die Reiter und stehen der Trefferliste im Weg. */
+.undt-wrap.is-searching .undt-section-hint,
+.undt-wrap.is-searching .undt-disclaimer {
+	display: none;
+}
+
+/* ---------------------------------------------------------- Updater */
+
+.undt-dot--ok {
+	background: #00a32a;
+}
+
+.undt-update-state {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	margin: 0 0 0.4em;
+}
+
+.undt-recheck {
+	margin: 1em 0 2em;
+}
