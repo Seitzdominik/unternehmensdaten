@@ -27,7 +27,7 @@ final class UNDT_SchemaOrg {
 	/**
 	 * Erkennt ein aktives SEO-Plugin.
 	 *
-	 * Yoast, Rank Math, SEOPress und AIOSEO geben bereits eine
+	 * Yoast, Rank Math, SEOPress, AIOSEO und Slim SEO geben bereits eine
 	 * Organization-Auszeichnung aus. Zwei Auszeichnungen derselben Entitaet auf
 	 * einer Seite sind schlechter als eine.
 	 *
@@ -50,7 +50,9 @@ final class UNDT_SchemaOrg {
 			return 'All in One SEO';
 		}
 
-		if ( defined( 'SLIM_SEO_VERSION' ) ) {
+		// Slim SEO nennt seine Konstante SLIM_SEO_VER. Die laengere Form bleibt als
+		// Rueckfall stehen, falls eine kuenftige Fassung sie umbenennt.
+		if ( defined( 'SLIM_SEO_VER' ) || defined( 'SLIM_SEO_VERSION' ) ) {
 			return 'Slim SEO';
 		}
 

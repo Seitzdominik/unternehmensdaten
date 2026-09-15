@@ -1,8 +1,9 @@
 name: Release
 
-# Ausgeloest durch einen Tag der Form v0.4.0. Der Workflow baut das Archiv,
+# Ausgeloest durch einen Tag der Form v0.4.1. Der Workflow baut das Archiv,
 # erzeugt die update.json fuer den eingebauten Updater und haengt beides an ein
-# GitHub-Release.
+# GitHub-Release. Ein Tag mit Bindestrich wie v0.5.0-beta.1 wird als
+# Vorabversion veroeffentlicht und nie zum neuesten Release.
 on:
   push:
     tags:
@@ -18,14 +19,22 @@ jobs:
     env:
       SLUG: unternehmensdaten
 
+    # Die Actions sind an Commits gebunden, nicht an Tags. Ein Tag laesst sich
+    # nachtraeglich verschieben, und dieser Workflow baut das Archiv, das jede
+    # Kundenseite installiert. Der Kommentar hinter dem Hash nennt die Fassung.
     steps:
       - name: Repository holen
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Der Workflow schreibt nie ins Repository zurueck.
+          persist-credentials: false
 
       - name: PHP bereitstellen
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
-          php-version: '8.2'
+          # Die aelteste unterstuetzte Version. Syntax, die erst neuere
+          # PHP-Versionen kennen, faellt so vor der Auslieferung auf.
+          php-version: '7.4'
           coverage: none
 
       - name: Versionen abgleichen
@@ -33,9 +42,18 @@ jobs:
         run: |
           set -euo pipefail
 
+          TAG="${GITHUB_REF_NAME#v}"
+
+          # Nur eine Versionsnummer, wie sie auch der Updater annimmt. Das steht
+          # am Anfang, damit kein anderer Inhalt eines Tags weiterverarbeitet
+          # oder ausgegeben wird.
+          if [[ ! "$TAG" =~ ^[0-9]+(\.[0-9]+){1,3}(-[0-9A-Za-z_.]+)?$ ]]; then
+            echo "::error::Der Tag ist keine gültige Versionsnummer."
+            exit 1
+          fi
+
           HEADER=$(grep -m1 -E '^\s*\*\s*Version:' "$SLUG.php" | sed -E 's/.*Version:[[:space:]]*//' | tr -d '\r' | xargs)
           STABLE=$(grep -m1 '^Stable tag:' readme.txt | sed -E 's/^Stable tag:[[:space:]]*//' | tr -d '\r' | xargs)
-          TAG="${GITHUB_REF_NAME#v}"
 
           echo "Tag: $TAG | Header: $HEADER | Stable tag: $STABLE"
 
@@ -51,8 +69,15 @@ jobs:
             exit 1
           fi
 
+          # Ein Bindestrich kennzeichnet eine Vorabversion.
+          case "$TAG" in
+            *-*) PRERELEASE=true ;;
+            *) PRERELEASE=false ;;
+          esac
+
           {
             echo "version=$TAG"
+            echo "prerelease=$PRERELEASE"
             echo "requires=$(grep -m1 '^Requires at least:' readme.txt | sed -E 's/^[^:]+:[[:space:]]*//' | tr -d '\r' | xargs)"
             echo "tested=$(grep -m1 '^Tested up to:' readme.txt | sed -E 's/^[^:]+:[[:space:]]*//' | tr -d '\r' | xargs)"
             echo "php=$(grep -m1 '^Requires PHP:' readme.txt | sed -E 's/^[^:]+:[[:space:]]*//' | tr -d '\r' | xargs)"
@@ -61,6 +86,7 @@ jobs:
       - name: PHP-Dateien auf Syntaxfehler prüfen
         run: |
           set -euo pipefail
+          php -r 'echo "PHP ", PHP_VERSION, PHP_EOL;'
           find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
           echo "Alle PHP-Dateien sind syntaktisch fehlerfrei."
 
@@ -75,6 +101,7 @@ jobs:
             --exclude '.git' \
             --exclude '.github' \
             --exclude '.gitignore' \
+            --exclude '.gitattributes' \
             --exclude 'build' \
             --exclude 'dev' \
             --exclude 'node_modules' \
@@ -92,12 +119,14 @@ jobs:
           unzip -l "$SLUG.zip" | tail -n 3
 
       - name: Änderungen aus der readme.txt lesen
+        env:
+          # Werte aus vorigen Schritten nur ueber die Umgebung: direkt ins Skript
+          # eingesetzt, wuerden sie als Shell-Code gelesen.
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
 
-          VERSION="${{ steps.version.outputs.version }}"
-
-          # Den Abschnitt "= 0.4.0 =" bis zur naechsten Ueberschrift herausziehen.
+          # Den Abschnitt "= 0.4.1 =" bis zur naechsten Ueberschrift herausziehen.
           # Als Datei, nicht als Ausgabewert: mehrzeilige Werte in YAML-Eingaben
           # und Shell-Aufrufen zu interpolieren geht regelmaessig schief.
           awk -v ver="= $VERSION =" '
@@ -114,11 +143,14 @@ jobs:
           cat release-notes.md
 
       - name: update.json erzeugen
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          REQUIRES: ${{ steps.version.outputs.requires }}
+          TESTED: ${{ steps.version.outputs.tested }}
+          PHP_MIN: ${{ steps.version.outputs.php }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-
-          VERSION="${{ steps.version.outputs.version }}"
-          REPO="${{ github.repository }}"
 
           # Die Notizen als HTML fuer das Detailfenster von WordPress. Zuerst
           # maskieren, damit ein kaufmaennisches Und die Auszeichnung nicht bricht.
@@ -138,9 +170,9 @@ jobs:
             --arg version   "$VERSION" \
             --arg slug      "$SLUG" \
             --arg repo      "$REPO" \
-            --arg requires  "${{ steps.version.outputs.requires }}" \
-            --arg tested    "${{ steps.version.outputs.tested }}" \
-            --arg php       "${{ steps.version.outputs.php }}" \
+            --arg requires  "$REQUIRES" \
+            --arg tested    "$TESTED" \
+            --arg php       "$PHP_MIN" \
             --arg updated   "$(date -u '+%Y-%m-%d %H:%M:%S')" \
             --rawfile changelog changelog.html \
             '{
@@ -164,10 +196,17 @@ jobs:
           cat update.json
 
       - name: Release veröffentlichen
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: "Version ${{ steps.version.outputs.version }}"
           body_path: release-notes.md
+          # Eine Vorabversion wird nie zum neuesten Release, denn dorthin zeigt
+          # releases/latest/download/update.json, das alle Kundenseiten abfragen.
+          # legacy macht ein Release nur dann zum neuesten, wenn es auch die
+          # hoechste Versionsnummer traegt, also nicht bei einem Nachtrag zu
+          # einer aelteren Fassung.
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          make_latest: ${{ steps.version.outputs.prerelease == 'true' && 'false' || 'legacy' }}
           files: |
             unternehmensdaten.zip
             update.json

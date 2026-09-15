@@ -219,7 +219,7 @@ final class UNDT_Admin {
 			UNDT_Store::OPTION_PROFILE,
 			array(
 				'type'              => 'array',
-				'sanitize_callback' => array( 'UNDT_Sanitizer', 'profile' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_profile' ),
 				'default'           => UNDT_Schema::profile_defaults(),
 				'show_in_rest'      => false,
 			)
@@ -270,6 +270,24 @@ final class UNDT_Admin {
 
 			add_filter( 'option_page_capability_' . $group, array( 'UNDT_Store', 'capability' ) );
 		}
+	}
+
+	/**
+	 * Sanitisiert das Profil und haelt die Einrichtung fest.
+	 *
+	 * Als abgeschlossen gilt die Einrichtung erst mit dem Speichern, nicht schon
+	 * mit dem Aufruf der Seite: eine GET-Anfrage soll nichts veraendern, und hier
+	 * ist die Nonce von options.php bereits geprueft.
+	 *
+	 * @param mixed $input Rohe Eingabe.
+	 * @return array
+	 */
+	public static function sanitize_profile( $input ) {
+		if ( ! UNDT_Store::is_set_up() ) {
+			UNDT_Store::mark_set_up();
+		}
+
+		return UNDT_Sanitizer::profile( $input );
 	}
 
 	/**

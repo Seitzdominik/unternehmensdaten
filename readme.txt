@@ -2,9 +2,9 @@
 Contributors: seitz
 Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
-Tested up to: 6.4
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,7 +90,7 @@ Jede Zeile enthält neben den Rohwerten ein fertig formatiertes `times`, weil Pa
 
 = Je nach Builder =
 
-**Bricks** zeigt die Query-Namen im Schleifen-Dialog unter „Unternehmensdaten“. Einzelwerte über `{echo:undt_get('phone')}`, in der Schleife `{echo:undt_loop('question')}`. Bricks muss dafür die Ausführung von Code erlauben.
+**Bricks** zeigt die Query-Namen im Schleifen-Dialog unter „Unternehmensdaten“. Einzelwerte über `{echo:undt_get('phone')}`, in der Schleife `{echo:undt_loop('question')}`. Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. In Bricks muss zusätzlich unter Einstellungen › Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein.
 
 **Breakdance und Etch** führen PHP in einem Code-Element aus. Eine Schleife entsteht dort direkt über `undt_query()`.
 
@@ -127,7 +127,7 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * Keine zusätzliche Datenbankabfrage im Frontend für Stammdaten, Öffnungszeiten, Social, Banner und Schema: diese Optionen sind autoloaded
 * Preise und FAQ sind bewusst nicht autoloaded und kosten nur auf den Seiten etwas, die sie ausgeben
 * Keine Asset-Datei im Frontend. Das CSS wird inline ausgegeben, nur auf Seiten mit einem Block, und enthält ausschließlich die aktiven Bereiche
-* Das einzige Frontend-JavaScript ist das Schließen des Infobanners, rund 300 Byte, nur wenn das Banner aktiv und schließbar ist
+* Das einzige Frontend-JavaScript ist das Schließen des Infobanners, unter einem Kilobyte, nur wenn das Banner aktiv und schließbar ist
 * Backend-Assets ausschließlich auf den eigenen Seiten, die Medienauswahl nur auf der Seite, die sie braucht
 * Keine AJAX-Endpunkte und keine REST-Routen
 
@@ -142,8 +142,26 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_schema_organization` passt die JSON-LD-Auszeichnung an
 * `undt_audit_issues` ergänzt eigene Prüfungen
 * `undt_query` passt die Zeilen einer Schleifen-Quelle an
+* `undt_update_allow_prerelease` bietet Vorabversionen als Aktualisierung an, etwa auf einer Testseite
 
 == Changelog ==
+
+= 0.4.1 =
+* Behoben: Eine Vorabversion wie 0.5.0-beta.1 wäre allen Websites sofort als Aktualisierung angeboten worden. Der Workflow veröffentlicht sie jetzt als Vorabversion, und der Updater bietet sie nur noch an, wenn der Filter undt_update_allow_prerelease das erlaubt
+* Behoben: Die Seitenauswahl in den Stammdaten zeigte nur veröffentlichte Seiten, eine verknüpfte Entwurfsseite ging deshalb beim nächsten Speichern verloren. Entwürfe, private und geplante Seiten stehen jetzt gekennzeichnet in der Auswahl
+* Behoben: Geleerte Felder wie die Fußnote der Preisliste, der Zusatz „Uhr“ oder der Kleinunternehmer-Hinweis fielen auf die Voreinstellung zurück
+* Behoben: Slim SEO wurde nicht erkannt, das JSON-LD erschien dort doppelt
+* Behoben: Bricks führte {echo:undt_get(…)} nicht aus, weil die Funktionen nicht freigegeben waren
+* Behoben: Ein Zeitfenster über Mitternacht galt am Folgetag als geschlossen, und gleiche Anfangs- und Endzeiten galten als rund um die Uhr geöffnet. 00:00 bis 00:00 wird jetzt zu 00:00 bis 23:59
+* Behoben: [undt key="page_privacy" link="1"] verlinkte auch unveröffentlichte Seiten
+* Behoben: Auf den Unterseiten eines Netzwerks wurden Preise und FAQ auf jeder Seite mitgeladen
+* Behoben: Arrays in manipulierten Formulardaten erzeugten PHP-Warnungen
+* Sondertermine ohne Uhrzeiten werden beim Speichern als geschlossen markiert, so wie die Ausgabe sie schon behandelt hat
+* Barrierefreiheit: Nach dem Schließen des Infobanners bleibt der Tastaturfokus an seiner Stelle auf der Seite, Zusatztexte sind nicht mehr abgeschwächt, Links in neuen Tabs kündigen das für Screenreader an, Behördenanschriften stehen nicht mehr in address-Elementen
+* Die Einrichtung gilt erst nach dem Speichern von Rechtsform & Umfang als abgeschlossen, nicht schon beim Aufruf der Seite
+* Die Deinstallation entfernt auch den Zwischenspeicher des Updaters
+* Entfernt: die Konstante UNDT_GITHUB_TOKEN. Private Repositories funktionierten damit nie, und der Token wurde beim Abruf über die Umleitung an das CDN von GitHub weitergereicht
+* Workflow: Actions an Commit-Hashes gebunden, Versionsangaben nur über Umgebungsvariablen, Syntaxprüfung mit PHP 7.4
 
 = 0.4.0 =
 * Neu: Aktualisierung über GitHub-Releases, gemeldet im gewohnten Plugin-Bildschirm

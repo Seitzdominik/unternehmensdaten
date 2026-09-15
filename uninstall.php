@@ -61,3 +61,18 @@ if ( is_multisite() ) {
 } else {
 	undt_uninstall_site();
 }
+
+/*
+ * Der Zwischenspeicher des Updaters gilt fuer das ganze Netzwerk und enthaelt
+ * keine Angaben des Unternehmens. Er wird deshalb unabhaengig von keep_data
+ * entfernt, und nur einmal statt je Website.
+ *
+ * Laeuft die Deinstallation im selben Aufruf wie die Deaktivierung, etwa bei
+ * wp plugin uninstall --deactivate, haengt der Updater noch an update_plugins.
+ * WordPress schreibt diesen Transient nach dem Loeschen neu, und der Updater
+ * wuerde dabei erneut bei GitHub anfragen, seinen Zwischenspeicher wieder
+ * anlegen und das geloeschte Plugin in die Liste der Aktualisierungen
+ * zuruecktragen. Deshalb wird er zuerst abgehaengt.
+ */
+remove_filter( 'pre_set_site_transient_update_plugins', array( 'UNDT_Updater', 'inject' ) );
+delete_site_transient( 'undt_update_info' );

@@ -37,11 +37,31 @@ final class UNDT_Modules {
 	private static $active = null;
 
 	/**
+	 * Laufzeit-Cache der festen Listen.
+	 *
+	 * @var array
+	 */
+	private static $lists = array();
+
+	/**
 	 * Bekannte Social-Plattformen.
 	 *
 	 * @return array
 	 */
 	public static function platforms() {
+		if ( ! isset( self::$lists['platforms'] ) ) {
+			self::$lists['platforms'] = self::build_platforms();
+		}
+
+		return self::$lists['platforms'];
+	}
+
+	/**
+	 * Baut die Liste der Plattformen auf.
+	 *
+	 * @return array
+	 */
+	private static function build_platforms() {
 		return array(
 			'facebook'  => 'Facebook',
 			'instagram' => 'Instagram',
@@ -70,6 +90,19 @@ final class UNDT_Modules {
 	 * @return array
 	 */
 	public static function schema_types() {
+		if ( ! isset( self::$lists['schema_types'] ) ) {
+			self::$lists['schema_types'] = self::build_schema_types();
+		}
+
+		return self::$lists['schema_types'];
+	}
+
+	/**
+	 * Baut die Liste der Schema.org-Typen auf.
+	 *
+	 * @return array
+	 */
+	private static function build_schema_types() {
 		return array(
 			'Organization'        => __( 'Organization (allgemein)', 'unternehmensdaten' ),
 			'LocalBusiness'       => __( 'LocalBusiness (Betrieb mit Ladenlokal)', 'unternehmensdaten' ),
@@ -89,6 +122,37 @@ final class UNDT_Modules {
 			'EducationalOrganization'     => __( 'EducationalOrganization (Bildung)', 'unternehmensdaten' ),
 			'NGO'                 => __( 'NGO (Verein, gemeinnützig)', 'unternehmensdaten' ),
 		);
+	}
+
+	/**
+	 * Haelt die autoload-Entscheidung auch fuer spaeter entstehende Optionen.
+	 *
+	 * Die Aktivierung legt die Optionen mit dem richtigen Wert an, aber nur auf
+	 * der Website, auf der sie laeuft. Bei netzwerkweiter Aktivierung entstehen
+	 * die Optionen der uebrigen Websites erst beim ersten Speichern ueber
+	 * options.php, und das kennt keine autoload-Angabe: WordPress laedt sie dann
+	 * auf jeder Seite mit.
+	 *
+	 * @return void
+	 */
+	public static function register() {
+		foreach ( self::all() as $module ) {
+			if ( ! $module['autoload'] ) {
+				add_action( 'add_option_' . $module['option'], array( __CLASS__, 'keep_autoload_off' ) );
+			}
+		}
+	}
+
+	/**
+	 * Nimmt eine gerade angelegte Option aus dem Autoload.
+	 *
+	 * @param string $option Name der Option.
+	 * @return void
+	 */
+	public static function keep_autoload_off( $option ) {
+		if ( function_exists( 'wp_set_option_autoload_values' ) ) {
+			wp_set_option_autoload_values( array( (string) $option => false ) );
+		}
 	}
 
 	/**
@@ -114,12 +178,12 @@ final class UNDT_Modules {
 					'days'    => array(
 						'label' => __( 'Reguläre Zeiten', 'unternehmensdaten' ),
 						'type'  => 'hours',
-						'help'  => __( 'Pro Tag sind zwei Zeitfenster möglich, etwa für eine Mittagspause. Ein leeres zweites Fenster wird nicht ausgegeben.', 'unternehmensdaten' ),
+						'help'  => __( 'Pro Tag sind zwei Zeitfenster möglich, etwa für eine Mittagspause. Ein leeres zweites Fenster wird nicht ausgegeben. Ein Fenster über Mitternacht, etwa 22:00 bis 02:00, gehört zu dem Tag, an dem es beginnt. Rund um die Uhr geöffnet ist 00:00 bis 23:59.', 'unternehmensdaten' ),
 					),
 					'special' => array(
 						'label'  => __( 'Sonderöffnungszeiten', 'unternehmensdaten' ),
 						'type'   => 'repeater',
-						'help'   => __( 'Feiertage, Betriebsferien, abweichende Zeiten. Ein Eintrag überschreibt an diesem Datum die reguläre Zeit. Vergangene Termine werden nicht ausgegeben.', 'unternehmensdaten' ),
+						'help'   => __( 'Feiertage, Betriebsferien, abweichende Zeiten. Ein Eintrag überschreibt an diesem Datum die reguläre Zeit, ohne Uhrzeiten gilt der Tag als geschlossen. Vergangene Termine werden nicht ausgegeben.', 'unternehmensdaten' ),
 						'single' => __( 'Termin', 'unternehmensdaten' ),
 						'fields' => array(
 							'date'   => array(
@@ -363,7 +427,7 @@ final class UNDT_Modules {
 							'always' => __( 'Immer', 'unternehmensdaten' ),
 							'never'  => __( 'Nie', 'unternehmensdaten' ),
 						),
-						'help'    => __( 'Yoast, Rank Math, SEOPress und AIOSEO geben bereits eine Organization-Auszeichnung aus. Zwei davon auf einer Seite sind schlechter als eine.', 'unternehmensdaten' ),
+						'help'    => __( 'Yoast, Rank Math, SEOPress, AIOSEO und Slim SEO geben bereits eine Organization-Auszeichnung aus. Zwei davon auf einer Seite sind schlechter als eine.', 'unternehmensdaten' ),
 					),
 					'schema_type' => array(
 						'label'   => __( 'Typ', 'unternehmensdaten' ),

@@ -270,13 +270,17 @@ final class UNDT_Render {
 				$out .= '<p>' . esc_html( UNDT_Store::get( 'permit_note' ) ) . '</p>';
 			}
 
-			$out .= '<address class="undt-address">' . esc_html( UNDT_Store::get( 'authority_name' ) );
+			/*
+			 * Kein address-Element: das steht fuer die Kontaktdaten des Anbieters
+			 * selbst, nicht fuer die Anschrift einer Behoerde.
+			 */
+			$out .= '<p class="undt-address">' . esc_html( UNDT_Store::get( 'authority_name' ) );
 
 			if ( UNDT_Store::has( 'authority_address' ) ) {
 				$out .= '<br />' . self::multiline( UNDT_Store::get( 'authority_address' ) );
 			}
 
-			$out .= '</address>';
+			$out .= '</p>';
 
 			if ( UNDT_Store::has( 'authority_url' ) ) {
 				$out .= '<p><a href="' . esc_url( UNDT_Store::get( 'authority_url' ) ) . '">' . esc_html( UNDT_Store::get( 'authority_url' ) ) . '</a></p>';
@@ -413,8 +417,9 @@ final class UNDT_Render {
 				$out .= '<p>' . esc_html__( 'Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.', 'unternehmensdaten' ) . '</p>';
 		}
 
+		// Die Schlichtungsstelle ist nicht der Anbieter, deshalb kein address-Element.
 		if ( UNDT_Store::has( 'vsbg_authority' ) ) {
-			$out .= '<address class="undt-address">' . self::multiline( UNDT_Store::get( 'vsbg_authority' ) ) . '</address>';
+			$out .= '<p class="undt-address">' . self::multiline( UNDT_Store::get( 'vsbg_authority' ) ) . '</p>';
 		}
 
 		return $out;
@@ -635,7 +640,8 @@ final class UNDT_Render {
 					$out .= self::h( $level, __( 'Zuständige Aufsichtsbehörde', 'unternehmensdaten' ) );
 				}
 
-				$out .= '<address class="undt-address">' . self::multiline( UNDT_Store::get( 'privacy_authority' ) ) . '</address>';
+				// Die Behoerde ist nicht der Verantwortliche, deshalb kein address-Element.
+				$out .= '<p class="undt-address">' . self::multiline( UNDT_Store::get( 'privacy_authority' ) ) . '</p>';
 
 				return $out . '</div>';
 		}

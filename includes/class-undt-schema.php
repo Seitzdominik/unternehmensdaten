@@ -24,6 +24,17 @@ final class UNDT_Schema {
 	private static $fields = null;
 
 	/**
+	 * Laufzeit-Cache der übrigen Listen.
+	 *
+	 * applies() fragt die Rechtsform bei jedem Feldzugriff ab. Ohne Cache entstünde
+	 * die Liste samt aller Übersetzungsaufrufe dabei jedes Mal neu, für ein
+	 * einziges Impressum mehrere hundert Mal.
+	 *
+	 * @var array
+	 */
+	private static $lists = array();
+
+	/**
 	 * Rechtsformen mit ihren strukturellen Eigenschaften.
 	 *
 	 * register  - Registerart, steuert die Register-Felder.
@@ -36,6 +47,19 @@ final class UNDT_Schema {
 	 * @return array
 	 */
 	public static function legal_forms() {
+		if ( ! isset( self::$lists['legal_forms'] ) ) {
+			self::$lists['legal_forms'] = self::build_legal_forms();
+		}
+
+		return self::$lists['legal_forms'];
+	}
+
+	/**
+	 * Baut die Liste der Rechtsformen auf.
+	 *
+	 * @return array
+	 */
+	private static function build_legal_forms() {
 		return array(
 			'sole'       => array(
 				'label'    => __( 'Einzelunternehmen (nicht im Register)', 'unternehmensdaten' ),
@@ -187,6 +211,19 @@ final class UNDT_Schema {
 	 * @return array
 	 */
 	public static function register_types() {
+		if ( ! isset( self::$lists['register_types'] ) ) {
+			self::$lists['register_types'] = self::build_register_types();
+		}
+
+		return self::$lists['register_types'];
+	}
+
+	/**
+	 * Baut die Liste der Registerarten auf.
+	 *
+	 * @return array
+	 */
+	private static function build_register_types() {
 		return array(
 			'hra'   => __( 'Handelsregister A', 'unternehmensdaten' ),
 			'hrb'   => __( 'Handelsregister B', 'unternehmensdaten' ),
@@ -976,20 +1013,23 @@ final class UNDT_Schema {
 	 */
 	public static function legal_form( $key ) {
 		$forms = self::legal_forms();
+		$key   = is_string( $key ) && isset( $forms[ $key ] ) ? $key : 'sole';
 
-		$form = isset( $forms[ $key ] ) ? $forms[ $key ] : $forms['sole'];
+		if ( ! isset( self::$lists['legal_form'][ $key ] ) ) {
+			self::$lists['legal_form'][ $key ] = array_merge(
+				array(
+					'label'     => '',
+					'register'  => '',
+					'rep'       => false,
+					'capital'   => false,
+					'board'     => false,
+					'second'    => '',
+					'rep_label' => __( 'Vertretungsberechtigte', 'unternehmensdaten' ),
+				),
+				$forms[ $key ]
+			);
+		}
 
-		return array_merge(
-			array(
-				'label'     => '',
-				'register'  => '',
-				'rep'       => false,
-				'capital'   => false,
-				'board'     => false,
-				'second'    => '',
-				'rep_label' => __( 'Vertretungsberechtigte', 'unternehmensdaten' ),
-			),
-			$form
-		);
+		return self::$lists['legal_form'][ $key ];
 	}
 }

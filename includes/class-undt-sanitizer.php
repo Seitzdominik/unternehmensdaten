@@ -30,7 +30,9 @@ final class UNDT_Sanitizer {
 
 		foreach ( $defaults as $key => $default ) {
 			$question = isset( $questions[ $key ] ) ? $questions[ $key ] : array( 'type' => 'checkbox' );
-			$raw      = isset( $input[ $key ] ) ? $input[ $key ] : null;
+
+			// Nur Einzelwerte. Ein Array kaeme aus einem manipulierten Formular.
+			$raw = isset( $input[ $key ] ) && is_scalar( $input[ $key ] ) ? $input[ $key ] : null;
 
 			if ( 'select' === $question['type'] ) {
 				$choices       = isset( $question['choices'] ) ? array_keys( $question['choices'] ) : array();

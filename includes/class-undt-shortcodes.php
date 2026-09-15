@@ -109,12 +109,13 @@ final class UNDT_Shortcodes {
 			return '';
 		}
 
-		$value = UNDT_Store::get( $key );
-		$link  = ! empty( $atts['link'] ) && '0' !== $atts['link'];
-		$obf   = ! empty( $atts['obfuscate'] ) && '0' !== $atts['obfuscate'];
+		$value    = UNDT_Store::get( $key );
+		$link     = ! empty( $atts['link'] ) && '0' !== $atts['link'];
+		$obf      = ! empty( $atts['obfuscate'] ) && '0' !== $atts['obfuscate'];
+		$fallback = '' === $atts['fallback'] ? '' : esc_html( $atts['fallback'] );
 
 		if ( '' === trim( $value ) ) {
-			return '' === $atts['fallback'] ? '' : esc_html( $atts['fallback'] );
+			return $fallback;
 		}
 
 		switch ( $field['type'] ) {
@@ -133,16 +134,27 @@ final class UNDT_Shortcodes {
 				break;
 
 			case 'page':
-				$id    = (int) $value;
-				$title = get_the_title( $id );
+				$id = (int) $value;
 
-				if ( $id <= 0 || '' === $title ) {
-					return '';
+				/*
+				 * Wie im Footer nur veroeffentlichte Seiten. Ein Entwurf ergaebe einen
+				 * toten Link und verriete seinen Arbeitstitel, bei privaten Seiten
+				 * stuende "Privat:" im Linktext.
+				 */
+				if ( $id <= 0 || 'publish' !== get_post_status( $id ) ) {
+					$html = '';
+					break;
 				}
 
-				$html = $link
-					? '<a href="' . esc_url( (string) get_permalink( $id ) ) . '">' . esc_html( $title ) . '</a>'
-					: esc_html( $title );
+				$title = get_the_title( $id );
+
+				if ( '' === $title ) {
+					$html = '';
+				} elseif ( $link ) {
+					$html = '<a href="' . esc_url( (string) get_permalink( $id ) ) . '">' . esc_html( $title ) . '</a>';
+				} else {
+					$html = esc_html( $title );
+				}
 				break;
 
 			case 'list':
@@ -154,8 +166,9 @@ final class UNDT_Shortcodes {
 				$html = esc_html( $value );
 		}
 
+		// Ein Wert, der sich nicht ausgeben laesst, zaehlt wie ein leeres Feld.
 		if ( '' === $html ) {
-			return '';
+			return $fallback;
 		}
 
 		return esc_html( $atts['before'] ) . $html . esc_html( $atts['after'] );

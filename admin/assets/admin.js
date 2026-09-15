@@ -537,7 +537,7 @@
 				var clearField = clear.closest( '[data-undt-media]' );
 
 				clearField.querySelector( '.undt-media__value' ).value = '0';
-				clearField.querySelector( '.undt-media__preview' ).innerHTML = '';
+				clearField.querySelector( '.undt-media__preview' ).textContent = '';
 				clear.hidden = true;
 
 				return;
@@ -573,8 +573,20 @@
 				}
 
 				field.querySelector( '.undt-media__value' ).value = item.id;
-				field.querySelector( '.undt-media__preview' ).innerHTML =
-					'<img src="' + url + '" alt="" />';
+
+				/*
+				 * Das Vorschaubild entsteht als Element, nicht als HTML-Text. Die
+				 * Adresse landet so in einer Eigenschaft und kann kein Attribut
+				 * aufbrechen, gleich woher sie stammt.
+				 */
+				var preview = field.querySelector( '.undt-media__preview' );
+				var image   = document.createElement( 'img' );
+
+				image.src = url;
+				image.alt = '';
+
+				preview.textContent = '';
+				preview.appendChild( image );
 
 				var clearButton = field.querySelector( '.undt-media__clear' );
 

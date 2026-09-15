@@ -50,6 +50,11 @@ final class UNDT_Content {
 	/**
 	 * Wert eines Feldes, mit Rueckfall auf die Voreinstellung.
 	 *
+	 * Die Voreinstellung gilt nur, solange das Feld nie gespeichert wurde. Ein
+	 * bewusst geleertes Feld bleibt leer. Sonst liesse sich etwa die Fussnote mit
+	 * dem Umsatzsteuer-Hinweis nicht entfernen, auch wenn ausschliesslich
+	 * Nettopreise ausgewiesen werden.
+	 *
 	 * @param string $slug Modul-Schluessel.
 	 * @param string $key  Feldschluessel.
 	 * @return mixed
@@ -61,20 +66,13 @@ final class UNDT_Content {
 			return '';
 		}
 
-		$field = $module['fields'][ $key ];
-		$data  = self::all( $slug );
+		$data = self::all( $slug );
 
-		if ( ! array_key_exists( $key, $data ) ) {
-			return $field['default'];
+		if ( ! isset( $data[ $key ] ) ) {
+			return $module['fields'][ $key ]['default'];
 		}
 
-		$value = $data[ $key ];
-
-		if ( is_string( $value ) && '' === $value && '' !== $field['default'] ) {
-			return $field['default'];
-		}
-
-		return $value;
+		return $data[ $key ];
 	}
 
 	/**
@@ -133,7 +131,7 @@ final class UNDT_Content {
 
 			foreach ( $row as $sub_key => $sub_value ) {
 				// Ein gesetzter Schalter allein macht eine Zeile noch nicht sinnvoll.
-				if ( 'closed' === $sub_key ) {
+				if ( 'closed' === $sub_key || ! is_scalar( $sub_value ) ) {
 					continue;
 				}
 
@@ -212,6 +210,11 @@ final class UNDT_Content {
 		// Schluessel entfernen, die es im Register nicht mehr gibt.
 		$clean = array_intersect_key( $clean, $module['fields'] );
 
+		// Sondertermine ohne Uhrzeiten gelten als geschlossen, siehe UNDT_Hours.
+		if ( 'hours' === $slug && isset( $clean['special'] ) ) {
+			$clean['special'] = UNDT_Hours::normalize_special( $clean['special'] );
+		}
+
 		self::flush();
 
 		return $clean;
@@ -225,6 +228,15 @@ final class UNDT_Content {
 	 * @return mixed
 	 */
 	private static function sanitize_value( $value, array $field ) {
+		/*
+		 * Ein Array, wo ein einzelner Wert erwartet wird, kommt nur aus einem
+		 * manipulierten Formular. Es wird verworfen, statt als Text "Array"
+		 * gespeichert zu werden.
+		 */
+		if ( is_array( $value ) && ! in_array( $field['type'], array( 'repeater', 'hours' ), true ) ) {
+			$value = '';
+		}
+
 		switch ( $field['type'] ) {
 
 			case 'repeater':

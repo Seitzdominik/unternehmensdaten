@@ -6,6 +6,9 @@
  * genuegen fuer den Regelfall einschliesslich Mittagspause, ohne die Oberflaeche
  * mit beliebig vielen Zeilen zu belasten.
  *
+ * Ein Zeitfenster, das vor seinem Beginn endet, reicht ueber Mitternacht, etwa
+ * 22:00 bis 02:00. Es gehoert zu dem Tag, an dem es beginnt.
+ *
  * @package Unternehmensdaten
  */
 
@@ -141,18 +144,14 @@ final class UNDT_Hours {
 					continue;
 				}
 
-				$from = self::time( isset( $row['slots'][ $i ]['from'] ) ? $row['slots'][ $i ]['from'] : '' );
-				$to   = self::time( isset( $row['slots'][ $i ]['to'] ) ? $row['slots'][ $i ]['to'] : '' );
-
-				// Ein halb ausgefuelltes Fenster ist keine Angabe.
-				if ( '' === $from || '' === $to ) {
-					continue;
-				}
-
-				$data['slots'][ $i ] = array(
-					'from' => $from,
-					'to'   => $to,
+				$window = self::window(
+					isset( $row['slots'][ $i ]['from'] ) ? $row['slots'][ $i ]['from'] : '',
+					isset( $row['slots'][ $i ]['to'] ) ? $row['slots'][ $i ]['to'] : ''
 				);
+
+				if ( null !== $window ) {
+					$data['slots'][ $i ] = $window;
+				}
 			}
 
 			$clean[ $day ] = $data;
@@ -162,12 +161,53 @@ final class UNDT_Hours {
 	}
 
 	/**
+	 * Ein Zeitfenster aus zwei Uhrzeiten.
+	 *
+	 * @param mixed $from Beginn.
+	 * @param mixed $to   Ende.
+	 * @return array|null Null, wenn sich daraus kein gueltiges Fenster ergibt.
+	 */
+	public static function window( $from, $to ) {
+		$from = self::time( $from );
+		$to   = self::time( $to );
+
+		// Ein halb ausgefuelltes Fenster ist keine Angabe.
+		if ( '' === $from || '' === $to ) {
+			return null;
+		}
+
+		if ( $from === $to ) {
+			/*
+			 * 00:00 bis 00:00 ist als rund um die Uhr gemeint, bedeutet in
+			 * strukturierten Daten aber ganztaegig geschlossen. Daraus wird deshalb
+			 * 00:00 bis 23:59, die Schreibweise, die Google fuer durchgehend
+			 * geoeffnet vorsieht. Jede andere gleiche Uhrzeit ist ein Tippfehler,
+			 * der sonst als rund um die Uhr geoeffnet gelten wuerde.
+			 */
+			if ( '00:00' !== $from ) {
+				return null;
+			}
+
+			$to = '23:59';
+		}
+
+		return array(
+			'from' => $from,
+			'to'   => $to,
+		);
+	}
+
+	/**
 	 * Prueft und normalisiert eine Uhrzeit auf HH:MM.
 	 *
 	 * @param mixed $value Rohwert.
 	 * @return string Leerstring, wenn ungueltig.
 	 */
 	public static function time( $value ) {
+		if ( ! is_scalar( $value ) ) {
+			return '';
+		}
+
 		$value = trim( (string) $value );
 
 		if ( '' === $value ) {
@@ -188,6 +228,10 @@ final class UNDT_Hours {
 	 * @return string Leerstring, wenn ungueltig.
 	 */
 	public static function date( $value ) {
+		if ( ! is_scalar( $value ) ) {
+			return '';
+		}
+
 		$value = trim( (string) $value );
 
 		if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m ) ) {
@@ -337,23 +381,62 @@ final class UNDT_Hours {
 	}
 
 	/**
-	 * Die heute geltenden Zeitfenster, Sonderregelungen eingerechnet.
+	 * Bereitet die Sondertermine beim Speichern auf.
 	 *
+	 * Ein Termin ohne Uhrzeiten gilt als geschlossen, so behandelt ihn die
+	 * Ausgabe ohnehin. Der Schalter wird deshalb gesetzt, damit das Backend nach
+	 * dem Speichern zeigt, was auf der Website erscheint, statt es stillschweigend
+	 * anzunehmen. Gueltige Zeitfenster laufen durch dieselbe Pruefung wie die
+	 * regulaeren Zeiten.
+	 *
+	 * @param mixed $rows Bereits sanitisierte Zeilen.
+	 * @return array
+	 */
+	public static function normalize_special( $rows ) {
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		foreach ( $rows as $index => $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$from   = isset( $row['from'] ) ? $row['from'] : '';
+			$to     = isset( $row['to'] ) ? $row['to'] : '';
+			$window = self::window( $from, $to );
+
+			if ( null !== $window ) {
+				$rows[ $index ]['from'] = $window['from'];
+				$rows[ $index ]['to']   = $window['to'];
+
+				continue;
+			}
+
+			if ( ! empty( $row['date'] ) && '' === $from && '' === $to ) {
+				$rows[ $index ]['closed'] = 1;
+			}
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Die Zeitfenster eines Kalendertags, Sonderregelungen eingerechnet.
+	 *
+	 * @param DateTimeInterface $date Tag in der Zeitzone der Website.
 	 * @return array array( closed, slots, note, is_special ).
 	 */
-	public static function today() {
-		$now     = current_datetime();
-		$date    = $now->format( 'Y-m-d' );
-		$day     = strtolower( $now->format( 'D' ) );
-		$special = self::special_for( $date );
+	public static function day_for( DateTimeInterface $date ) {
+		$special = self::special_for( $date->format( 'Y-m-d' ) );
 
 		if ( null !== $special ) {
-			$from = self::time( isset( $special['from'] ) ? $special['from'] : '' );
-			$to   = self::time( isset( $special['to'] ) ? $special['to'] : '' );
+			$window = self::window(
+				isset( $special['from'] ) ? $special['from'] : '',
+				isset( $special['to'] ) ? $special['to'] : ''
+			);
 
-			$slots = ( ! empty( $special['closed'] ) || '' === $from || '' === $to )
-				? array()
-				: array( array( 'from' => $from, 'to' => $to ) );
+			$slots = ( ! empty( $special['closed'] ) || null === $window ) ? array() : array( $window );
 
 			return array(
 				'closed'     => empty( $slots ),
@@ -363,7 +446,7 @@ final class UNDT_Hours {
 			);
 		}
 
-		$slots = self::slots( $day );
+		$slots = self::slots( strtolower( $date->format( 'D' ) ) );
 
 		return array(
 			'closed'     => empty( $slots ),
@@ -374,6 +457,20 @@ final class UNDT_Hours {
 	}
 
 	/**
+	 * Die heute geltenden Zeitfenster, Sonderregelungen eingerechnet.
+	 *
+	 * Bewusst der Kalendertag: ein Fenster, das gestern begonnen hat und nach
+	 * Mitternacht noch laeuft, erscheint hier nicht. So bleibt die Ausgabe den
+	 * ganzen Tag gleich und vertraegt einen Seiten-Cache. Ob gerade geoeffnet ist,
+	 * beantwortet is_open_now().
+	 *
+	 * @return array array( closed, slots, note, is_special ).
+	 */
+	public static function today() {
+		return self::day_for( current_datetime() );
+	}
+
+	/**
 	 * Ob gerade geoeffnet ist.
 	 *
 	 * Rechnet in der Zeitzone der Website, nicht in der des Servers.
@@ -381,25 +478,32 @@ final class UNDT_Hours {
 	 * @return bool
 	 */
 	public static function is_open_now() {
-		$today = self::today();
+		$now  = current_datetime();
+		$time = $now->format( 'H:i' );
 
-		if ( $today['closed'] ) {
-			return false;
+		// Ein Fenster, das gestern begonnen hat, kann ueber Mitternacht noch laufen.
+		$yesterday = self::day_for( $now->modify( '-1 day' ) );
+
+		foreach ( $yesterday['slots'] as $slot ) {
+			if ( $slot['to'] < $slot['from'] && $time < $slot['to'] ) {
+				return true;
+			}
 		}
 
-		$now = current_datetime()->format( 'H:i' );
+		$today = self::day_for( $now );
 
 		foreach ( $today['slots'] as $slot ) {
-			// Ein Fenster ueber Mitternacht endet rechnerisch vor seinem Beginn.
-			if ( $slot['to'] <= $slot['from'] ) {
-				if ( $now >= $slot['from'] || $now < $slot['to'] ) {
+			// Beginnt heute und endet erst nach Mitternacht.
+			if ( $slot['to'] < $slot['from'] ) {
+				if ( $time >= $slot['from'] ) {
 					return true;
 				}
 
 				continue;
 			}
 
-			if ( $now >= $slot['from'] && $now < $slot['to'] ) {
+			// 23:59 steht fuer das Tagesende, sonst waere die letzte Minute geschlossen.
+			if ( $time >= $slot['from'] && ( $time < $slot['to'] || '23:59' === $slot['to'] ) ) {
 				return true;
 			}
 		}

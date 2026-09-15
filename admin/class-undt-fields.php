@@ -401,17 +401,30 @@ final class UNDT_Fields {
 				break;
 
 			case 'page':
+				/*
+				 * Auch Seiten, die gerade nicht veroeffentlicht sind, gehoeren in die
+				 * Auswahl. Fehlt die gespeicherte Seite darin, waehlt der Browser
+				 * „keine Seite“, und das naechste Speichern loest die Verknuepfung
+				 * stillschweigend. Ob verlinkt wird, entscheidet ohnehin die Ausgabe.
+				 */
+				add_filter( 'list_pages', array( __CLASS__, 'page_status_label' ), 10, 2 );
+
+				$dropdown = wp_dropdown_pages(
+					array(
+						'name'              => $name,
+						'id'                => $id,
+						'selected'          => (int) $value,
+						'show_option_none'  => __( '— keine Seite —', 'unternehmensdaten' ),
+						'option_none_value' => 0,
+						'post_status'       => array( 'publish', 'private', 'draft', 'pending', 'future' ),
+						'echo'              => 0,
+					)
+				);
+
+				remove_filter( 'list_pages', array( __CLASS__, 'page_status_label' ), 10 );
+
 				echo wp_kses(
-					wp_dropdown_pages(
-						array(
-							'name'              => $name,
-							'id'                => $id,
-							'selected'          => (int) $value,
-							'show_option_none'  => __( '— keine Seite —', 'unternehmensdaten' ),
-							'option_none_value' => 0,
-							'echo'              => 0,
-						)
-					),
+					$dropdown,
 					array(
 						'select' => array(
 							'name'  => array(),
@@ -456,6 +469,25 @@ final class UNDT_Fields {
 					esc_attr( isset( $classes[ $field['type'] ] ) ? $classes[ $field['type'] ] : 'regular-text' )
 				);
 		}
+	}
+
+	/**
+	 * Kennzeichnet nicht veroeffentlichte Seiten in der Seitenauswahl.
+	 *
+	 * Haengt nur waehrend des Aufbaus der Auswahl am Filter list_pages.
+	 *
+	 * @param string $title Seitentitel.
+	 * @param mixed  $page  Seite.
+	 * @return string
+	 */
+	public static function page_status_label( $title, $page = null ) {
+		if ( ! $page instanceof WP_Post || 'publish' === $page->post_status ) {
+			return $title;
+		}
+
+		$status = get_post_status_object( $page->post_status );
+
+		return null === $status ? $title : sprintf( '%1$s (%2$s)', $title, $status->label );
 	}
 
 	/* ------------------------------------------------- Wiederholungsfelder */
@@ -737,6 +769,11 @@ final class UNDT_Fields {
 		$extra = '';
 
 		foreach ( $attrs as $attr => $attr_value ) {
+			// esc_attr() maskiert Werte, nicht Namen. Deshalb nur schlichte Attributnamen.
+			if ( ! preg_match( '/^[a-z][a-z0-9-]*$/', (string) $attr ) ) {
+				continue;
+			}
+
 			$extra .= sprintf(
 				' %s="%s"',
 				esc_attr( $attr ),

@@ -73,6 +73,9 @@ final class UNDT_Api {
 		// Bricks: eigene Query-Typen im Schleifen-Dialog anbieten.
 		add_filter( 'bricks/setup/control_options', array( __CLASS__, 'bricks_options' ) );
 		add_filter( 'bricks/query/run', array( __CLASS__, 'bricks_run' ), 10, 2 );
+
+		// Bricks: die Funktionen fuer das Dynamic-Data-Tag {echo:...} freigeben.
+		add_filter( 'bricks/code/echo_function_names', array( __CLASS__, 'bricks_echo_functions' ), 10, 2 );
 	}
 
 	/**
@@ -260,7 +263,13 @@ final class UNDT_Api {
 
 			$from   = UNDT_Hours::time( isset( $entry['from'] ) ? $entry['from'] : '' );
 			$to     = UNDT_Hours::time( isset( $entry['to'] ) ? $entry['to'] : '' );
-			$closed = ! empty( $entry['closed'] ) || '' === $from || '' === $to;
+			$window = UNDT_Hours::window( $from, $to );
+			$closed = ! empty( $entry['closed'] ) || null === $window;
+
+			if ( null !== $window ) {
+				$from = $window['from'];
+				$to   = $window['to'];
+			}
 
 			$rows[] = array(
 				'date'       => $date,
@@ -268,7 +277,7 @@ final class UNDT_Api {
 				'closed'     => $closed,
 				'from'       => $from,
 				'to'         => $to,
-				'times'      => $closed ? self::closed_label() : self::format_slots( array( array( 'from' => $from, 'to' => $to ) ) ),
+				'times'      => $closed ? self::closed_label() : self::format_slots( array( $window ) ),
 				'note'       => isset( $entry['note'] ) ? (string) $entry['note'] : '',
 			);
 		}
@@ -354,6 +363,30 @@ final class UNDT_Api {
 	}
 
 	/**
+	 * Gibt die Funktionen fuer das Bricks-Tag {echo:...} frei.
+	 *
+	 * Seit Bricks 1.9.7 fuehrt das Tag nur freigegebene Funktionen aus. Je nach
+	 * Fassung reicht Bricks eine Liste durch, prueft einen einzelnen Namen oder
+	 * beides, deshalb deckt die Methode alle drei Formen ab. undt_query fehlt
+	 * bewusst: es liefert ein Array, und das laesst sich nicht ausgeben.
+	 *
+	 * @param mixed  $allowed       Bisherige Freigabe: Liste, Wahrheitswert oder Funktionsname.
+	 * @param string $function_name Gepruefter Funktionsname, falls Bricks ihn mitgibt.
+	 * @return mixed
+	 */
+	public static function bricks_echo_functions( $allowed = array(), $function_name = '' ) {
+		$own = array( 'undt_get', 'undt_has', 'undt_field', 'undt_loop', 'undt_is_open', 'undt_today' );
+
+		if ( is_array( $allowed ) ) {
+			return array_values( array_unique( array_merge( $allowed, $own ) ) );
+		}
+
+		$name = is_string( $allowed ) ? $allowed : (string) $function_name;
+
+		return in_array( $name, $own, true ) ? true : $allowed;
+	}
+
+	/**
 	 * Liefert Bricks die Zeilen der gewaehlten Datenquelle.
 	 *
 	 * @param array  $results Bisheriges Ergebnis.
@@ -371,12 +404,25 @@ final class UNDT_Api {
 			return $results;
 		}
 
-		$args = isset( $query->query_vars ) && is_array( $query->query_vars ) ? $query->query_vars : array();
+		/*
+		 * Wo Bricks die Argumente eines eigenen Query-Typs ablegt, ist nicht
+		 * dokumentiert. Gelesen werden deshalb die Einstellungen des Elements und
+		 * query_vars, wobei query_vars Vorrang hat.
+		 */
+		$args = array();
+
+		if ( isset( $query->settings['query'] ) && is_array( $query->settings['query'] ) ) {
+			$args = $query->settings['query'];
+		}
+
+		if ( isset( $query->query_vars ) && is_array( $query->query_vars ) ) {
+			$args = array_merge( $args, $query->query_vars );
+		}
 
 		return self::query(
 			$source,
 			array(
-				'group' => isset( $args['undt_group'] ) ? $args['undt_group'] : '',
+				'group' => isset( $args['undt_group'] ) && is_scalar( $args['undt_group'] ) ? (string) $args['undt_group'] : '',
 				'limit' => isset( $args['posts_per_page'] ) ? (int) $args['posts_per_page'] : 0,
 			)
 		);

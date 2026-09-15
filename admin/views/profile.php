@@ -15,10 +15,8 @@ $undt_profile   = UNDT_Store::profile();
 $undt_questions = UNDT_Schema::profile_questions();
 $undt_option    = UNDT_Store::OPTION_PROFILE;
 
-// Der Hinweis im Backend hat seinen Zweck erfuellt, sobald diese Seite offen ist.
-if ( ! UNDT_Store::is_set_up() ) {
-	UNDT_Store::mark_set_up();
-}
+// Als eingerichtet gilt das Plugin erst nach dem Speichern, nicht schon beim
+// Aufruf dieser Seite. Siehe UNDT_Admin::sanitize_profile().
 ?>
 <div class="wrap undt-wrap">
 	<h1><?php esc_html_e( 'Rechtsform & Umfang', 'unternehmensdaten' ); ?></h1>

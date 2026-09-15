@@ -158,16 +158,16 @@ final class UNDT_Updater {
 			return null;
 		}
 
+		/*
+		 * Bewusst ohne Zugriffstoken. Die Adresse unter github.com nimmt fuer
+		 * private Repositories keinen an, WordPress laedt das Paket ohnehin ohne
+		 * ihn, und beim Folgen der Umleitung ginge er an das CDN weiter.
+		 */
 		$args = array(
 			'timeout'    => 10,
 			'user-agent' => 'Unternehmensdaten/' . UNDT_VERSION . '; ' . home_url( '/' ),
 			'headers'    => array( 'Accept' => 'application/json' ),
 		);
-
-		// Fuer ein privates Repository. Der Wert gehoert in die wp-config.php.
-		if ( defined( 'UNDT_GITHUB_TOKEN' ) && UNDT_GITHUB_TOKEN ) {
-			$args['headers']['Authorization'] = 'Bearer ' . UNDT_GITHUB_TOKEN;
-		}
 
 		$response = wp_remote_get( $url, $args );
 
@@ -267,6 +267,35 @@ final class UNDT_Updater {
 	}
 
 	/**
+	 * Ob eine gelesene Fassung als Aktualisierung angeboten wird.
+	 *
+	 * Vorabversionen wie 0.5.0-beta.1 nur auf ausdruecklichen Wunsch. Der
+	 * Workflow veroeffentlicht sie zwar als Vorabversion, auf die
+	 * releases/latest nicht zeigt. Ein von Hand angelegtes Release koennte das
+	 * aber umgehen, und ein Testlauf landete dann auf allen Kundenseiten.
+	 *
+	 * @param array $info Angaben aus fetch().
+	 * @return bool
+	 */
+	private static function offers( array $info ) {
+		if ( ! version_compare( $info['version'], UNDT_VERSION, '>' ) ) {
+			return false;
+		}
+
+		if ( false === strpos( $info['version'], '-' ) ) {
+			return true;
+		}
+
+		/**
+		 * Laesst Vorabversionen als Aktualisierung zu, etwa auf einer Testseite.
+		 *
+		 * @param bool   $allow   Standard: false.
+		 * @param string $version Die gefundene Version.
+		 */
+		return (bool) apply_filters( 'undt_update_allow_prerelease', false, $info['version'] );
+	}
+
+	/**
 	 * Traegt eine verfuegbare Aktualisierung in den Transient von WordPress ein.
 	 *
 	 * @param mixed $transient Der Transient update_plugins.
@@ -284,7 +313,7 @@ final class UNDT_Updater {
 		}
 
 		$file   = self::basename();
-		$newer  = version_compare( $info['version'], UNDT_VERSION, '>' );
+		$newer  = self::offers( $info );
 		$entry  = (object) array(
 			'id'           => 'github.com/' . self::repo(),
 			'slug'         => dirname( $file ),
@@ -467,7 +496,7 @@ final class UNDT_Updater {
 		}
 
 		return array(
-			'state'    => version_compare( $info['version'], UNDT_VERSION, '>' ) ? 'update' : 'current',
+			'state'    => self::offers( $info ) ? 'update' : 'current',
 			'repo'     => $repo,
 			'version'  => $info['version'],
 			'checked'  => $info['checked'],

@@ -211,10 +211,12 @@ final class UNDT_Blocks {
 				continue;
 			}
 
-			$stamp = strtotime( $date . ' 12:00:00' );
-			$from  = UNDT_Hours::time( isset( $row['from'] ) ? $row['from'] : '' );
-			$to    = UNDT_Hours::time( isset( $row['to'] ) ? $row['to'] : '' );
-			$shut  = ! empty( $row['closed'] ) || '' === $from || '' === $to;
+			$stamp  = strtotime( $date . ' 12:00:00' );
+			$window = UNDT_Hours::window(
+				isset( $row['from'] ) ? $row['from'] : '',
+				isset( $row['to'] ) ? $row['to'] : ''
+			);
+			$shut   = ! empty( $row['closed'] ) || null === $window;
 
 			$out .= '<tr class="undt-hours__row' . ( $shut ? ' undt-hours__row--closed' : '' ) . '">';
 			$out .= '<th scope="row">';
@@ -225,7 +227,7 @@ final class UNDT_Blocks {
 			}
 
 			$out .= '</th><td>';
-			$out .= $shut ? esc_html( $closed ) : esc_html( self::slot_text( array( 'from' => $from, 'to' => $to ), $suffix ) );
+			$out .= $shut ? esc_html( $closed ) : esc_html( self::slot_text( $window, $suffix ) );
 			$out .= '</td></tr>';
 		}
 
@@ -424,13 +426,15 @@ final class UNDT_Blocks {
 				$label = isset( $platforms[ $platform ] ) ? $platforms[ $platform ] : $platform;
 			}
 
+			// Ein neuer Tab oeffnet sich fuer Screenreader unangekuendigt, deshalb der Zusatz.
 			$items[] = sprintf(
-				'<li class="undt-social__item"><a class="undt-social__link undt-social__link--%1$s" data-platform="%1$s" href="%2$s"%3$s%4$s>%5$s</a></li>',
+				'<li class="undt-social__item"><a class="undt-social__link undt-social__link--%1$s" data-platform="%1$s" href="%2$s"%3$s%4$s>%5$s%6$s</a></li>',
 				esc_attr( $platform ),
 				esc_url( $url ),
 				empty( $rel ) ? '' : ' rel="' . esc_attr( implode( ' ', $rel ) ) . '"',
 				$new_tab ? ' target="_blank"' : '',
-				esc_html( $label )
+				esc_html( $label ),
+				$new_tab ? '<span class="undt-sr"> ' . esc_html__( '(öffnet in neuem Tab)', 'unternehmensdaten' ) . '</span>' : ''
 			);
 		}
 
@@ -661,11 +665,23 @@ final class UNDT_Blocks {
 			return '';
 		}
 
+		/*
+		 * Beim Schliessen wandert der Fokus auf das naechste bedienbare Element
+		 * hinter dem Banner. Sonst fiele er an den Anfang der Seite zurueck, und
+		 * wer mit Tastatur oder Screenreader unterwegs ist, muesste von vorn
+		 * beginnen.
+		 */
 		$js = "(function(){var k='%s',e=document.querySelector('[data-undt-banner=\"'+k+'\"]');"
 			. "if(!e)return;var s='undt-banner-'+k;"
 			. "try{if(window.localStorage&&localStorage.getItem(s)){e.hidden=true;return;}}catch(x){}"
 			. "var b=e.querySelector('.undt-banner__close');if(!b)return;"
-			. "b.addEventListener('click',function(){e.hidden=true;try{localStorage.setItem(s,'1');}catch(x){}});})();";
+			. "b.addEventListener('click',function(){"
+			. "var l=document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]'),i,t;"
+			. "e.hidden=true;try{localStorage.setItem(s,'1');}catch(x){}"
+			. "for(i=0;i<l.length;i++){t=l[i];"
+			. "if(e.contains(t)||!(e.compareDocumentPosition(t)&4)||t.disabled||t.getAttribute('tabindex')==='-1'||!t.getClientRects().length)continue;"
+			. "t.focus();if(document.activeElement===t)return;}"
+			. "});})();";
 
 		return '<script>' . sprintf( $js, $key ) . '</script>';
 	}
@@ -674,6 +690,10 @@ final class UNDT_Blocks {
 	 * Das CSS der aktiven Module.
 	 *
 	 * Nur was gebraucht wird: ist ein Modul abgeschaltet, entfaellt sein CSS.
+	 *
+	 * Nebensaechliche Angaben werden kleiner gesetzt, nicht blasser. opacity
+	 * mischt die Textfarbe des Themes mit dem Hintergrund und drueckt den
+	 * Kontrast bei verbreiteten Grautoenen unter die Grenze der WCAG.
 	 *
 	 * @return string
 	 */
@@ -684,7 +704,7 @@ final class UNDT_Blocks {
 			$css .= '.undt-hours__table{width:100%;border-collapse:collapse;margin:0 0 1em}'
 				. '.undt-hours__table th,.undt-hours__table td{padding:.2em 0;text-align:left;vertical-align:top;font-weight:inherit}'
 				. '.undt-hours__table th{padding-right:1.5em;white-space:nowrap}'
-				. '.undt-hours__occasion{display:block;font-size:.9em;opacity:.75}'
+				. '.undt-hours__occasion{display:block;font-size:.9em}'
 				. '.undt-hours__note{margin:0 0 1em}';
 		}
 
@@ -693,7 +713,7 @@ final class UNDT_Blocks {
 				. '.undt-prices__table th,.undt-prices__table td{padding:.35em 0;text-align:left;vertical-align:top;font-weight:inherit;border-bottom:1px solid currentColor}'
 				. '.undt-prices__table tr:last-child th,.undt-prices__table tr:last-child td{border-bottom:0}'
 				. '.undt-prices__price{text-align:right;white-space:nowrap;padding-left:1.5em}'
-				. '.undt-prices__note{display:block;font-size:.9em;opacity:.75}';
+				. '.undt-prices__note{display:block;font-size:.9em}';
 		}
 
 		if ( UNDT_Modules::is_active( 'faq' ) ) {
@@ -723,13 +743,15 @@ final class UNDT_Blocks {
 				. '.undt-banner__text>p{margin:0}'
 				. '.undt-banner__text>p+p{margin-top:.5em}'
 				. '.undt-banner__link{color:inherit;font-weight:bolder}'
-				. '.undt-banner__close{flex:0 0 auto;padding:0 .4em;border:0;background:none;color:inherit;'
+				. '.undt-banner__close{flex:0 0 auto;padding:0 .4em;border:0;border-radius:.15em;background:none;color:inherit;'
 				. 'font:inherit;font-size:1.4em;line-height:1;cursor:pointer}'
-				. '.undt-banner__close:hover{opacity:.7}';
+				. '.undt-banner__close:hover{box-shadow:inset 0 0 0 1px currentColor}';
 		}
 
 		if ( UNDT_Modules::is_active( 'social' ) ) {
-			$css .= '.undt-social__item{display:inline-flex}';
+			// .undt-sr traegt den Hinweis auf einen neuen Tab, sichtbar nur fuer Screenreader.
+			$css .= '.undt-social__item{display:inline-flex}'
+				. '.undt-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}';
 		}
 
 		return $css;

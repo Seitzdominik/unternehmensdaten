@@ -82,13 +82,15 @@ final class UNDT_Store {
 		}
 
 		$company = self::company();
-		$value   = isset( $company[ $key ] ) ? $company[ $key ] : '';
 
-		if ( '' === $value && '' !== $field['default'] ) {
-			$value = $field['default'];
-		}
+		/*
+		 * Die Voreinstellung gilt nur fuer ein Feld, das nie gespeichert wurde.
+		 * Ein bewusst geleertes Feld bleibt leer, sonst liesse sich etwa der
+		 * Kleinunternehmer-Hinweis nicht entfernen.
+		 */
+		$value = isset( $company[ $key ] ) ? $company[ $key ] : $field['default'];
 
-		return (string) $value;
+		return is_scalar( $value ) ? (string) $value : '';
 	}
 
 	/**

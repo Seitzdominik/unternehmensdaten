@@ -221,7 +221,7 @@ $undt_first = key( $undt_panels );
 						<?php UNDT_Fields::copy_button( "{echo:undt_get('phone')}" ); ?>
 						<?php UNDT_Fields::copy_button( "{echo:undt_loop('question')}" ); ?>
 						<p class="description">
-							<?php esc_html_e( 'Bricks muss dafür die Ausführung von Code erlauben. Die Einstellung dazu liegt unter Bricks, Einstellungen, Allgemein.', 'unternehmensdaten' ); ?>
+							<?php esc_html_e( 'Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. Zusätzlich muss unter Bricks, Einstellungen, Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein.', 'unternehmensdaten' ); ?>
 						</p>
 					</td>
 				</tr>
