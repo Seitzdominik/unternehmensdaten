@@ -86,16 +86,22 @@
 	vertical-align: middle;
 }
 
-.undt-switch__input {
+/* Bewusst so spezifisch: WordPress setzt `input[type="checkbox"]` auf 1rem
+   Breite und Hoehe, und diese Regel wiegt schwerer als eine einzelne Klasse.
+   Die Klickflaeche deckte dann nur das linke Viertel der Schiene ab. */
+.undt-switch input[type="checkbox"].undt-switch__input {
 	position: absolute;
 	top: 0;
 	left: 0;
 	width: 100%;
 	height: 100%;
 	min-width: 0;
+	max-width: none;
 	margin: 0;
 	padding: 0;
 	border: 0;
+	border-radius: 10px;
+	box-shadow: none;
 	opacity: 0;
 	cursor: pointer;
 	z-index: 1;
@@ -337,11 +343,13 @@
 	flex: 0 0 auto;
 }
 
+/* Feste Zeilenhoehe, damit die Knoepfe daneben den Abstand kennen. */
 .undt-repeater__label {
 	display: block;
 	margin-bottom: 2px;
 	font-size: 12px;
 	font-weight: 600;
+	line-height: 16px;
 }
 
 .undt-repeater__field input[type="text"],
@@ -358,30 +366,119 @@
 	margin-top: 2px;
 }
 
+/* Pfeile als zusammenhaengende Gruppe, Entfernen mit Abstand daneben. Der
+   Abstand oben entspricht der Beschriftung ueber den Feldern, die Groesse der
+   Knoepfe der Hoehe der Eingabefelder: 30 Pixel, ab WordPress 7 40 Pixel,
+   gesetzt ueber --undt-control-size. */
 .undt-repeater__controls {
 	display: flex;
 	flex: 0 0 auto;
-	flex-direction: column;
-	gap: 2px;
+	align-items: center;
+	gap: 10px;
+	padding-top: 18px;
 }
 
-.undt-repeater__controls button {
-	padding: 2px;
-	color: #646970;
+.undt-repeater__order {
+	display: inline-flex;
+}
+
+.undt-icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: var(--undt-control-size, 30px);
+	height: var(--undt-control-size, 30px);
+	margin: 0;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	color: #50575e;
+	line-height: 1;
+	text-decoration: none;
 	cursor: pointer;
+	transition: color 0.1s ease-in-out, border-color 0.1s ease-in-out, background-color 0.1s ease-in-out;
 }
 
-.undt-repeater__controls button:hover:not(:disabled) {
+.undt-icon-button__icon {
+	display: block;
+	flex: 0 0 auto;
+	pointer-events: none;
+}
+
+.undt-repeater__order .undt-icon-button:first-child {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.undt-repeater__order .undt-icon-button:last-child {
+	margin-left: -1px;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+/* position hebt die Kante der gerade aktiven Schaltflaeche ueber die der
+   Nachbarin, mit der sie sich einen Pixel teilt. */
+.undt-icon-button:hover:not(:disabled) {
+	position: relative;
+	border-color: #2271b1;
+	background: #f6f7f7;
 	color: #2271b1;
 }
 
-.undt-repeater__controls button:disabled {
-	opacity: 0.35;
+.undt-icon-button:focus-visible {
+	position: relative;
+	border-color: #2271b1;
+	outline: 2px solid transparent;
+	box-shadow: 0 0 0 1px #2271b1;
+	color: #2271b1;
+}
+
+.undt-icon-button:disabled {
+	background: #f6f7f7;
+	color: #a7aaad;
 	cursor: default;
 }
 
-.undt-repeater__remove:hover {
-	color: #d63638 !important;
+.undt-icon-button--danger:hover:not(:disabled),
+.undt-icon-button--danger:focus-visible {
+	border-color: #d63638;
+	background: #fcf0f1;
+	color: #d63638;
+}
+
+.undt-icon-button--danger:focus-visible {
+	box-shadow: 0 0 0 1px #d63638;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.undt-icon-button {
+		transition: none;
+	}
+}
+
+/* ------------------------------------------------------ Seitenfelder */
+
+.undt-link {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 8px;
+}
+
+.undt-link select {
+	max-width: 100%;
+}
+
+.undt-link .undt-link__url {
+	flex: 1 1 16em;
+	max-width: 25em;
+	margin: 0;
+}
+
+.undt-link .undt-link__url[hidden] {
+	display: none;
 }
 
 .undt-repeater__actions {
@@ -430,13 +527,23 @@
 	margin: 0;
 }
 
+/* Schmal stehen die Knoepfe oben rechts ueber den Feldern der Zeile und
+   werden fingerfreundlich groesser. */
 @media screen and (max-width: 782px) {
 	.undt-repeater__row {
 		flex-wrap: wrap;
 	}
 
 	.undt-repeater__controls {
-		flex-direction: row;
+		order: -1;
+		justify-content: flex-end;
+		width: 100%;
+		padding-top: 0;
+	}
+
+	.undt-icon-button {
+		width: 40px;
+		height: 40px;
 	}
 }
 

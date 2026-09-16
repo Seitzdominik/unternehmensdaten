@@ -466,22 +466,31 @@ final class UNDT_Render {
 	}
 
 	/**
+	 * Die Teile der einzeiligen Anschrift als schlichter Text.
+	 *
+	 * @return array Firma, Strasse und Ort, leere Teile ausgelassen.
+	 */
+	public static function address_parts() {
+		return array_values(
+			array_filter(
+				array(
+					trim( UNDT_Store::get( 'company_name' ) ),
+					trim( UNDT_Store::get( 'street' ) ),
+					trim( UNDT_Store::get( 'postal_code' ) . ' ' . UNDT_Store::get( 'city' ) ),
+				),
+				'strlen'
+			)
+		);
+	}
+
+	/**
 	 * Die Anschrift einzeilig, etwa fuer den Footer.
 	 *
 	 * @param string $separator Trennzeichen.
 	 * @return string
 	 */
 	public static function address_inline( $separator = ' · ' ) {
-		$parts = array_filter(
-			array(
-				UNDT_Store::get( 'company_name' ),
-				UNDT_Store::get( 'street' ),
-				trim( UNDT_Store::get( 'postal_code' ) . ' ' . UNDT_Store::get( 'city' ) ),
-			),
-			'strlen'
-		);
-
-		return esc_html( implode( $separator, $parts ) );
+		return esc_html( implode( $separator, self::address_parts() ) );
 	}
 
 	/**
@@ -543,15 +552,16 @@ final class UNDT_Render {
 		$items = array();
 
 		foreach ( $pages as $key => $label ) {
-			$id = (int) UNDT_Store::get( $key );
+			// Nur veroeffentlichte Beitraege und eigene Adressen, siehe UNDT_Store::link().
+			$link = UNDT_Store::link( $key );
 
-			if ( $id <= 0 || 'publish' !== get_post_status( $id ) ) {
+			if ( null === $link ) {
 				continue;
 			}
 
 			$items[] = sprintf(
 				'<li><a href="%s">%s</a></li>',
-				esc_url( (string) get_permalink( $id ) ),
+				esc_url( $link['url'] ),
 				esc_html( $label )
 			);
 		}

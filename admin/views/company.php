@@ -164,6 +164,6 @@ $undt_first = key( $undt_tabs );
 			</div>
 		<?php endforeach; ?>
 
-		<?php submit_button(); ?>
+		<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ) ); ?>
 	</form>
 </div>

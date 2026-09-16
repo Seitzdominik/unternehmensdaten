@@ -401,43 +401,7 @@ final class UNDT_Fields {
 				break;
 
 			case 'page':
-				/*
-				 * Auch Seiten, die gerade nicht veroeffentlicht sind, gehoeren in die
-				 * Auswahl. Fehlt die gespeicherte Seite darin, waehlt der Browser
-				 * „keine Seite“, und das naechste Speichern loest die Verknuepfung
-				 * stillschweigend. Ob verlinkt wird, entscheidet ohnehin die Ausgabe.
-				 */
-				add_filter( 'list_pages', array( __CLASS__, 'page_status_label' ), 10, 2 );
-
-				$dropdown = wp_dropdown_pages(
-					array(
-						'name'              => $name,
-						'id'                => $id,
-						'selected'          => (int) $value,
-						'show_option_none'  => __( '— keine Seite —', 'unternehmensdaten' ),
-						'option_none_value' => 0,
-						'post_status'       => array( 'publish', 'private', 'draft', 'pending', 'future' ),
-						'echo'              => 0,
-					)
-				);
-
-				remove_filter( 'list_pages', array( __CLASS__, 'page_status_label' ), 10 );
-
-				echo wp_kses(
-					$dropdown,
-					array(
-						'select' => array(
-							'name'  => array(),
-							'id'    => array(),
-							'class' => array(),
-						),
-						'option' => array(
-							'value'    => array(),
-							'selected' => array(),
-							'class'    => array(),
-						),
-					)
-				);
+				self::link_control( $field, $value, $name, $id );
 				break;
 
 			case 'email':
@@ -471,8 +435,219 @@ final class UNDT_Fields {
 		}
 	}
 
+	/* -------------------------------------------------------- Seitenfelder */
+
 	/**
-	 * Kennzeichnet nicht veroeffentlichte Seiten in der Seitenauswahl.
+	 * Hoechstzahl der Eintraege je Inhaltstyp in der Auswahl.
+	 */
+	const LINK_LIMIT = 500;
+
+	/**
+	 * Die geladenen Eintraege je Inhaltstyp, geteilt von allen Seitenfeldern.
+	 *
+	 * @var array
+	 */
+	private static $link_posts = array();
+
+	/**
+	 * Inhaltstypen, die nie als Rechtsseite taugen.
+	 *
+	 * Beitraege, Produkte und Anhaenge machten die Liste nur lang. Die Vorlagen
+	 * der Page Builder sind oeffentlich und teils sogar fuer Menues
+	 * freigegeben, Bricks etwa, aber keine eigenstaendigen Seiten.
+	 */
+	const LINK_EXCLUDED_TYPES = array(
+		'attachment',
+		'post',
+		'product',
+		'bricks_template',
+		'elementor_library',
+		'et_pb_layout',
+		'fl-builder-template',
+		'ct_template',
+		'breakdance_template',
+		'breakdance_header',
+		'breakdance_footer',
+		'breakdance_popup',
+		'breakdance_block',
+	);
+
+	/**
+	 * Die Inhaltstypen, aus denen Seitenfelder waehlen.
+	 *
+	 * Neben Seiten alle eigenen Inhaltstypen, die sich in Menues verlinken
+	 * lassen, denn Rechtstexte liegen oft in einem eigenen Typ.
+	 *
+	 * @return array Name => Bezeichnung.
+	 */
+	public static function link_post_types() {
+		$types = array();
+
+		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type => $object ) {
+			if ( in_array( $type, self::LINK_EXCLUDED_TYPES, true ) || empty( $object->show_in_nav_menus ) ) {
+				continue;
+			}
+
+			$types[ $type ] = (string) $object->labels->name;
+		}
+
+		/**
+		 * Erlaubt das Anpassen der Inhaltstypen in der Auswahl der Seitenfelder.
+		 *
+		 * @param array $types Name => Bezeichnung.
+		 */
+		$types = apply_filters( 'undt_link_post_types', $types );
+
+		if ( ! is_array( $types ) ) {
+			return array();
+		}
+
+		return array_filter(
+			$types,
+			static function ( $type ) {
+				return is_string( $type ) && post_type_exists( $type );
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	/**
+	 * Die waehlbaren Eintraege eines Inhaltstyps.
+	 *
+	 * @param string $type Inhaltstyp.
+	 * @return array WP_Post-Objekte.
+	 */
+	private static function link_posts( $type ) {
+		if ( ! isset( self::$link_posts[ $type ] ) ) {
+			self::$link_posts[ $type ] = get_posts(
+				array(
+					'post_type'              => $type,
+					'post_status'            => array( 'publish', 'private', 'draft', 'pending', 'future' ),
+					'posts_per_page'         => self::LINK_LIMIT,
+					'orderby'                => array(
+						'menu_order' => 'ASC',
+						'title'      => 'ASC',
+					),
+					'no_found_rows'          => true,
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+				)
+			);
+		}
+
+		return self::$link_posts[ $type ];
+	}
+
+	/**
+	 * Auswahl eines Eintrags oder eine eigene Adresse.
+	 *
+	 * Gespeichert wird genau eines davon, siehe UNDT_Sanitizer::page_value().
+	 * Die Auswahl zeigt auch Eintraege, die gerade nicht veroeffentlicht sind.
+	 * Fehlte der gespeicherte Eintrag darin, waehlte der Browser „keine Seite“,
+	 * und das naechste Speichern loeste die Verknuepfung stillschweigend. Ob
+	 * verlinkt wird, entscheidet die Ausgabe.
+	 *
+	 * @param array  $field Felddefinition.
+	 * @param mixed  $value Gespeicherte ID oder Adresse.
+	 * @param string $name  Formularname.
+	 * @param string $id    Element-ID.
+	 * @return void
+	 */
+	private static function link_control( array $field, $value, $name, $id ) {
+		$value    = is_scalar( $value ) ? trim( (string) $value ) : '';
+		$is_id    = (bool) preg_match( '/^\d+$/', $value );
+		$selected = $is_id ? (int) $value : 0;
+		$url      = $is_id ? '' : $value;
+		$choice   = '' === $url ? (string) $selected : 'url';
+		$found    = 0 === $selected;
+		$walk     = array(
+			'selected'    => $selected,
+			'value_field' => 'ID',
+		);
+		$groups   = '';
+
+		add_filter( 'list_pages', array( __CLASS__, 'page_status_label' ), 10, 2 );
+
+		foreach ( self::link_post_types() as $type => $label ) {
+			$posts = self::link_posts( $type );
+
+			if ( empty( $posts ) ) {
+				continue;
+			}
+
+			if ( ! $found && in_array( $selected, wp_list_pluck( $posts, 'ID' ), true ) ) {
+				$found = true;
+			}
+
+			$groups .= '<optgroup label="' . esc_attr( $label ) . '">';
+			$groups .= walk_page_dropdown_tree( $posts, is_post_type_hierarchical( $type ) ? 0 : -1, $walk );
+			$groups .= '</optgroup>';
+		}
+
+		// Ein gespeicherter Eintrag ausserhalb der Liste bleibt sichtbar, statt beim Speichern zu verschwinden.
+		if ( ! $found ) {
+			$post = get_post( $selected );
+
+			if ( $post instanceof WP_Post ) {
+				$current = walk_page_dropdown_tree( array( $post ), -1, $walk );
+			} else {
+				$current = sprintf(
+					'<option value="%1$d" selected="selected">%2$s</option>',
+					$selected,
+					/* translators: %d: ID des gespeicherten Eintrags. */
+					esc_html( sprintf( __( 'Nicht mehr vorhanden (ID %d)', 'unternehmensdaten' ), $selected ) )
+				);
+			}
+
+			$groups = '<optgroup label="' . esc_attr__( 'Bisherige Auswahl', 'unternehmensdaten' ) . '">' . $current . '</optgroup>' . $groups;
+		}
+
+		remove_filter( 'list_pages', array( __CLASS__, 'page_status_label' ), 10 );
+
+		echo '<div class="undt-link">';
+
+		printf(
+			'<select id="%1$s" name="%2$s" data-undt-link><option value="0"%3$s>%4$s</option><option value="url"%5$s>%6$s</option>',
+			esc_attr( $id ),
+			esc_attr( $name . '[choice]' ),
+			selected( $choice, '0', false ),
+			esc_html__( '— keine Seite —', 'unternehmensdaten' ),
+			selected( $choice, 'url', false ),
+			esc_html__( 'Eigene Adresse …', 'unternehmensdaten' )
+		);
+
+		echo wp_kses(
+			$groups,
+			array(
+				'optgroup' => array(
+					'label' => array(),
+				),
+				'option'   => array(
+					'value'    => array(),
+					'selected' => array(),
+					'class'    => array(),
+				),
+			)
+		);
+
+		echo '</select>';
+
+		printf(
+			'<input type="text" inputmode="url" spellcheck="false" id="%1$s-url" name="%2$s" value="%3$s" class="regular-text undt-link__url" placeholder="%4$s" aria-label="%5$s" data-undt-link-url%6$s />',
+			esc_attr( $id ),
+			esc_attr( $name . '[url]' ),
+			esc_attr( $url ),
+			esc_attr__( 'https://… oder /pfad/', 'unternehmensdaten' ),
+			/* translators: %s: Feldbezeichnung, etwa „Seite: Impressum“. */
+			esc_attr( sprintf( __( '%s, eigene Adresse', 'unternehmensdaten' ), $field['label'] ) ),
+			'url' === $choice ? '' : ' hidden'
+		);
+
+		echo '</div>';
+	}
+
+	/**
+	 * Kennzeichnet nicht veroeffentlichte Eintraege in der Auswahl.
 	 *
 	 * Haengt nur waehrend des Aufbaus der Auswahl am Filter list_pages.
 	 *
@@ -597,24 +772,52 @@ final class UNDT_Fields {
 
 		echo '</div>';
 
-		// Verschieben ueber Schaltflaechen statt Ziehen: mit Tastatur bedienbar
-		// und ohne zusaetzliche Bibliothek.
-		echo '<div class="undt-repeater__controls">';
-		printf(
-			'<button type="button" class="button-link undt-repeater__move" data-dir="up" aria-label="%s"><span class="dashicons dashicons-arrow-up-alt2" aria-hidden="true"></span></button>',
-			esc_attr__( 'Nach oben verschieben', 'unternehmensdaten' )
-		);
-		printf(
-			'<button type="button" class="button-link undt-repeater__move" data-dir="down" aria-label="%s"><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>',
-			esc_attr__( 'Nach unten verschieben', 'unternehmensdaten' )
-		);
-		printf(
-			'<button type="button" class="button-link undt-repeater__remove" aria-label="%s"><span class="dashicons dashicons-trash" aria-hidden="true"></span></button>',
-			esc_attr__( 'Eintrag entfernen', 'unternehmensdaten' )
-		);
+		/*
+		 * Verschieben ueber Schaltflaechen statt Ziehen: mit Tastatur bedienbar
+		 * und ohne zusaetzliche Bibliothek. Die beiden Pfeile bilden eine Gruppe,
+		 * das Entfernen steht mit Abstand daneben, damit es nicht versehentlich
+		 * getroffen wird.
+		 */
+		echo '<div class="undt-repeater__controls"><span class="undt-repeater__order">';
+		self::icon_button( 'undt-repeater__move', 'up', __( 'Nach oben verschieben', 'unternehmensdaten' ), 'up' );
+		self::icon_button( 'undt-repeater__move', 'down', __( 'Nach unten verschieben', 'unternehmensdaten' ), 'down' );
+		echo '</span>';
+		self::icon_button( 'undt-repeater__remove undt-icon-button--danger', 'remove', __( 'Eintrag entfernen', 'unternehmensdaten' ) );
 		echo '</div>';
 
 		echo '</div>';
+	}
+
+	/**
+	 * Eine Schaltflaeche, die nur ein Symbol zeigt.
+	 *
+	 * Die Symbole sind eigene SVG-Pfade statt Dashicons: sie sitzen pixelgenau in
+	 * der Schaltflaeche und haengen an keiner Schriftdatei.
+	 *
+	 * @param string $class Zusaetzliche Klassen.
+	 * @param string $icon  up, down oder remove.
+	 * @param string $label Beschriftung fuer Screenreader und Tooltip.
+	 * @param string $dir   Richtung fuer das Skript, leer ohne.
+	 * @return void
+	 */
+	private static function icon_button( $class, $icon, $label, $dir = '' ) {
+		$paths = array(
+			'up'     => 'M5 12.5l5-5 5 5',
+			'down'   => 'M5 7.5l5 5 5-5',
+			'remove' => 'M3.5 5.5h13M8 5.5V3.75h4V5.5M5.25 5.5l.8 10.75h7.9l.8-10.75M8.5 8.5v5M11.5 8.5v5',
+		);
+
+		if ( ! isset( $paths[ $icon ] ) ) {
+			return;
+		}
+
+		printf(
+			'<button type="button" class="undt-icon-button %1$s"%2$s aria-label="%3$s" title="%3$s"><svg class="undt-icon-button__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="%4$s"/></svg></button>',
+			esc_attr( $class ),
+			'' === $dir ? '' : ' data-dir="' . esc_attr( $dir ) . '"',
+			esc_attr( $label ),
+			esc_attr( $paths[ $icon ] )
+		);
 	}
 
 	/* ---------------------------------------------------- Öffnungszeiten */
@@ -840,8 +1043,8 @@ final class UNDT_Fields {
 	 */
 	public static function copy_button( $text, $style = 'button' ) {
 		$label = sprintf(
-			/* translators: %s: Shortcode. */
-			__( 'Shortcode %s kopieren', 'unternehmensdaten' ),
+			/* translators: %s: Shortcode, Tag oder Funktionsaufruf. */
+			__( '%s kopieren', 'unternehmensdaten' ),
 			$text
 		);
 

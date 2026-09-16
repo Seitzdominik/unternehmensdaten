@@ -184,7 +184,8 @@ final class UNDT_Audit {
 
 		// Verknuepfte Rechtsseiten.
 		foreach ( array( 'page_imprint' => __( 'Impressum', 'unternehmensdaten' ), 'page_privacy' => __( 'Datenschutzerklärung', 'unternehmensdaten' ) ) as $key => $label ) {
-			$id = (int) UNDT_Store::get( $key );
+			// Eine eigene Adresse laesst sich von hier aus nicht pruefen.
+			$id = UNDT_Store::page_id( $key );
 
 			if ( $id > 0 && 'publish' !== get_post_status( $id ) ) {
 				$issues[] = array(
@@ -245,7 +246,7 @@ final class UNDT_Audit {
 		$ids = array();
 
 		foreach ( array( 'page_imprint', 'page_privacy', 'page_terms', 'page_accessibility' ) as $key ) {
-			$id = (int) UNDT_Store::get( $key );
+			$id = UNDT_Store::page_id( $key );
 
 			if ( $id > 0 ) {
 				$ids[] = $id;

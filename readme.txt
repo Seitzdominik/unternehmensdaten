@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,8 @@ Alle Angaben, die eine Unternehmenswebsite braucht, werden an einer Stelle gepfl
 = Rechtliche Angaben =
 
 **Rechtsformabhängige Felder.** Ein Einrichtungsassistent fragt Rechtsform, reglementierten Beruf, Erlaubnispflicht, Verbrauchergeschäft, redaktionelle Inhalte und Umsatzsteuerstatus ab. Angezeigt werden danach nur die Angaben, die tatsächlich gelten. Unterstützt werden 20 Rechtsformen vom Einzelunternehmen über die eGbR bis zur GmbH & Co. KG mit ihren beiden Registereinträgen.
+
+**Rechtsseiten.** Impressum, Datenschutz, AGB und Barrierefreiheit werden aus Seiten und eigenen Inhaltstypen gewählt oder als eigene Adresse eingetragen. Der Footer verlinkt sie automatisch.
 
 **Prüfung.** Eine Checkliste zeigt fehlende Pflichtangaben mit ihrer Rechtsgrundlage und durchsucht die verknüpften Rechtsseiten nach veralteten Inhalten, etwa dem Link zur abgeschalteten EU-Streitbeilegungsplattform oder der Rechtsgrundlage "§ 5 TMG".
 
@@ -33,7 +35,9 @@ Jeder Bereich lässt sich unter Einstellungen abschalten. Dann verschwindet er a
 
 = Ausgabe =
 
-Die Blöcke erzeugen semantisches HTML mit address-, dl-, table- und nav-Elementen. Es werden weder Schriftart noch Schriftgröße noch Farben gesetzt, damit die Ausgabe die Gestaltung des Themes vollständig erbt. Einzige Ausnahme ist das Infobanner: ein Warnhinweis ohne visuelle Abgrenzung erfüllt seinen Zweck nicht. Dessen Farben hängen an CSS-Variablen und lassen sich überschreiben.
+Die Blöcke erzeugen semantisches HTML mit address-, dl-, table- und nav-Elementen. Es werden weder Schriftart noch Schriftgröße noch Farben gesetzt, damit die Ausgabe die Gestaltung des Themes vollständig erbt. Einzige Ausnahme ist das Infobanner: ein Warnhinweis ohne visuelle Abgrenzung erfüllt seinen Zweck nicht, und er soll nicht mit dem Inhalt der Seite konkurrieren. Farben und Schriftgröße hängen an CSS-Variablen und lassen sich überschreiben, die Schrift etwa über `--undt-banner-font-size`, Voreinstellung `0.875em`.
+
+Wochentage und Monatsnamen erscheinen auf Deutsch, auch wenn WordPress selbst auf Englisch eingestellt ist. Unter Öffnungszeiten lässt sich auf die Sprache der Website umstellen.
 
 Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe in die Gliederung der Seite einfügt, statt sie zu brechen.
 
@@ -64,6 +68,16 @@ Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe 
 * `[undt_faq]` Fragen und Antworten, Attribute `group`, `style`, `heading_level`
 * `[undt_banner]` das Infobanner an dieser Stelle
 
+== Dynamische Daten ==
+
+Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise.
+
+* **Slim SEO** `{{ undt.phone }}`, etwa in Meta-Titel und Meta-Beschreibung hinter den drei Punkten
+* **Bricks** `{undt_phone}` in jedem Feld für dynamische Daten, ohne dass Code-Ausführung eingeschaltet sein muss. Die Bricks-Filter für die Wortzahl und den Ersatzwert funktionieren wie gewohnt, etwa `{undt_fax @fallback:'kein Fax'}`
+* **Etch** `{options.undt.phone}` in Texten und Attributen, auch mit Modifikatoren wie `{options.undt.company_name.toUpperCase()}`
+
+Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}` und den Geöffnet-Status `{undt_open_now}`. Diese beiden ändern sich im Lauf des Tages und fehlen deshalb bei Slim SEO.
+
 == Page Builder ==
 
 Für Bricks, Breakdance und Etch stehen die Daten zusätzlich als PHP-Funktionen und als Schleifen-Quellen bereit.
@@ -90,9 +104,11 @@ Jede Zeile enthält neben den Rohwerten ein fertig formatiertes `times`, weil Pa
 
 = Je nach Builder =
 
-**Bricks** zeigt die Query-Namen im Schleifen-Dialog unter „Unternehmensdaten“. Einzelwerte über `{echo:undt_get('phone')}`, in der Schleife `{echo:undt_loop('question')}`. Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. In Bricks muss zusätzlich unter Einstellungen › Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein.
+**Bricks** zeigt die Query-Namen im Schleifen-Dialog unter „Unternehmensdaten“. Einzelwerte kommen am einfachsten über die dynamischen Daten, siehe oben. In der Schleife liest `{echo:undt_loop('question')}` das Feld der aktuellen Zeile. Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. In Bricks muss dafür zusätzlich unter Einstellungen › Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein. Geprüft mit Bricks 2.4.
 
-**Breakdance und Etch** führen PHP in einem Code-Element aus. Eine Schleife entsteht dort direkt über `undt_query()`.
+**Etch** bekommt Einzelwerte unter `{options.undt.…}`. Schleifen entstehen in einem Code-Element über `undt_query()`. Geprüft mit Etch 1.6.
+
+**Breakdance** führt PHP in einem Code-Element aus. Einzelwerte liefert `undt_get()`, Schleifen `undt_query()`.
 
 Ein REST-Endpunkt fehlt bewusst: Page Builder laufen auf dem Server und brauchen keinen, und ein öffentlicher Endpunkt wäre zusätzliche Angriffsfläche ohne Gegenwert.
 
@@ -143,8 +159,25 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_audit_issues` ergänzt eigene Prüfungen
 * `undt_query` passt die Zeilen einer Schleifen-Quelle an
 * `undt_update_allow_prerelease` bietet Vorabversionen als Aktualisierung an, etwa auf einer Testseite
+* `undt_auto_banner` legt fest, wo das Banner automatisch am Seitenanfang erscheint. Standard ist überall außer in der Oberfläche von Etch und Bricks
+* `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
 == Changelog ==
+
+= 0.5.0 =
+* Neu: Slim SEO führt die Stammdaten in seiner Auswahl dynamischer Daten, etwa hinter den drei Punkten neben Meta-Titel und Meta-Beschreibung, als {{ undt.phone }}
+* Neu: Bricks führt die Stammdaten in seiner Auswahl dynamischer Daten, als {undt_phone}, dazu fertige tel:- und mailto:-Links, die heutige Öffnungszeit und den Geöffnet-Status. Die Filter :Wortzahl und @fallback werden unterstützt
+* Neu: Etch bekommt dieselben Werte unter {options.undt.phone}, geprüft mit Etch 1.6
+* Neu: Rechtsseiten lassen sich aus eigenen Inhaltstypen wählen oder als eigene Adresse eintragen. Ein Pfad ohne Schrägstrich wie „impressum“ wird zu „/impressum“ statt zu einer toten http-Adresse
+* Neu: Wochentage und Monatsnamen erscheinen auf Deutsch, auch wenn WordPress auf Englisch läuft. Unter Öffnungszeiten lässt sich auf die Sprache der Website umstellen
+* Neu: Registerkarte „Dynamische Daten“ in der Shortcode-Referenz mit der Schreibweise für Slim SEO, Bricks und Etch
+* Das Infobanner setzt seine Schrift etwas kleiner als den Fließtext, einstellbar über --undt-banner-font-size
+* Die Knöpfe zum Verschieben und Entfernen in Listen wie Social Media sind jetzt gerahmte Schaltflächen mit größerer Klickfläche. Entfernen steht abgesetzt daneben und färbt sich rot
+* Behoben: Schalter reagierten nur auf Klicks in ihrer linken Hälfte, weil WordPress die Größe von Ankreuzfeldern mit höherem Vorrang festlegt
+* Behoben: Der Speichern-Knopf war englisch beschriftet
+* Behoben: Das automatische Banner erschien auch über der Oberfläche des Etch-Builders. In den Buildern von Etch und Bricks bleibt es jetzt aus
+* Behoben: Sondertermine nannten den Monat auf einer englisch eingestellten Website auf Englisch
+* undt_today() bleibt leer, solange keine Öffnungszeiten hinterlegt sind, statt „geschlossen“ zu melden
 
 = 0.4.1 =
 * Behoben: Eine Vorabversion wie 0.5.0-beta.1 wäre allen Websites sofort als Aktualisierung angeboten worden. Der Workflow veröffentlicht sie jetzt als Vorabversion, und der Updater bietet sie nur noch an, wenn der Filter undt_update_allow_prerelease das erlaubt

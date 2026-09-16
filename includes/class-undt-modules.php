@@ -223,6 +223,16 @@ final class UNDT_Modules {
 						'type'    => 'text',
 						'default' => 'geschlossen',
 					),
+					'day_language' => array(
+						'label'   => __( 'Sprache für Tage und Monate', 'unternehmensdaten' ),
+						'type'    => 'select',
+						'default' => 'de',
+						'choices' => array(
+							'de'   => __( 'Deutsch', 'unternehmensdaten' ),
+							'site' => __( 'Sprache der Website', 'unternehmensdaten' ),
+						),
+						'help'    => __( 'Gilt für die Wochentage und für die Monatsnamen bei Sonderterminen. Deutsch bleibt Deutsch, auch wenn WordPress selbst auf Englisch eingestellt ist.', 'unternehmensdaten' ),
+					),
 				),
 			),
 

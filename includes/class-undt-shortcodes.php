@@ -134,26 +134,17 @@ final class UNDT_Shortcodes {
 				break;
 
 			case 'page':
-				$id = (int) $value;
+				// Wie im Footer nur veroeffentlichte Beitraege, siehe UNDT_Store::link().
+				// Eine eigene Adresse hat keinen Titel und steht deshalb selbst da.
+				$target = UNDT_Store::link( $key );
+				$text   = null === $target ? '' : ( '' === $target['title'] ? $target['url'] : $target['title'] );
 
-				/*
-				 * Wie im Footer nur veroeffentlichte Seiten. Ein Entwurf ergaebe einen
-				 * toten Link und verriete seinen Arbeitstitel, bei privaten Seiten
-				 * stuende "Privat:" im Linktext.
-				 */
-				if ( $id <= 0 || 'publish' !== get_post_status( $id ) ) {
-					$html = '';
-					break;
-				}
-
-				$title = get_the_title( $id );
-
-				if ( '' === $title ) {
+				if ( '' === $text ) {
 					$html = '';
 				} elseif ( $link ) {
-					$html = '<a href="' . esc_url( (string) get_permalink( $id ) ) . '">' . esc_html( $title ) . '</a>';
+					$html = '<a href="' . esc_url( $target['url'] ) . '">' . esc_html( $text ) . '</a>';
 				} else {
-					$html = esc_html( $title );
+					$html = esc_html( $text );
 				}
 				break;
 
@@ -447,9 +438,27 @@ final class UNDT_Shortcodes {
 	/**
 	 * Gibt das Banner automatisch am Seitenanfang aus.
 	 *
+	 * Nicht in der Oberflaeche eines Page Builders: Etch baut seinen Builder mit
+	 * ?etch=magic auf der Startseite auf, Bricks mit ?bricks=run, und dort saesse
+	 * das Banner ueber den Bedienelementen statt ueber der Seite. Ein Shortcode
+	 * im Inhalt ist davon nicht betroffen.
+	 *
 	 * @return void
 	 */
 	public static function auto_banner() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur gelesen, genau so erkennt Etch seinen Builder.
+		$etch    = isset( $_GET['etch'] ) && 'magic' === sanitize_key( wp_unslash( $_GET['etch'] ) );
+		$builder = $etch || ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() );
+
+		/**
+		 * Ob das Banner automatisch am Seitenanfang erscheint.
+		 *
+		 * @param bool $show Standard: ueberall ausser in der Oberflaeche eines Page Builders.
+		 */
+		if ( ! apply_filters( 'undt_auto_banner', ! $builder ) ) {
+			return;
+		}
+
 		self::need_style();
 
 		echo UNDT_Blocks::banner(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- im Renderer escaped.

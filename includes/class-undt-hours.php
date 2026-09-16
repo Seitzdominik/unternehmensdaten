@@ -50,7 +50,20 @@ final class UNDT_Hours {
 	}
 
 	/**
-	 * Uebersetzte Bezeichnung eines Wochentags.
+	 * Die Sprache fuer Tage und Monate.
+	 *
+	 * Deutsch ist voreingestellt. Viele Websites laufen mit englischem Backend,
+	 * geben aber deutsche Inhalte aus, und WordPress lieferte dann „Mon“ und
+	 * „December“ mitten in einer deutschen Seite.
+	 *
+	 * @return string de oder site.
+	 */
+	public static function language() {
+		return 'site' === (string) UNDT_Content::value( 'hours', 'day_language' ) ? 'site' : 'de';
+	}
+
+	/**
+	 * Bezeichnung eines Wochentags in der eingestellten Sprache.
 	 *
 	 * @param string $key   Tagesschluessel.
 	 * @param bool   $short Abkuerzung verwenden.
@@ -59,6 +72,25 @@ final class UNDT_Hours {
 	public static function day_label( $key, $short = false ) {
 		global $wp_locale;
 
+		$german = array(
+			'mon' => array( 'Montag', 'Mo' ),
+			'tue' => array( 'Dienstag', 'Di' ),
+			'wed' => array( 'Mittwoch', 'Mi' ),
+			'thu' => array( 'Donnerstag', 'Do' ),
+			'fri' => array( 'Freitag', 'Fr' ),
+			'sat' => array( 'Samstag', 'Sa' ),
+			'sun' => array( 'Sonntag', 'So' ),
+		);
+
+		if ( ! isset( $german[ $key ] ) ) {
+			return '';
+		}
+
+		if ( 'site' !== self::language() || ! $wp_locale instanceof WP_Locale ) {
+			return $german[ $key ][ $short ? 1 : 0 ];
+		}
+
+		// WP_Locale zaehlt ab Sonntag.
 		$map = array(
 			'sun' => 0,
 			'mon' => 1,
@@ -69,17 +101,36 @@ final class UNDT_Hours {
 			'sat' => 6,
 		);
 
-		if ( ! isset( $map[ $key ] ) ) {
-			return '';
-		}
-
-		if ( ! $wp_locale instanceof WP_Locale ) {
-			return $key;
-		}
-
 		$full = $wp_locale->get_weekday( $map[ $key ] );
 
 		return $short ? $wp_locale->get_weekday_abbrev( $full ) : $full;
+	}
+
+	/**
+	 * Ein Datum als lesbarer Text in der eingestellten Sprache.
+	 *
+	 * Deutsch immer als „24. Dezember 2026“. Die Sprache der Website folgt dem
+	 * Datumsformat aus den WordPress-Einstellungen.
+	 *
+	 * @param string $date Datum als YYYY-MM-DD.
+	 * @return string Leerstring bei ungueltigem Datum.
+	 */
+	public static function date_label( $date ) {
+		$date = self::date( $date );
+
+		if ( '' === $date ) {
+			return '';
+		}
+
+		list( $year, $month, $day ) = array_map( 'intval', explode( '-', $date ) );
+
+		if ( 'site' === self::language() ) {
+			return date_i18n( (string) get_option( 'date_format', 'j. F Y' ), (int) gmmktime( 12, 0, 0, $month, $day, $year ) );
+		}
+
+		$months = array( 1 => 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember' );
+
+		return $day . '. ' . $months[ $month ] . ' ' . $year;
 	}
 
 	/**

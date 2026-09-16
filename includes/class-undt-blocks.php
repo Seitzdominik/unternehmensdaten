@@ -199,8 +199,6 @@ final class UNDT_Blocks {
 			return '';
 		}
 
-		$format = (string) get_option( 'date_format', 'j. F Y' );
-
 		$out = self::h( $level, __( 'Abweichende Öffnungszeiten', 'unternehmensdaten' ) );
 		$out .= '<table class="undt-hours__table undt-hours__table--special"><tbody>';
 
@@ -211,7 +209,6 @@ final class UNDT_Blocks {
 				continue;
 			}
 
-			$stamp  = strtotime( $date . ' 12:00:00' );
 			$window = UNDT_Hours::window(
 				isset( $row['from'] ) ? $row['from'] : '',
 				isset( $row['to'] ) ? $row['to'] : ''
@@ -220,7 +217,7 @@ final class UNDT_Blocks {
 
 			$out .= '<tr class="undt-hours__row' . ( $shut ? ' undt-hours__row--closed' : '' ) . '">';
 			$out .= '<th scope="row">';
-			$out .= '<time datetime="' . esc_attr( $date ) . '">' . esc_html( date_i18n( $format, (int) $stamp ) ) . '</time>';
+			$out .= '<time datetime="' . esc_attr( $date ) . '">' . esc_html( UNDT_Hours::date_label( $date ) ) . '</time>';
 
 			if ( ! empty( $row['note'] ) ) {
 				$out .= '<span class="undt-hours__occasion">' . esc_html( $row['note'] ) . '</span>';
@@ -731,9 +728,14 @@ final class UNDT_Blocks {
 			 * Einzige Stelle mit eigenen Farben: ein Warnhinweis ohne visuelle
 			 * Abgrenzung erfuellt seinen Zweck nicht. Alle Werte haengen an
 			 * CSS-Variablen und lassen sich vom Theme ueberschreiben.
+			 *
+			 * Die Schrift ist etwas kleiner als der Fliesstext, damit das Banner
+			 * nicht mit der Seite selbst konkurriert. em statt rem, weil viele
+			 * Builder-Setups die Wurzelgroesse auf 62,5 % setzen.
 			 */
 			$css .= '.undt-banner{--undt-bg:#eef2f7;--undt-fg:#1d2939;--undt-accent:#2563eb;'
-				. 'background:var(--undt-bg);color:var(--undt-fg);border-left:4px solid var(--undt-accent)}'
+				. 'background:var(--undt-bg);color:var(--undt-fg);border-left:4px solid var(--undt-accent);'
+				. 'font-size:var(--undt-banner-font-size,.875em);line-height:1.5}'
 				. '.undt-banner--success{--undt-bg:#e7f6ec;--undt-fg:#14532d;--undt-accent:#15803d}'
 				. '.undt-banner--warning{--undt-bg:#fdf4e3;--undt-fg:#713f12;--undt-accent:#c2820e}'
 				. '.undt-banner--urgent{--undt-bg:#fdeaea;--undt-fg:#7f1d1d;--undt-accent:#c81e1e}'

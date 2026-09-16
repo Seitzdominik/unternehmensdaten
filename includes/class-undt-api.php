@@ -190,6 +190,23 @@ final class UNDT_Api {
 	}
 
 	/**
+	 * Die heute geltenden Zeiten als Text.
+	 *
+	 * Sondertermine gehen den regulaeren Zeiten vor, siehe UNDT_Hours::today().
+	 *
+	 * @return string Leerstring, wenn der Bereich abgeschaltet ist oder keine Zeiten hinterlegt sind.
+	 */
+	public static function today_text() {
+		if ( ! UNDT_Modules::is_active( 'hours' ) || ! UNDT_Hours::has_data() ) {
+			return '';
+		}
+
+		$today = UNDT_Hours::today();
+
+		return $today['closed'] ? self::closed_label() : self::format_slots( $today['slots'] );
+	}
+
+	/**
 	 * Ein Eintrag je Wochentag.
 	 *
 	 * @return array
@@ -251,8 +268,7 @@ final class UNDT_Api {
 	 * @return array
 	 */
 	private static function hours_special_rows() {
-		$format = (string) get_option( 'date_format', 'j. F Y' );
-		$rows   = array();
+		$rows = array();
 
 		foreach ( UNDT_Hours::upcoming_special() as $entry ) {
 			$date = UNDT_Hours::date( isset( $entry['date'] ) ? $entry['date'] : '' );
@@ -273,7 +289,7 @@ final class UNDT_Api {
 
 			$rows[] = array(
 				'date'       => $date,
-				'date_label' => date_i18n( $format, (int) strtotime( $date . ' 12:00:00' ) ),
+				'date_label' => UNDT_Hours::date_label( $date ),
 				'closed'     => $closed,
 				'from'       => $from,
 				'to'         => $to,
@@ -553,18 +569,6 @@ if ( ! function_exists( 'undt_today' ) ) {
 	 * @return string
 	 */
 	function undt_today() {
-		if ( ! UNDT_Modules::is_active( 'hours' ) ) {
-			return '';
-		}
-
-		$today = UNDT_Hours::today();
-
-		if ( $today['closed'] ) {
-			$label = trim( (string) UNDT_Content::value( 'hours', 'closed_label' ) );
-
-			return '' === $label ? __( 'geschlossen', 'unternehmensdaten' ) : $label;
-		}
-
-		return UNDT_Api::format_slots( $today['slots'] );
+		return UNDT_Api::today_text();
 	}
 }

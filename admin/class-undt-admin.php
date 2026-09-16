@@ -310,6 +310,15 @@ final class UNDT_Admin {
 		wp_enqueue_style( 'undt-admin', UNDT_URL . 'admin/assets/admin.css', array(), self::asset_version( 'admin/assets/admin.css' ) );
 		wp_enqueue_script( 'undt-admin', UNDT_URL . 'admin/assets/admin.js', array(), self::asset_version( 'admin/assets/admin.js' ), true );
 
+		/*
+		 * Seit WordPress 7 sind Eingabefelder 40 statt 30 Pixel hoch. Die Knoepfe
+		 * der Wiederholungsfelder ziehen mit, damit sie buendig neben den Feldern
+		 * stehen.
+		 */
+		if ( version_compare( (string) get_bloginfo( 'version' ), '7.0-alpha', '>=' ) ) {
+			wp_add_inline_style( 'undt-admin', '.undt-wrap{--undt-control-size:40px}' );
+		}
+
 		wp_localize_script(
 			'undt-admin',
 			'undtL10n',

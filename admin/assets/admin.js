@@ -674,6 +674,39 @@
 		} );
 	}
 
+	/* ------------------------------------------------------ Seitenfelder */
+
+	/*
+	 * Das Adressfeld erscheint nur, wenn „Eigene Adresse“ gewählt ist, und
+	 * bekommt dann gleich den Fokus. Sein Inhalt bleibt beim Umschalten stehen;
+	 * gespeichert wird ohnehin nur, was die Auswahl vorgibt.
+	 */
+	function initLinks() {
+		Array.prototype.slice
+			.call( document.querySelectorAll( '[data-undt-link]' ) )
+			.forEach( function ( select ) {
+				var input = select.parentNode ? select.parentNode.querySelector( '[data-undt-link-url]' ) : null;
+
+				if ( ! input ) {
+					return;
+				}
+
+				function sync() {
+					input.hidden = 'url' !== select.value;
+				}
+
+				select.addEventListener( 'change', function () {
+					sync();
+
+					if ( ! input.hidden ) {
+						input.focus();
+					}
+				} );
+
+				sync();
+			} );
+	}
+
 	function init() {
 		initTabs();
 		initCopy();
@@ -683,6 +716,7 @@
 		initMedia();
 		initHours();
 		initHelp();
+		initLinks();
 	}
 
 	if ( 'loading' === document.readyState ) {

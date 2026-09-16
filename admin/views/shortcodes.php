@@ -35,8 +35,12 @@ $undt_panels = array(
 	'blocks'  => __( 'Rechtliche Blöcke', 'unternehmensdaten' ),
 	'modules' => __( 'Inhaltsbereiche', 'unternehmensdaten' ),
 	'fields'  => __( 'Einzelne Felder', 'unternehmensdaten' ),
+	'dynamic' => __( 'Dynamische Daten', 'unternehmensdaten' ),
 	'builder' => __( 'Page Builder', 'unternehmensdaten' ),
 );
+
+$undt_dynamic     = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER );
+$undt_dynamic_seo = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SEO );
 
 if ( empty( $undt_modules ) ) {
 	unset( $undt_panels['modules'] );
@@ -114,8 +118,10 @@ $undt_first = key( $undt_panels );
 						<?php
 						$undt_value = UNDT_Store::get( $undt_key );
 
-						if ( 'page' === $undt_field['type'] && '' !== $undt_value ) {
-							$undt_value = (string) get_the_title( (int) $undt_value );
+						// Seitenfelder zeigen den Titel des Eintrags oder die eigene Adresse.
+						if ( 'page' === $undt_field['type'] ) {
+							$undt_page  = UNDT_Store::page_id( $undt_key );
+							$undt_value = $undt_page > 0 ? (string) get_the_title( $undt_page ) : ( preg_match( '/^\d*$/', trim( $undt_value ) ) ? '' : $undt_value );
 						}
 
 						$undt_value = trim( preg_replace( '/\s+/', ' ', $undt_value ) );
@@ -141,6 +147,57 @@ $undt_first = key( $undt_panels );
 				</tbody>
 			</table>
 		<?php endforeach; ?>
+	</div>
+
+	<!-- Dynamische Daten -->
+	<div id="undt-panel-dynamic" class="undt-panel" role="tabpanel" aria-labelledby="undt-tab-dynamic"<?php echo 'dynamic' === $undt_first ? '' : ' hidden'; ?>>
+		<p class="description undt-section-hint">
+			<?php esc_html_e( 'Slim SEO und Bricks führen diese Werte in ihrer Auswahl dynamischer Daten unter „Unternehmensdaten“, etwa hinter den drei Punkten neben der Meta-Beschreibung. In Etch steht die Schreibweise aus der letzten Spalte in Texten und Attributen, auch mit Modifikatoren wie .toUpperCase().', 'unternehmensdaten' ); ?>
+		</p>
+
+		<table class="widefat striped undt-table undt-table--dynamic">
+			<thead>
+				<tr>
+					<th scope="col"><?php esc_html_e( 'Wert', 'unternehmensdaten' ); ?></th>
+					<th scope="col">Slim SEO</th>
+					<th scope="col">Bricks</th>
+					<th scope="col">Etch</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $undt_dynamic as $undt_key => $undt_label ) : ?>
+					<?php
+					$undt_value = trim( preg_replace( '/\s+/', ' ', UNDT_Dynamic::value( $undt_key ) ) );
+					$undt_short = mb_substr( $undt_value, 0, 60 ) . ( mb_strlen( $undt_value ) > 60 ? '…' : '' );
+					?>
+					<tr class="undt-searchable" data-undt-text="<?php echo esc_attr( strtolower( $undt_label . ' ' . $undt_key . ' ' . $undt_value ) ); ?>">
+						<td>
+							<strong><?php echo esc_html( $undt_label ); ?></strong>
+							<p class="description">
+								<?php if ( '' === $undt_short ) : ?>
+									<em class="undt-empty"><?php esc_html_e( 'derzeit leer', 'unternehmensdaten' ); ?></em>
+								<?php else : ?>
+									<?php echo esc_html( $undt_short ); ?>
+								<?php endif; ?>
+							</p>
+						</td>
+						<td>
+							<?php if ( isset( $undt_dynamic_seo[ $undt_key ] ) ) : ?>
+								<?php UNDT_Fields::copy_button( '{{ undt.' . $undt_key . ' }}', 'inline' ); ?>
+							<?php else : ?>
+								<span class="undt-empty" title="<?php esc_attr_e( 'Nur für Builder gedacht', 'unternehmensdaten' ); ?>">–</span>
+							<?php endif; ?>
+						</td>
+						<td><?php UNDT_Fields::copy_button( '{undt_' . $undt_key . '}', 'inline' ); ?></td>
+						<td><?php UNDT_Fields::copy_button( '{options.undt.' . $undt_key . '}', 'inline' ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<p class="description undt-section-hint">
+			<?php esc_html_e( 'Werte mit „(Link)“ liefern eine Adresse und gehören in Link-Felder. Öffnungszeit und Geöffnet-Status ändern sich im Lauf des Tages und fehlen deshalb bei Slim SEO; hinter einem Seiten-Cache zeigen sie den Stand der Zwischenspeicherung.', 'unternehmensdaten' ); ?>
+		</p>
 	</div>
 
 	<!-- Page Builder -->
@@ -216,22 +273,31 @@ $undt_first = key( $undt_panels );
 					<td><strong>Bricks</strong></td>
 					<td>
 						<p class="description">
-							<?php esc_html_e( 'Die Query-Namen stehen im Schleifen-Dialog unter „Unternehmensdaten“ zur Auswahl. Einzelwerte holt man über ein Feld für dynamische Daten:', 'unternehmensdaten' ); ?>
+							<?php esc_html_e( 'Einzelwerte stehen in der Auswahl dynamischer Daten unter „Unternehmensdaten“, siehe Registerkarte „Dynamische Daten“. Die Query-Namen stehen im Schleifen-Dialog zur Auswahl, die Felder der laufenden Schleife liest undt_loop() über das echo-Tag:', 'unternehmensdaten' ); ?>
 						</p>
-						<?php UNDT_Fields::copy_button( "{echo:undt_get('phone')}" ); ?>
+						<?php UNDT_Fields::copy_button( '{undt_phone}' ); ?>
 						<?php UNDT_Fields::copy_button( "{echo:undt_loop('question')}" ); ?>
 						<p class="description">
-							<?php esc_html_e( 'Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. Zusätzlich muss unter Bricks, Einstellungen, Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein.', 'unternehmensdaten' ); ?>
+							<?php esc_html_e( 'Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. Zusätzlich muss unter Bricks, Einstellungen, Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein. Die Tags aus der Auswahl brauchen das nicht.', 'unternehmensdaten' ); ?>
 						</p>
 					</td>
 				</tr>
-				<tr class="undt-searchable" data-undt-text="breakdance etch php code block loop">
-					<td><strong>Breakdance, Etch</strong></td>
+				<tr class="undt-searchable" data-undt-text="etch dynamic data options php code block loop">
+					<td><strong>Etch</strong></td>
 					<td>
 						<p class="description">
-							<?php esc_html_e( 'Beide führen PHP in einem Code-Element aus. Eine Schleife entsteht damit direkt über undt_query():', 'unternehmensdaten' ); ?>
+							<?php esc_html_e( 'Einzelwerte stehen unter options.undt bereit. Schleifen entstehen in einem Code-Element über undt_query():', 'unternehmensdaten' ); ?>
 						</p>
+						<?php UNDT_Fields::copy_button( '{options.undt.phone}' ); ?>
 						<?php UNDT_Fields::copy_button( "foreach ( undt_query( 'undt_faq' ) as \$row ) { echo esc_html( \$row['question'] ); }" ); ?>
+					</td>
+				</tr>
+				<tr class="undt-searchable" data-undt-text="breakdance php code block loop">
+					<td><strong>Breakdance</strong></td>
+					<td>
+						<p class="description">
+							<?php esc_html_e( 'Führt PHP in einem Code-Element aus. Einzelwerte liefert undt_get(), Schleifen undt_query().', 'unternehmensdaten' ); ?>
+						</p>
 					</td>
 				</tr>
 			</tbody>
@@ -239,7 +305,7 @@ $undt_first = key( $undt_panels );
 
 		<div class="notice notice-info inline undt-disclaimer">
 			<p>
-				<?php esc_html_e( 'Die Funktionen und Query-Namen sind in WordPress geprüft. Die Anbindung an Bricks selbst konnte hier nicht getestet werden, weil das Plugin kostenpflichtig ist. Sollte die Auswahl im Schleifen-Dialog fehlen, funktionieren die Funktionen trotzdem, und die Schleife lässt sich über ein Code-Element bauen.', 'unternehmensdaten' ); ?>
+				<?php esc_html_e( 'Die Anbindung ist mit Bricks 2.4 und Etch 1.6 geprüft. Fehlt in einer anderen Fassung ein Wert, hilft undt_get() in einem Code-Element weiter.', 'unternehmensdaten' ); ?>
 			</p>
 		</div>
 	</div>

@@ -65,7 +65,7 @@ $undt_data = UNDT_Content::all( $undt_slug );
 			</tbody>
 		</table>
 
-		<?php submit_button(); ?>
+		<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ) ); ?>
 	</form>
 
 	<?php

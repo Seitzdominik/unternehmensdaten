@@ -174,7 +174,7 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 			</tbody>
 		</table>
 
-		<?php submit_button(); ?>
+		<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ) ); ?>
 	</form>
 
 	<?php if ( UNDT_Updater::enabled() && '' !== UNDT_Updater::repo() ) : ?>
@@ -205,6 +205,8 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 			<tr><td><code>undt_imprint_html</code>, <code>undt_footer_html</code></td><td><?php esc_html_e( 'Die fertige Ausgabe nachbearbeiten.', 'unternehmensdaten' ); ?></td></tr>
 			<tr><td><code>undt_schema_organization</code></td><td><?php esc_html_e( 'Die JSON-LD-Auszeichnung anpassen.', 'unternehmensdaten' ); ?></td></tr>
 			<tr><td><code>undt_audit_issues</code></td><td><?php esc_html_e( 'Eigene Prüfungen ergänzen.', 'unternehmensdaten' ); ?></td></tr>
+			<tr><td><code>undt_auto_banner</code></td><td><?php esc_html_e( 'Festlegen, wo das Banner automatisch am Seitenanfang erscheint. Standard ist überall außer in der Oberfläche von Etch und Bricks.', 'unternehmensdaten' ); ?></td></tr>
+			<tr><td><code>undt_link_post_types</code></td><td><?php esc_html_e( 'Festlegen, aus welchen Inhaltstypen die Seitenfelder wählen. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen.', 'unternehmensdaten' ); ?></td></tr>
 		</tbody>
 	</table>
 </div>

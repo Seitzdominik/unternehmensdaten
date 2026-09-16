@@ -80,6 +80,54 @@ final class UNDT_Sanitizer {
 	}
 
 	/**
+	 * Sanitisiert ein Seitenfeld.
+	 *
+	 * Das Formular sendet die Auswahl und daneben eine eigene Adresse. Gespeichert
+	 * wird genau eines davon: die ID des gewaehlten Beitrags oder, wenn „Eigene
+	 * Adresse“ gewaehlt ist, die Adresse. Ein einzelner Wert, etwa aus einem
+	 * Import oder einem aelteren Formular, wird an seiner Form erkannt.
+	 *
+	 * @param mixed $value Rohwert.
+	 * @return int|string
+	 */
+	private static function page_value( $value ) {
+		if ( is_array( $value ) ) {
+			$choice = isset( $value['choice'] ) && is_scalar( $value['choice'] ) ? (string) $value['choice'] : '';
+
+			if ( 'url' !== $choice ) {
+				return absint( $choice );
+			}
+
+			$value = isset( $value['url'] ) && is_scalar( $value['url'] ) ? $value['url'] : '';
+		}
+
+		if ( ! is_scalar( $value ) ) {
+			return 0;
+		}
+
+		$value = trim( (string) $value );
+
+		if ( '' === $value || preg_match( '/^\d+$/', $value ) ) {
+			return absint( $value );
+		}
+
+		/*
+		 * Ohne Schema ist „impressum“ ein Pfad der eigenen Website und
+		 * „example.com/impressum“ eine fremde Domain. WordPress machte aus beidem
+		 * sonst eine http-Adresse, aus dem Pfad also einen toten Link.
+		 */
+		if ( ! preg_match( '#^(?:[a-z][a-z0-9+.\-]*:|[/?\#])#i', $value ) ) {
+			$host  = substr( $value, 0, strcspn( $value, '/?#' ) );
+			$value = ( false !== strpos( $host, '.' ) ? 'https://' : '/' ) . $value;
+		}
+
+		// Nur Web-Adressen und Pfade, weder javascript: noch data:.
+		$url = esc_url_raw( $value, array( 'http', 'https' ) );
+
+		return '' === $url ? 0 : $url;
+	}
+
+	/**
 	 * Sanitisiert einen einzelnen Wert nach seinem Typ.
 	 *
 	 * @param mixed $value Rohwert.
@@ -87,6 +135,11 @@ final class UNDT_Sanitizer {
 	 * @return string|int
 	 */
 	private static function value( $value, array $field ) {
+		// Seitenfelder senden Auswahl und eigene Adresse als Paar.
+		if ( 'page' === $field['type'] ) {
+			return self::page_value( $value );
+		}
+
 		if ( is_array( $value ) ) {
 			$value = '';
 		}
@@ -104,9 +157,6 @@ final class UNDT_Sanitizer {
 			case 'tel':
 				$value = preg_replace( '#[^0-9+/()\-. ]#', '', $value );
 				return trim( (string) $value );
-
-			case 'page':
-				return absint( $value );
 
 			case 'select':
 				$choices = array_keys( $field['choices'] );

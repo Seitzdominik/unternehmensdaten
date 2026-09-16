@@ -110,15 +110,79 @@ final class UNDT_Store {
 		 * Felder, die eine ID halten, speichern eine 0, wenn nichts ausgewaehlt
 		 * ist. Als Zeichenkette ist "0" nicht leer, gilt hier aber trotzdem als
 		 * nicht ausgefuellt. Ohne diese Unterscheidung haelt die Pruefung eine
-		 * nie ausgewaehlte Seite fuer hinterlegt.
+		 * nie ausgewaehlte Seite fuer hinterlegt. Ein Seitenfeld kann statt der ID
+		 * auch eine eigene Adresse halten, und die zaehlt immer.
 		 */
 		$field = UNDT_Schema::field( $key );
 
-		if ( null !== $field && in_array( $field['type'], array( 'page', 'media' ), true ) ) {
+		if ( null !== $field && in_array( $field['type'], array( 'page', 'media' ), true ) && preg_match( '/^\d+$/', $value ) ) {
 			return (int) $value > 0;
 		}
 
 		return true;
+	}
+
+	/**
+	 * Die ID in einem Seitenfeld.
+	 *
+	 * @param string $key Feldschluessel.
+	 * @return int 0, wenn nichts gewaehlt ist oder das Feld eine eigene Adresse haelt.
+	 */
+	public static function page_id( $key ) {
+		$value = trim( self::get( $key ) );
+
+		return preg_match( '/^\d+$/', $value ) ? (int) $value : 0;
+	}
+
+	/**
+	 * Das Ziel eines Seitenfeldes.
+	 *
+	 * Ein Seitenfeld haelt die ID eines Beitrags beliebigen Inhaltstyps oder eine
+	 * eigene Adresse. Beitraege zaehlen nur, solange sie veroeffentlicht sind:
+	 * ein Entwurf ergaebe einen toten Link und verriete seinen Arbeitstitel, bei
+	 * privaten Seiten stuende "Privat:" im Linktext.
+	 *
+	 * @param string $key Feldschluessel.
+	 * @return array|null array( url, title, post_id ), null ohne gueltiges Ziel.
+	 */
+	public static function link( $key ) {
+		$field = UNDT_Schema::field( $key );
+
+		if ( null === $field || 'page' !== $field['type'] ) {
+			return null;
+		}
+
+		$value = trim( self::get( $key ) );
+
+		if ( '' === $value || '0' === $value ) {
+			return null;
+		}
+
+		if ( ! preg_match( '/^\d+$/', $value ) ) {
+			return array(
+				'url'     => $value,
+				'title'   => '',
+				'post_id' => 0,
+			);
+		}
+
+		$id = (int) $value;
+
+		if ( 'publish' !== get_post_status( $id ) ) {
+			return null;
+		}
+
+		$url = (string) get_permalink( $id );
+
+		if ( '' === $url ) {
+			return null;
+		}
+
+		return array(
+			'url'     => $url,
+			'title'   => (string) get_the_title( $id ),
+			'post_id' => $id,
+		);
 	}
 
 	/**
