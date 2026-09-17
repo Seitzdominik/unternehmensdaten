@@ -245,6 +245,72 @@
 	color: #d63638 !important;
 }
 
+/* Kopierzeile unter einem Feld: der Shortcode, daneben die Kuerzel fuer
+   Bricks und Etch. */
+.undt-copy-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 2px;
+	margin-top: 4px;
+}
+
+.undt-copy-row .undt-copy--inline {
+	margin: 0 4px 0 0;
+}
+
+/* Nur ein Kuerzel, der Tag steht im Tooltip. Die Klickflaeche ist groesser
+   als das sichtbare Symbol, damit sie sich auch mit dem Finger treffen laesst. */
+.undt-copy--icon {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 24px;
+	height: 24px !important;
+	margin: 0;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 3px;
+	background: none !important;
+	box-shadow: none !important;
+	color: #787c82 !important;
+	cursor: pointer;
+}
+
+.undt-copy__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 18px;
+	height: 18px;
+	border: 1px solid currentColor;
+	border-radius: 3px;
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 1;
+	pointer-events: none;
+}
+
+.undt-copy--icon:hover,
+.undt-copy--icon:focus-visible {
+	color: #2271b1 !important;
+}
+
+.undt-copy--icon:focus-visible {
+	outline: 1px solid #2271b1;
+	outline-offset: 0;
+}
+
+.undt-copy--icon.undt-copy--ok {
+	color: #007017 !important;
+}
+
+.undt-copy--icon.undt-copy--fail {
+	color: #d63638 !important;
+}
+
 /* Etwas mehr Platz in der ersten Spalte, damit der Shortcode dort hineinpasst. */
 @media screen and (min-width: 783px) {
 	.undt-wrap .form-table th {
@@ -648,7 +714,7 @@
 	min-width: 0;
 }
 
-.undt-pair__field .undt-copy--inline {
+.undt-pair__field .undt-copy-row {
 	margin-top: 3px;
 }
 

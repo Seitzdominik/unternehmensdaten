@@ -100,6 +100,20 @@ final class UNDT_Dynamic {
 	}
 
 	/**
+	 * Die Schreibweise eines Schluessels in Slim SEO, Bricks und Etch.
+	 *
+	 * @param string $key Schluessel aus fields().
+	 * @return array slim_seo, bricks und etch.
+	 */
+	public static function syntax( $key ) {
+		return array(
+			'slim_seo' => '{{ undt.' . $key . ' }}',
+			'bricks'   => '{undt_' . $key . '}',
+			'etch'     => '{options.undt.' . $key . '}',
+		);
+	}
+
+	/**
 	 * Der Wert eines Schluessels als schlichter Text.
 	 *
 	 * @param string $key Schluessel aus fields().
@@ -251,8 +265,9 @@ final class UNDT_Dynamic {
 		}
 
 		foreach ( self::fields( self::CONTEXT_BUILDER ) as $key => $label ) {
+			$syntax = self::syntax( $key );
 			$tags[] = array(
-				'name'  => '{undt_' . $key . '}',
+				'name'  => $syntax['bricks'],
 				'label' => $label,
 				'group' => __( 'Unternehmensdaten', 'unternehmensdaten' ),
 			);

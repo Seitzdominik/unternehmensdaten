@@ -167,8 +167,9 @@ $undt_first = key( $undt_panels );
 			<tbody>
 				<?php foreach ( $undt_dynamic as $undt_key => $undt_label ) : ?>
 					<?php
-					$undt_value = trim( preg_replace( '/\s+/', ' ', UNDT_Dynamic::value( $undt_key ) ) );
-					$undt_short = mb_substr( $undt_value, 0, 60 ) . ( mb_strlen( $undt_value ) > 60 ? '…' : '' );
+					$undt_syntax = UNDT_Dynamic::syntax( $undt_key );
+					$undt_value  = trim( preg_replace( '/\s+/', ' ', UNDT_Dynamic::value( $undt_key ) ) );
+					$undt_short  = mb_substr( $undt_value, 0, 60 ) . ( mb_strlen( $undt_value ) > 60 ? '…' : '' );
 					?>
 					<tr class="undt-searchable" data-undt-text="<?php echo esc_attr( strtolower( $undt_label . ' ' . $undt_key . ' ' . $undt_value ) ); ?>">
 						<td>
@@ -183,13 +184,13 @@ $undt_first = key( $undt_panels );
 						</td>
 						<td>
 							<?php if ( isset( $undt_dynamic_seo[ $undt_key ] ) ) : ?>
-								<?php UNDT_Fields::copy_button( '{{ undt.' . $undt_key . ' }}', 'inline' ); ?>
+								<?php UNDT_Fields::copy_button( $undt_syntax['slim_seo'], 'inline' ); ?>
 							<?php else : ?>
 								<span class="undt-empty" title="<?php esc_attr_e( 'Nur für Builder gedacht', 'unternehmensdaten' ); ?>">–</span>
 							<?php endif; ?>
 						</td>
-						<td><?php UNDT_Fields::copy_button( '{undt_' . $undt_key . '}', 'inline' ); ?></td>
-						<td><?php UNDT_Fields::copy_button( '{options.undt.' . $undt_key . '}', 'inline' ); ?></td>
+						<td><?php UNDT_Fields::copy_button( $undt_syntax['bricks'], 'inline' ); ?></td>
+						<td><?php UNDT_Fields::copy_button( $undt_syntax['etch'], 'inline' ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>

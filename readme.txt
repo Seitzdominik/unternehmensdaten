@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,7 +70,7 @@ Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe 
 
 == Dynamische Daten ==
 
-Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise.
+Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise. In den Stammdaten stehen unter jedem Feld neben dem Shortcode die Kürzel B und E: ein Klick kopiert die Schreibweise für Bricks beziehungsweise Etch, der Tooltip nennt sie.
 
 * **Slim SEO** `{{ undt.phone }}`, etwa in Meta-Titel und Meta-Beschreibung hinter den drei Punkten
 * **Bricks** `{undt_phone}` in jedem Feld für dynamische Daten, ohne dass Code-Ausführung eingeschaltet sein muss. Die Bricks-Filter für die Wortzahl und den Ersatzwert funktionieren wie gewohnt, etwa `{undt_fax @fallback:'kein Fax'}`
@@ -163,6 +163,9 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
 == Changelog ==
+
+= 0.5.1 =
+* Neu: Unter jedem Feld der Stammdaten kopieren zwei Kürzel neben dem Shortcode die Schreibweise für Bricks ({undt_phone}) und Etch ({options.undt.phone}). Der Tag selbst steht nur im Tooltip
 
 = 0.5.0 =
 * Neu: Slim SEO führt die Stammdaten in seiner Auswahl dynamischer Daten, etwa hinter den drei Punkten neben Meta-Titel und Meta-Beschreibung, als {{ undt.phone }}

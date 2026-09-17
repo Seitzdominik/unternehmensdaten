@@ -140,12 +140,12 @@ final class UNDT_Fields {
 		self::control( $key, $field, $value, $name, $id );
 
 		/*
-		 * Der Kopierbutton steht unter dem Eingabefeld. Neben dem Feld ergaebe er
-		 * ueber die Seite eine zweite Spalte aus Schaltflaechen, und in der
+		 * Die Kopierknoepfe stehen unter dem Eingabefeld. Neben dem Feld ergaeben
+		 * sie ueber die Seite eine zweite Spalte aus Schaltflaechen, und in der
 		 * Beschriftungsspalte bricht ein laengerer Shortcode um.
 		 */
 		if ( $args['with_copy'] && ! empty( $field['shortcode'] ) ) {
-			self::copy_button( '[undt key="' . $key . '"]', 'inline' );
+			self::field_copy_buttons( $key );
 		}
 
 		echo '</td>';
@@ -199,7 +199,7 @@ final class UNDT_Fields {
 			self::control( $key, $field, $value, $name, $id );
 
 			if ( $args['with_copy'] && ! empty( $field['shortcode'] ) ) {
-				self::copy_button( '[undt key="' . $key . '"]', 'inline' );
+				self::field_copy_buttons( $key );
 			}
 
 			echo '</div>';
@@ -1028,6 +1028,59 @@ final class UNDT_Fields {
 		}
 
 		echo '</tbody></table>';
+	}
+
+	/**
+	 * Die Kopierknoepfe unter einem Stammdaten-Feld.
+	 *
+	 * Neben dem Shortcode stehen zwei Kuerzel fuer die Schreibweise in Bricks
+	 * und Etch. Den Tag selbst nennt nur der Tooltip, damit unter jedem Feld
+	 * eine Zeile genuegt.
+	 *
+	 * @param string $key Feldschluessel.
+	 * @return void
+	 */
+	private static function field_copy_buttons( $key ) {
+		echo '<div class="undt-copy-row">';
+
+		self::copy_button( '[undt key="' . $key . '"]', 'inline' );
+
+		// Nur, was die Builder auch tatsaechlich aufloesen.
+		if ( array_key_exists( $key, UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER ) ) ) {
+			$syntax = UNDT_Dynamic::syntax( $key );
+
+			self::copy_icon( $syntax['bricks'], 'B', 'Bricks' );
+			self::copy_icon( $syntax['etch'], 'E', 'Etch' );
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * Ein Kopierknopf, der statt des Textes nur ein Kuerzel zeigt.
+	 *
+	 * Bewusst Buchstaben statt der Logos: Markenzeichen bringt das Plugin nicht
+	 * mit, wie schon bei den Social-Profilen.
+	 *
+	 * @param string $text   Zu kopierender Text.
+	 * @param string $letter Kuerzel im Symbol.
+	 * @param string $tool   Name des Werkzeugs fuer Tooltip und Screenreader.
+	 * @return void
+	 */
+	private static function copy_icon( $text, $letter, $tool ) {
+		$label = sprintf(
+			/* translators: 1: Werkzeug, etwa Bricks, 2: zu kopierender Tag. */
+			__( '%1$s: %2$s kopieren', 'unternehmensdaten' ),
+			$tool,
+			$text
+		);
+
+		printf(
+			'<button type="button" class="undt-copy undt-copy--icon" data-undt-copy="%1$s" title="%2$s"><span class="undt-copy__badge" aria-hidden="true">%3$s</span><span class="screen-reader-text">%2$s</span></button>',
+			esc_attr( $text ),
+			esc_attr( $label ),
+			esc_html( $letter )
+		);
 	}
 
 	/**
