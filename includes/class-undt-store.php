@@ -89,8 +89,58 @@ final class UNDT_Store {
 		 * Kleinunternehmer-Hinweis nicht entfernen.
 		 */
 		$value = isset( $company[ $key ] ) ? $company[ $key ] : $field['default'];
+		$value = is_scalar( $value ) ? (string) $value : '';
 
-		return is_scalar( $value ) ? (string) $value : '';
+		// Ein leeres Feld kann seinen Wert aus anderen Angaben ableiten, etwa ein Kartenlink aus der Anschrift.
+		if ( '' === trim( $value ) && is_callable( $field['derived'] ) ) {
+			$value = (string) call_user_func( $field['derived'], $key );
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Ein Kartenlink aus Firma und Anschrift.
+	 *
+	 * Fuer Google Maps eine Suche nach Firma und Anschrift, die in der Regel
+	 * den Eintrag samt Bewertungen findet. Fuer Apple Maps die Anschrift als
+	 * Ort, beschriftet mit dem Firmennamen.
+	 *
+	 * @param string $key maps_google oder maps_apple.
+	 * @return string Leerstring, solange Strasse oder Ort fehlen.
+	 */
+	public static function maps_link( $key ) {
+		$street   = trim( self::get( 'street' ) );
+		$locality = trim( self::get( 'postal_code' ) . ' ' . self::get( 'city' ) );
+
+		if ( '' === $street || '' === $locality ) {
+			return '';
+		}
+
+		$address = $street . ', ' . $locality;
+		$country = trim( self::get( 'country' ) );
+		$name    = trim( self::get( 'company_name' ) );
+
+		if ( '' !== $country ) {
+			$address .= ', ' . $country;
+		}
+
+		if ( 'maps_apple' === $key ) {
+			$args = array( 'address' => $address );
+
+			if ( '' !== $name ) {
+				$args['q'] = $name;
+			}
+
+			return 'https://maps.apple.com/?' . http_build_query( $args, '', '&', PHP_QUERY_RFC3986 );
+		}
+
+		$args = array(
+			'api'   => 1,
+			'query' => '' === $name ? $address : $name . ', ' . $address,
+		);
+
+		return 'https://www.google.com/maps/search/?' . http_build_query( $args, '', '&', PHP_QUERY_RFC3986 );
 	}
 
 	/**

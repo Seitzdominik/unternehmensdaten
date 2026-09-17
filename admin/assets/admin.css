@@ -259,8 +259,9 @@
 	margin: 0 4px 0 0;
 }
 
-/* Nur ein Kuerzel, der Tag steht im Tooltip. Die Klickflaeche ist groesser
-   als das sichtbare Symbol, damit sie sich auch mit dem Finger treffen laesst. */
+/* Nur das Logo in einem kleinen Rahmen, der Tag steht im Tooltip. Die
+   Klickflaeche ist groesser als der Rahmen, damit sie sich auch mit dem Finger
+   treffen laesst. */
 .undt-copy--icon {
 	display: inline-flex !important;
 	align-items: center;
@@ -287,10 +288,13 @@
 	height: 18px;
 	border: 1px solid currentColor;
 	border-radius: 3px;
-	font-size: 10px;
-	font-weight: 600;
-	line-height: 1;
 	pointer-events: none;
+}
+
+.undt-copy__icon {
+	display: block;
+	width: 11px;
+	height: 11px;
 }
 
 .undt-copy--icon:hover,
@@ -430,6 +434,30 @@
 .undt-repeater__help {
 	display: block;
 	margin-top: 2px;
+}
+
+/* Auswahl mit dem Symbol der gewaehlten Plattform davor. */
+.undt-select-icon {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.undt-select-icon__preview {
+	display: inline-flex;
+	flex: 0 0 auto;
+	color: #50575e;
+}
+
+.undt-select-icon__preview svg {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+.undt-repeater__field .undt-select-icon select {
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 /* Pfeile als zusammenhaengende Gruppe, Entfernen mit Abstand daneben. Der

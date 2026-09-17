@@ -144,9 +144,10 @@ final class UNDT_Fields {
 		 * sie ueber die Seite eine zweite Spalte aus Schaltflaechen, und in der
 		 * Beschriftungsspalte bricht ein laengerer Shortcode um.
 		 */
-		if ( $args['with_copy'] && ! empty( $field['shortcode'] ) ) {
-			self::field_copy_buttons( $key );
-		}
+		$shortcode = $args['with_copy'] && ! empty( $field['shortcode'] ) ? '[undt key="' . $key . '"]' : '';
+		$dynamic   = '' !== $shortcode ? $key : ( isset( $field['dynamic'] ) ? (string) $field['dynamic'] : '' );
+
+		self::copy_row( $shortcode, $dynamic );
 
 		echo '</td>';
 
@@ -198,9 +199,10 @@ final class UNDT_Fields {
 
 			self::control( $key, $field, $value, $name, $id );
 
-			if ( $args['with_copy'] && ! empty( $field['shortcode'] ) ) {
-				self::field_copy_buttons( $key );
-			}
+			$shortcode = $args['with_copy'] && ! empty( $field['shortcode'] ) ? '[undt key="' . $key . '"]' : '';
+			$dynamic   = '' !== $shortcode ? $key : ( isset( $field['dynamic'] ) ? (string) $field['dynamic'] : '' );
+
+			self::copy_row( $shortcode, $dynamic );
 
 			echo '</div>';
 		}
@@ -382,7 +384,19 @@ final class UNDT_Fields {
 				break;
 
 			case 'select':
-				echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">';
+				$icons = ! empty( $field['icons'] );
+
+				// Neben der Auswahl das Symbol der gewaehlten Plattform, siehe initIconSelects().
+				if ( $icons ) {
+					$current = array_key_exists( (string) $value, $field['choices'] ) ? (string) $value : (string) key( $field['choices'] );
+
+					printf(
+						'<span class="undt-select-icon"><span class="undt-select-icon__preview" aria-hidden="true">%s</span>',
+						UNDT_Icons::platform( $current ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ueber wp_kses aufbereitet.
+					);
+				}
+
+				echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '"' . ( $icons ? ' data-undt-icon-select' : '' ) . '>';
 
 				foreach ( $field['choices'] as $choice => $label ) {
 					printf(
@@ -394,6 +408,10 @@ final class UNDT_Fields {
 				}
 
 				echo '</select>';
+
+				if ( $icons ) {
+					echo '</span>';
+				}
 				break;
 
 			case 'checkbox':
@@ -424,13 +442,24 @@ final class UNDT_Fields {
 					'date' => 'undt-input-date',
 				);
 
+				// Ein Feld, das sich leer aus anderen Angaben ergibt, zeigt diesen Wert grau an.
+				$placeholder = isset( $field['derived'] ) && is_callable( $field['derived'] )
+					? (string) call_user_func( $field['derived'], $key )
+					: '';
+
+				// Adressen lesbar, also „Straße 11“ statt „Stra%C3%9Fe%2011“.
+				if ( 'url' === $field['type'] ) {
+					$placeholder = rawurldecode( $placeholder );
+				}
+
 				printf(
-					'<input type="%1$s" id="%2$s" name="%3$s" value="%4$s" class="%5$s" />',
+					'<input type="%1$s" id="%2$s" name="%3$s" value="%4$s" class="%5$s"%6$s />',
 					esc_attr( isset( $types[ $field['type'] ] ) ? $types[ $field['type'] ] : 'text' ),
 					esc_attr( $id ),
 					esc_attr( $name ),
 					esc_attr( (string) $value ),
-					esc_attr( isset( $classes[ $field['type'] ] ) ? $classes[ $field['type'] ] : 'regular-text' )
+					esc_attr( isset( $classes[ $field['type'] ] ) ? $classes[ $field['type'] ] : 'regular-text' ),
+					'' === $placeholder ? '' : ' placeholder="' . esc_attr( $placeholder ) . '"'
 				);
 		}
 	}
@@ -703,6 +732,26 @@ final class UNDT_Fields {
 		echo '<template class="undt-repeater__template">';
 		self::repeater_row( $field, $name, self::INDEX_TOKEN, array() );
 		echo '</template>';
+
+		// Die Symbole aller Auswahlen, aus denen das Skript beim Umschalten nimmt.
+		foreach ( $field['fields'] as $sub ) {
+			if ( 'select' !== $sub['type'] || empty( $sub['icons'] ) ) {
+				continue;
+			}
+
+			echo '<div class="undt-icon-library" hidden>';
+
+			foreach ( array_keys( $sub['choices'] ) as $choice ) {
+				printf(
+					'<span data-undt-icon="%1$s">%2$s</span>',
+					esc_attr( $choice ),
+					UNDT_Icons::platform( (string) $choice ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ueber wp_kses aufbereitet.
+				);
+			}
+
+			echo '</div>';
+			break;
+		}
 
 		printf(
 			'<p class="undt-repeater__actions"><button type="button" class="button undt-repeater__add">%s</button></p>',
@@ -1031,43 +1080,51 @@ final class UNDT_Fields {
 	}
 
 	/**
-	 * Die Kopierknoepfe unter einem Stammdaten-Feld.
+	 * Die Kopierknoepfe unter einem Feld.
 	 *
-	 * Neben dem Shortcode stehen zwei Kuerzel fuer die Schreibweise in Bricks
-	 * und Etch. Den Tag selbst nennt nur der Tooltip, damit unter jedem Feld
-	 * eine Zeile genuegt.
+	 * Stammdaten zeigen den Shortcode, daneben stehen die Logos von Bricks und
+	 * Etch fuer die jeweilige Schreibweise. Den Tag selbst nennt nur der
+	 * Tooltip, damit unter jedem Feld eine Zeile genuegt. Felder der
+	 * Inhaltsbereiche haben keinen Shortcode, manche aber einen Wert fuer die
+	 * Builder, etwa die Angaben des Infobanners.
 	 *
-	 * @param string $key Feldschluessel.
+	 * @param string $shortcode Shortcode, leer fuer keinen.
+	 * @param string $dynamic   Schluessel fuer Bricks und Etch, leer fuer keinen.
 	 * @return void
 	 */
-	private static function field_copy_buttons( $key ) {
+	private static function copy_row( $shortcode, $dynamic ) {
+		// Nur, was die Builder auch tatsaechlich aufloesen.
+		$builder = '' !== $dynamic && array_key_exists( $dynamic, UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER ) );
+
+		if ( '' === $shortcode && ! $builder ) {
+			return;
+		}
+
 		echo '<div class="undt-copy-row">';
 
-		self::copy_button( '[undt key="' . $key . '"]', 'inline' );
+		if ( '' !== $shortcode ) {
+			self::copy_button( $shortcode, 'inline' );
+		}
 
-		// Nur, was die Builder auch tatsaechlich aufloesen.
-		if ( array_key_exists( $key, UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER ) ) ) {
-			$syntax = UNDT_Dynamic::syntax( $key );
+		if ( $builder ) {
+			$syntax = UNDT_Dynamic::syntax( $dynamic );
 
-			self::copy_icon( $syntax['bricks'], 'B', 'Bricks' );
-			self::copy_icon( $syntax['etch'], 'E', 'Etch' );
+			self::copy_icon( $syntax['bricks'], 'bricks', 'Bricks' );
+			self::copy_icon( $syntax['etch'], 'etch', 'Etch' );
 		}
 
 		echo '</div>';
 	}
 
 	/**
-	 * Ein Kopierknopf, der statt des Textes nur ein Kuerzel zeigt.
+	 * Ein Kopierknopf, der statt des Textes nur ein Logo zeigt.
 	 *
-	 * Bewusst Buchstaben statt der Logos: Markenzeichen bringt das Plugin nicht
-	 * mit, wie schon bei den Social-Profilen.
-	 *
-	 * @param string $text   Zu kopierender Text.
-	 * @param string $letter Kuerzel im Symbol.
-	 * @param string $tool   Name des Werkzeugs fuer Tooltip und Screenreader.
+	 * @param string $text Zu kopierender Text.
+	 * @param string $icon Name des Symbols, siehe UNDT_Icons::svg().
+	 * @param string $tool Name des Werkzeugs fuer Tooltip und Screenreader.
 	 * @return void
 	 */
-	private static function copy_icon( $text, $letter, $tool ) {
+	private static function copy_icon( $text, $icon, $tool ) {
 		$label = sprintf(
 			/* translators: 1: Werkzeug, etwa Bricks, 2: zu kopierender Tag. */
 			__( '%1$s: %2$s kopieren', 'unternehmensdaten' ),
@@ -1075,11 +1132,13 @@ final class UNDT_Fields {
 			$text
 		);
 
+		// Das Logo sitzt in einem kleinen Rahmen, damit es als Knopf erkennbar ist.
 		printf(
-			'<button type="button" class="undt-copy undt-copy--icon" data-undt-copy="%1$s" title="%2$s"><span class="undt-copy__badge" aria-hidden="true">%3$s</span><span class="screen-reader-text">%2$s</span></button>',
+			'<button type="button" class="undt-copy undt-copy--icon undt-copy--%1$s" data-undt-copy="%2$s" title="%3$s"><span class="undt-copy__badge" aria-hidden="true">%4$s</span><span class="screen-reader-text">%3$s</span></button>',
+			esc_attr( $icon ),
 			esc_attr( $text ),
 			esc_attr( $label ),
-			esc_html( $letter )
+			UNDT_Icons::svg( $icon, 'undt-copy__icon' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- festes Markup.
 		);
 	}
 

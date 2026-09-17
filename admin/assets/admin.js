@@ -707,6 +707,48 @@
 			} );
 	}
 
+	/* ------------------------------------------------ Plattform-Symbole */
+
+	/*
+	 * Neben der Plattform-Auswahl steht ihr Symbol. Beim Umschalten kommt das
+	 * neue aus der Symbolsammlung des Wiederholungsfeldes. Das gilt auch fuer
+	 * Zeilen, die erst nachtraeglich hinzugefuegt werden.
+	 */
+	function initIconSelects() {
+		document.addEventListener( 'change', function ( event ) {
+			var select = event.target;
+
+			if ( ! select.matches || ! select.matches( '[data-undt-icon-select]' ) ) {
+				return;
+			}
+
+			var wrap     = select.closest( '.undt-select-icon' );
+			var repeater = select.closest( '[data-undt-repeater]' );
+			var preview  = wrap ? wrap.querySelector( '.undt-select-icon__preview' ) : null;
+			var library  = repeater ? repeater.querySelector( '.undt-icon-library' ) : null;
+
+			if ( ! preview || ! library ) {
+				return;
+			}
+
+			var icon = null;
+
+			Array.prototype.slice.call( library.children ).forEach( function ( item ) {
+				if ( item.getAttribute( 'data-undt-icon' ) === select.value ) {
+					icon = item;
+				}
+			} );
+
+			while ( preview.firstChild ) {
+				preview.removeChild( preview.firstChild );
+			}
+
+			if ( icon && icon.firstElementChild ) {
+				preview.appendChild( icon.firstElementChild.cloneNode( true ) );
+			}
+		} );
+	}
+
 	function init() {
 		initTabs();
 		initCopy();
@@ -717,6 +759,7 @@
 		initHours();
 		initHelp();
 		initLinks();
+		initIconSelects();
 	}
 
 	if ( 'loading' === document.readyState ) {

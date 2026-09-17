@@ -491,6 +491,25 @@ final class UNDT_Schema {
 				'section' => 'address',
 				'help'    => __( 'Leer lassen, wenn die Anschrift im Inland liegt und das Land nicht ausgegeben werden soll.', 'unternehmensdaten' ),
 			),
+			'maps_google'               => array(
+				'label'      => __( 'Google Maps', 'unternehmensdaten' ),
+				'type'       => 'url',
+				'pair'       => 'maps',
+				'pair_label' => __( 'Kartenlinks', 'unternehmensdaten' ),
+				'tab'        => 'company',
+				'section'    => 'address',
+				'derived'    => array( 'UNDT_Store', 'maps_link' ),
+				'help'       => __( 'Link zum Eintrag, etwa über „Teilen“ in Google Maps. Leer gelassen, entsteht eine Suche nach Firma und Anschrift, die grau im Feld steht.', 'unternehmensdaten' ),
+			),
+			'maps_apple'                => array(
+				'label'   => __( 'Apple Maps', 'unternehmensdaten' ),
+				'type'    => 'url',
+				'pair'    => 'maps',
+				'tab'     => 'company',
+				'section' => 'address',
+				'derived' => array( 'UNDT_Store', 'maps_link' ),
+				'help'    => __( 'Link zum Eintrag in Apple Maps. Leer gelassen, zeigt der Link die Anschrift mit dem Firmennamen.', 'unternehmensdaten' ),
+			),
 
 			// ----------------------------------------------------------- Kontakt.
 
@@ -928,6 +947,8 @@ final class UNDT_Schema {
 					'help'       => '',
 					'default'    => '',
 					'shortcode'  => true,
+					// Liefert den Wert eines leeren Feldes aus anderen Angaben, siehe UNDT_Store::get().
+					'derived'    => null,
 					'choices'    => array(),
 					// Felder mit gleichem pair teilen sich eine Formularzeile.
 					'pair'       => '',

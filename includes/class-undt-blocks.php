@@ -152,8 +152,9 @@ final class UNDT_Blocks {
 		$out .= '<table class="undt-hours__table"><tbody>';
 
 		foreach ( $rows as $row ) {
+			// Die Beschriftung traegt die Punktlinie zur Uhrzeit, siehe css().
 			$out .= '<tr class="undt-hours__row' . ( $row['closed'] ? ' undt-hours__row--closed' : '' ) . '">';
-			$out .= '<th scope="row">' . esc_html( self::day_range( $row['days'], $short ) ) . '</th>';
+			$out .= '<th scope="row"><span class="undt-hours__label">' . esc_html( self::day_range( $row['days'], $short ) ) . '</span></th>';
 			$out .= '<td>';
 
 			if ( $row['closed'] ) {
@@ -217,7 +218,7 @@ final class UNDT_Blocks {
 
 			$out .= '<tr class="undt-hours__row' . ( $shut ? ' undt-hours__row--closed' : '' ) . '">';
 			$out .= '<th scope="row">';
-			$out .= '<time datetime="' . esc_attr( $date ) . '">' . esc_html( UNDT_Hours::date_label( $date ) ) . '</time>';
+			$out .= '<span class="undt-hours__label"><time datetime="' . esc_attr( $date ) . '">' . esc_html( UNDT_Hours::date_label( $date ) ) . '</time></span>';
 
 			if ( ! empty( $row['note'] ) ) {
 				$out .= '<span class="undt-hours__occasion">' . esc_html( $row['note'] ) . '</span>';
@@ -379,10 +380,13 @@ final class UNDT_Blocks {
 	/**
 	 * Die Social-Profile.
 	 *
-	 * Bewusst ohne mitgelieferte Markenlogos: die sind geschuetzte Zeichen, und
-	 * ein Plugin sollte sie nicht ungefragt mitbringen. Stattdessen traegt jeder
-	 * Link eine eigene Klasse und ein data-platform-Attribut, an die sich ein
-	 * Icon-Set des Themes per CSS anhaengen laesst.
+	 * Die Symbole kommen aus dem Social-Icons-Block von WordPress und lassen
+	 * sich abschalten. Jeder Link traegt zusaetzlich eine eigene Klasse und ein
+	 * data-platform-Attribut fuer ein Icon-Set des Themes.
+	 *
+	 * Dass sich ein neuer Tab oeffnet, sagt der Name des Links, den Screenreader
+	 * vorlesen. Sichtbar ist dafuer hoechstens ein kleiner Pfeil. Ein versteckter
+	 * Zusatztext stand frueher im Link und wurde sichtbar, wo das CSS fehlte.
 	 *
 	 * @param array $atts Attribute.
 	 * @return string
@@ -407,6 +411,12 @@ final class UNDT_Blocks {
 			$rel[] = 'noopener';
 		}
 
+		$show_icons = (bool) UNDT_Content::value( 'social', 'show_icons' );
+
+		// Ohne Symbole bleiben die Namen immer sichtbar, sonst stuende nichts da.
+		$show_labels = ! $show_icons || (bool) UNDT_Content::value( 'social', 'show_labels' );
+		$arrow       = $new_tab && $show_labels && (bool) UNDT_Content::value( 'social', 'new_tab_icon' );
+
 		$items = array();
 
 		foreach ( $rows as $row ) {
@@ -423,15 +433,37 @@ final class UNDT_Blocks {
 				$label = isset( $platforms[ $platform ] ) ? $platforms[ $platform ] : $platform;
 			}
 
-			// Ein neuer Tab oeffnet sich fuer Screenreader unangekuendigt, deshalb der Zusatz.
+			$content = '';
+
+			if ( $show_icons ) {
+				$content .= '<span class="undt-social__icon" aria-hidden="true">' . UNDT_Icons::platform( $platform ) . '</span>';
+			}
+
+			if ( $show_labels ) {
+				$content .= '<span class="undt-social__label">' . esc_html( $label ) . '</span>';
+			}
+
+			if ( $arrow ) {
+				$content .= UNDT_Icons::svg( 'external', 'undt-social__external' );
+			}
+
+			$name = '';
+
+			if ( $new_tab ) {
+				/* translators: %s: Name des Profils, etwa Instagram. */
+				$name = sprintf( __( '%s (öffnet in neuem Tab)', 'unternehmensdaten' ), $label );
+			} elseif ( ! $show_labels ) {
+				$name = $label;
+			}
+
 			$items[] = sprintf(
-				'<li class="undt-social__item"><a class="undt-social__link undt-social__link--%1$s" data-platform="%1$s" href="%2$s"%3$s%4$s>%5$s%6$s</a></li>',
+				'<li class="undt-social__item"><a class="undt-social__link undt-social__link--%1$s" data-platform="%1$s" href="%2$s"%3$s%4$s%5$s>%6$s</a></li>',
 				esc_attr( $platform ),
 				esc_url( $url ),
 				empty( $rel ) ? '' : ' rel="' . esc_attr( implode( ' ', $rel ) ) . '"',
 				$new_tab ? ' target="_blank"' : '',
-				esc_html( $label ),
-				$new_tab ? '<span class="undt-sr"> ' . esc_html__( '(öffnet in neuem Tab)', 'unternehmensdaten' ) . '</span>' : ''
+				'' === $name ? '' : ' aria-label="' . esc_attr( $name ) . '"',
+				$content // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- oben escaped, Symbole ueber wp_kses.
 			);
 		}
 
@@ -445,8 +477,15 @@ final class UNDT_Blocks {
 			$label = __( 'Social Media', 'unternehmensdaten' );
 		}
 
+		$classes = 'undt-block undt-social';
+
+		if ( $show_icons ) {
+			$classes .= $show_labels ? ' undt-social--icons' : ' undt-social--icons-only';
+		}
+
 		return sprintf(
-			'<nav class="undt-block undt-social" aria-label="%1$s"><ul class="undt-inline-list">%2$s</ul></nav>',
+			'<nav class="%1$s" aria-label="%2$s"><ul class="undt-inline-list undt-social__list">%3$s</ul></nav>',
+			esc_attr( $classes ),
 			esc_attr( $label ),
 			implode( '', $items )
 		);
@@ -698,11 +737,22 @@ final class UNDT_Blocks {
 		$css = '';
 
 		if ( UNDT_Modules::is_active( 'hours' ) ) {
-			$css .= '.undt-hours__table{width:100%;border-collapse:collapse;margin:0 0 1em}'
+			/*
+			 * Tag links, Uhrzeit rechts, dazwischen eine Punktlinie, an der das
+			 * Auge entlanglaeuft. Die Breite ist begrenzt, damit Tag und Zeit
+			 * auch in breiten Bereichen beieinander bleiben. Beides laesst sich
+			 * ueber --undt-hours-width und --undt-hours-leader anpassen.
+			 */
+			$css .= '.undt-hours__table{width:100%;max-width:var(--undt-hours-width,25em);border-collapse:collapse;margin:0}'
 				. '.undt-hours__table th,.undt-hours__table td{padding:.2em 0;text-align:left;vertical-align:top;font-weight:inherit}'
-				. '.undt-hours__table th{padding-right:1.5em;white-space:nowrap}'
+				. '.undt-hours__table th{width:100%}'
+				. '.undt-hours__table td{padding-left:.6em;text-align:right;white-space:nowrap}'
+				. '.undt-hours__label{display:flex;align-items:baseline;gap:.6em;white-space:nowrap}'
+				. '.undt-hours__label::after{content:"";flex:1 1 auto;min-width:1em;border-bottom:1px var(--undt-hours-leader,dotted) currentColor}'
 				. '.undt-hours__occasion{display:block;font-size:.9em}'
-				. '.undt-hours__note{margin:0 0 1em}';
+				. '.undt-hours__note{margin:.75em 0 0}'
+				. '.undt-hours__note>p{margin:0}'
+				. '.undt-hours__note>p+p{margin-top:.5em}';
 		}
 
 		if ( UNDT_Modules::is_active( 'prices' ) ) {
@@ -751,9 +801,12 @@ final class UNDT_Blocks {
 		}
 
 		if ( UNDT_Modules::is_active( 'social' ) ) {
-			// .undt-sr traegt den Hinweis auf einen neuen Tab, sichtbar nur fuer Screenreader.
+			// Symbolgroesse ueber --undt-social-icon-size, Standard etwas groesser als der Text.
 			$css .= '.undt-social__item{display:inline-flex}'
-				. '.undt-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}';
+				. '.undt-social__link{display:inline-flex;align-items:center;gap:.4em}'
+				. '.undt-social__icon{display:inline-flex;flex:0 0 auto}'
+				. '.undt-social__icon svg{display:block;width:var(--undt-social-icon-size,1.25em);height:var(--undt-social-icon-size,1.25em)}'
+				. '.undt-social__external{flex:0 0 auto;width:.7em;height:.7em}';
 		}
 
 		return $css;

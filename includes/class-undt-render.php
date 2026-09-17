@@ -106,16 +106,17 @@ final class UNDT_Render {
 	 * Telefonnummer als waehlbarer Link.
 	 *
 	 * @param string $number Nummer.
+	 * @param string $text   Sichtbarer Text, leer fuer die Nummer.
 	 * @return string
 	 */
-	public static function tel_link( $number ) {
+	public static function tel_link( $number, $text = '' ) {
 		$href = preg_replace( '#[^0-9+]#', '', $number );
 
 		if ( '' === $href ) {
 			return esc_html( $number );
 		}
 
-		return sprintf( '<a href="tel:%s">%s</a>', esc_attr( $href ), esc_html( $number ) );
+		return sprintf( '<a href="tel:%s">%s</a>', esc_attr( $href ), esc_html( '' === $text ? $number : $text ) );
 	}
 
 	/**
@@ -124,9 +125,10 @@ final class UNDT_Render {
 	 * @param string $email     Adresse.
 	 * @param bool   $link      Als Link ausgeben.
 	 * @param bool   $obfuscate Zeichen als HTML-Entities kodieren.
+	 * @param string $text      Sichtbarer Text eines Links, leer fuer die Adresse.
 	 * @return string
 	 */
-	public static function email_link( $email, $link = true, $obfuscate = false ) {
+	public static function email_link( $email, $link = true, $obfuscate = false, $text = '' ) {
 		if ( ! is_email( $email ) ) {
 			return '';
 		}
@@ -139,7 +141,7 @@ final class UNDT_Render {
 
 		$href = $obfuscate ? antispambot( $email, 1 ) : esc_attr( $email );
 
-		return sprintf( '<a href="mailto:%s">%s</a>', $href, $display );
+		return sprintf( '<a href="mailto:%s">%s</a>', $href, '' === $text ? $display : esc_html( $text ) );
 	}
 
 	/**
@@ -679,7 +681,12 @@ final class UNDT_Render {
 			return '';
 		}
 
-		$css = '.undt-block{margin:0 0 1.5em}'
+		/*
+		 * Keine Aussenabstaende: Builder wie Bricks und Etch regeln Abstaende
+		 * ueber ihre Container. Wer welche braucht, setzt --undt-block-spacing.
+		 */
+		$css = '.undt-block{margin:0 0 var(--undt-block-spacing,0)}'
+			. '.undt-block>:last-child{margin-bottom:0}'
 			. '.undt-block__title{margin:1.5em 0 .4em}'
 			. '.undt-block__title:first-child{margin-top:0}'
 			. '.undt-address{font-style:normal;margin:0 0 1em}'

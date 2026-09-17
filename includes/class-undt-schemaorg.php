@@ -185,6 +185,11 @@ final class UNDT_SchemaOrg {
 			$data['geo'] = $geo;
 		}
 
+		// hasMap gehoert zu Orten. Organization, NGO und VeterinaryCare sind keine.
+		if ( ! in_array( $type, array( 'Organization', 'NGO', 'VeterinaryCare' ), true ) && UNDT_Store::has( 'maps_google' ) ) {
+			$data['hasMap'] = UNDT_Store::get( 'maps_google' );
+		}
+
 		if ( UNDT_Content::has( 'seo', 'price_range' ) ) {
 			$data['priceRange'] = (string) UNDT_Content::value( 'seo', 'price_range' );
 		}

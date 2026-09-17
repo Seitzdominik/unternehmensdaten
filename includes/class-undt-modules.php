@@ -298,6 +298,8 @@ final class UNDT_Modules {
 								'label'   => __( 'Plattform', 'unternehmensdaten' ),
 								'type'    => 'select',
 								'choices' => self::platforms(),
+								// Zeigt neben der Auswahl das Symbol der Plattform.
+								'icons'   => true,
 							),
 							'label'    => array(
 								'label' => __( 'Beschriftung', 'unternehmensdaten' ),
@@ -310,16 +312,33 @@ final class UNDT_Modules {
 							),
 						),
 					),
-					'rel_me' => array(
+					'show_icons'   => array(
+						'label' => __( 'Symbole anzeigen', 'unternehmensdaten' ),
+						'type'  => 'checkbox',
+						'help'  => __( 'Zeigt vor jedem Profil das Symbol der Plattform. Die Symbole stammen aus dem Social-Icons-Block von WordPress und übernehmen die Textfarbe. Plattformen ohne eigenes Symbol bekommen ein Link-Symbol.', 'unternehmensdaten' ),
+					),
+					'show_labels'  => array(
+						'label'   => __( 'Plattformnamen anzeigen', 'unternehmensdaten' ),
+						'type'    => 'checkbox',
+						'default' => 1,
+						'help'    => __( 'Ausgeschaltet bleiben nur die Symbole sichtbar, Screenreader lesen die Namen weiterhin vor. Ohne Symbole stehen die Namen immer da.', 'unternehmensdaten' ),
+					),
+					'rel_me'       => array(
 						'label'   => __( 'Profile mit rel="me" auszeichnen', 'unternehmensdaten' ),
 						'type'    => 'checkbox',
 						'default' => 1,
 						'help'    => __( 'Bestätigt gegenüber Mastodon und ähnlichen Diensten, dass Website und Profil zusammengehören.', 'unternehmensdaten' ),
 					),
-					'new_tab' => array(
+					'new_tab'      => array(
 						'label' => __( 'In neuem Tab öffnen', 'unternehmensdaten' ),
 						'type'  => 'checkbox',
-						'help'  => __( 'Setzt zusätzlich rel="noopener". Aus Sicht der Barrierefreiheit ist ein neues Fenster nur sinnvoll, wenn darauf hingewiesen wird.', 'unternehmensdaten' ),
+						'help'  => __( 'Setzt zusätzlich rel="noopener". Screenreader erfahren über den Namen des Links, dass sich ein neuer Tab öffnet.', 'unternehmensdaten' ),
+					),
+					'new_tab_icon' => array(
+						'label'   => __( 'Pfeil für neuen Tab', 'unternehmensdaten' ),
+						'type'    => 'checkbox',
+						'default' => 1,
+						'help'    => __( 'Ein kleiner schräger Pfeil hinter dem Namen zeigt, dass sich ein neuer Tab öffnet. Wirkt nur zusammen mit „In neuem Tab öffnen“ und sichtbaren Namen.', 'unternehmensdaten' ),
 					),
 				),
 			),
@@ -379,14 +398,18 @@ final class UNDT_Modules {
 				'option'   => 'undt_banner',
 				'autoload' => true,
 				'fields'   => array(
+					// dynamic nennt den Wert, den Bricks und Etch dafuer bekommen, siehe UNDT_Dynamic.
 					'enabled'     => array(
-						'label' => __( 'Banner anzeigen', 'unternehmensdaten' ),
-						'type'  => 'checkbox',
+						'label'   => __( 'Banner anzeigen', 'unternehmensdaten' ),
+						'type'    => 'checkbox',
+						'dynamic' => 'banner_show',
+						'help'    => __( 'In Bricks und Etch ist der Wert nur dann „ja“, wenn das Banner auch einen Text hat. So lässt sich ein selbst gestaltetes Banner über eine Bedingung ein- und ausblenden.', 'unternehmensdaten' ),
 					),
 					'type'        => array(
 						'label'   => __( 'Art', 'unternehmensdaten' ),
 						'type'    => 'select',
 						'default' => 'info',
+						'dynamic' => 'banner_type',
 						'choices' => array(
 							'info'    => __( 'Information (neutral)', 'unternehmensdaten' ),
 							'success' => __( 'Positiv', 'unternehmensdaten' ),
@@ -395,28 +418,32 @@ final class UNDT_Modules {
 						),
 					),
 					'text'        => array(
-						'label' => __( 'Text', 'unternehmensdaten' ),
-						'type'  => 'textarea',
+						'label'   => __( 'Text', 'unternehmensdaten' ),
+						'type'    => 'textarea',
+						'dynamic' => 'banner_text',
 					),
 					'link_text'   => array(
-						'label' => __( 'Link-Text', 'unternehmensdaten' ),
-						'type'  => 'text',
+						'label'   => __( 'Link-Text', 'unternehmensdaten' ),
+						'type'    => 'text',
+						'dynamic' => 'banner_link_text',
 					),
 					'link_url'    => array(
-						'label' => __( 'Link-Ziel', 'unternehmensdaten' ),
-						'type'  => 'url',
+						'label'   => __( 'Link-Ziel', 'unternehmensdaten' ),
+						'type'    => 'url',
+						'dynamic' => 'banner_link_url',
 					),
 					'dismissible' => array(
 						'label'   => __( 'Schließbar', 'unternehmensdaten' ),
 						'type'    => 'checkbox',
 						'default' => 1,
+						'dynamic' => 'banner_dismissible',
 						'help'    => __( 'Die Entscheidung wird lokal im Browser gespeichert. Ändert sich der Text, erscheint das Banner erneut.', 'unternehmensdaten' ),
 					),
 					'auto_output' => array(
 						'label'   => __( 'Automatisch am Seitenanfang ausgeben', 'unternehmensdaten' ),
 						'type'    => 'checkbox',
 						'default' => 1,
-						'help'    => __( 'Nutzt wp_body_open. Themes ohne diesen Haken benötigen stattdessen den Shortcode. Ist die Option aus, erscheint das Banner ausschließlich dort, wo der Shortcode steht.', 'unternehmensdaten' ),
+						'help'    => __( 'Nutzt wp_body_open. Themes ohne diesen Haken benötigen stattdessen den Shortcode. Ist die Option aus, erscheint das Banner nur dort, wo der Shortcode steht, oder so, wie es in Bricks oder Etch aus den Werten unter den Feldern gebaut ist.', 'unternehmensdaten' ),
 					),
 				),
 			),
@@ -541,6 +568,10 @@ final class UNDT_Modules {
 				'required'   => false,
 				// Einzelfeld-Shortcodes gibt es nur fuer die Stammdaten.
 				'shortcode'  => false,
+				// Schluessel des Wertes fuer Bricks und Etch, siehe UNDT_Dynamic.
+				'dynamic'    => '',
+				// Auswahlfeld mit Plattform-Symbol, siehe UNDT_Icons.
+				'icons'      => false,
 				// Felder mit gleichem pair teilen sich eine Formularzeile.
 				'pair'       => '',
 				'pair_label' => '',

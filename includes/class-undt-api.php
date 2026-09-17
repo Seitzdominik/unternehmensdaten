@@ -59,7 +59,7 @@ final class UNDT_Api {
 			'undt_social'        => array(
 				'label'  => __( 'Social-Profile', 'unternehmensdaten' ),
 				'module' => 'social',
-				'fields' => 'platform, platform_label, label, url',
+				'fields' => 'platform, platform_label, label, url, icon, new_tab',
 			),
 		);
 	}
@@ -334,6 +334,7 @@ final class UNDT_Api {
 	 */
 	private static function social_rows() {
 		$platforms = UNDT_Modules::platforms();
+		$new_tab   = (bool) UNDT_Content::value( 'social', 'new_tab' );
 		$rows      = array();
 
 		foreach ( UNDT_Content::rows( 'social', 'items' ) as $row ) {
@@ -352,6 +353,9 @@ final class UNDT_Api {
 				'platform_label' => $name,
 				'label'          => '' === $label ? $name : $label,
 				'url'            => $url,
+				// Fertiges SVG aus dem Social-Icons-Block, Farbe und Groesse vom Text.
+				'icon'           => UNDT_Icons::platform( $platform ),
+				'new_tab'        => $new_tab,
 			);
 		}
 

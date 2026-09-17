@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,7 +37,9 @@ Jeder Bereich lässt sich unter Einstellungen abschalten. Dann verschwindet er a
 
 Die Blöcke erzeugen semantisches HTML mit address-, dl-, table- und nav-Elementen. Es werden weder Schriftart noch Schriftgröße noch Farben gesetzt, damit die Ausgabe die Gestaltung des Themes vollständig erbt. Einzige Ausnahme ist das Infobanner: ein Warnhinweis ohne visuelle Abgrenzung erfüllt seinen Zweck nicht, und er soll nicht mit dem Inhalt der Seite konkurrieren. Farben und Schriftgröße hängen an CSS-Variablen und lassen sich überschreiben, die Schrift etwa über `--undt-banner-font-size`, Voreinstellung `0.875em`.
 
-Wochentage und Monatsnamen erscheinen auf Deutsch, auch wenn WordPress selbst auf Englisch eingestellt ist. Unter Öffnungszeiten lässt sich auf die Sprache der Website umstellen.
+Die Öffnungszeiten stehen als schmale Tabelle mit einer Punktlinie zwischen Tag und Uhrzeit. Ihre Breite regelt `--undt-hours-width`, Voreinstellung `25em`, die Linie `--undt-hours-leader`, etwa `none`. Die Blöcke selbst haben keine Außenabstände, das übernehmen Theme oder Builder. Wer sie braucht, setzt `--undt-block-spacing`.
+
+Wochentage und Monatsnamen erscheinen auf Deutsch, auf Englisch eingestellt ist. Unter Öffnungszeiten lässt sich auf die Sprache der Website umstellen.
 
 Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe in die Gliederung der Seite einfügt, statt sie zu brechen.
 
@@ -49,6 +51,9 @@ Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe 
 * `[undt key="phone" link="1"]` macht Telefon, E-Mail und URL anklickbar
 * `[undt key="email" obfuscate="1"]` verschleiert die Adresse
 * `[undt key="phone" before="Telefon: "]` ergänzt Text, der nur erscheint, wenn das Feld gefüllt ist
+* `[undt key="maps_google" link="1" text="Route planen"]` setzt einen eigenen Linktext
+
+Die Kartenlinks `maps_google` und `maps_apple` liegen bei der Anschrift. Bleiben sie leer, entsteht der Link aus Firma und Anschrift.
 
 = Rechtliche Blöcke =
 
@@ -64,7 +69,7 @@ Die Überschriftenebene ist bei jedem Block einstellbar, damit sich die Ausgabe 
 * `[undt_hours_today]` die heute geltende Zeit, Attribute `prefix`, `closed_text`
 * `[undt_open_now]` ob gerade geöffnet ist, Attribute `open_text`, `closed_text`
 * `[undt_prices]` Preisliste, Attribute `group`, `intro`, `footnote`, `heading_level`
-* `[undt_social]` die Profile als Navigation, Attribut `label`
+* `[undt_social]` die Profile als Navigation, Attribut `label`. Symbole, Plattformnamen und der Pfeil für neue Tabs lassen sich unter Social Media schalten, die Symbolgröße über `--undt-social-icon-size`
 * `[undt_faq]` Fragen und Antworten, Attribute `group`, `style`, `heading_level`
 * `[undt_banner]` das Infobanner an dieser Stelle
 
@@ -76,7 +81,7 @@ Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim 
 * **Bricks** `{undt_phone}` in jedem Feld für dynamische Daten, ohne dass Code-Ausführung eingeschaltet sein muss. Die Bricks-Filter für die Wortzahl und den Ersatzwert funktionieren wie gewohnt, etwa `{undt_fax @fallback:'kein Fax'}`
 * **Etch** `{options.undt.phone}` in Texten und Attributen, auch mit Modifikatoren wie `{options.undt.company_name.toUpperCase()}`
 
-Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}` und den Geöffnet-Status `{undt_open_now}`. Diese beiden ändern sich im Lauf des Tages und fehlen deshalb bei Slim SEO.
+Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
 
 == Page Builder ==
 
@@ -159,10 +164,24 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_audit_issues` ergänzt eigene Prüfungen
 * `undt_query` passt die Zeilen einer Schleifen-Quelle an
 * `undt_update_allow_prerelease` bietet Vorabversionen als Aktualisierung an, etwa auf einer Testseite
+* `undt_social_icon` ersetzt das Symbol einer Plattform, etwa für Xing oder kununu, die WordPress nicht mitbringt
 * `undt_auto_banner` legt fest, wo das Banner automatisch am Seitenanfang erscheint. Standard ist überall außer in der Oberfläche von Etch und Bricks
 * `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
 == Changelog ==
+
+= 0.5.2 =
+* Behoben: In Block-Themes und mit Etch fehlte das CSS des Plugins, wenn ein Shortcode in der Seitenvorlage stand und das automatische Banner aus war. Dadurch wurde der Hinweis „(öffnet in neuem Tab)“ sichtbar und Listen bekamen die Abstände des Browsers
+* Öffnungszeiten: schmalere Tabelle mit Punktlinie zwischen Tag und Uhrzeit, Uhrzeiten rechtsbündig, keine Außenabstände mehr
+* Die Blöcke setzen keine Außenabstände mehr, einstellbar über --undt-block-spacing
+* Neu: Kartenlinks für Google Maps und Apple Maps in den Stammdaten, leer gelassen aus Firma und Anschrift erzeugt. Google Maps erscheint im JSON-LD als hasMap
+* Neu: [undt] kennt das Attribut text für einen eigenen Linktext
+* Neu: Social Media mit Symbolen der Plattformen aus dem Social-Icons-Block von WordPress, abschaltbar, auf Wunsch ohne Namen. Im Backend steht das Symbol neben der Auswahl
+* Social Media: Statt des Textes „(öffnet in neuem Tab)“ zeigt ein kleiner Pfeil den neuen Tab an, Screenreader erfahren es über den Namen des Links
+* Neu: Die Angaben des Infobanners stehen Bricks und Etch zur Verfügung, samt banner_show für Bedingungen. Dazu kommt is_open als Ja-Nein-Wert. Etch bekommt echte Wahrheitswerte
+* Neu: Kopierknöpfe für Bricks und Etch auch unter den Feldern des Infobanners
+* Die Kopierknöpfe zeigen die Logos von Bricks und Etch in kleinen Rahmen statt der Buchstaben
+* Die Schleifen-Quelle undt_social liefert zusätzlich icon und new_tab
 
 = 0.5.1 =
 * Neu: Unter jedem Feld der Stammdaten kopieren zwei Kürzel neben dem Shortcode die Schreibweise für Bricks ({undt_phone}) und Etch ({options.undt.phone}). Der Tag selbst steht nur im Tooltip

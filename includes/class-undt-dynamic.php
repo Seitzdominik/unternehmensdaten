@@ -29,9 +29,16 @@ final class UNDT_Dynamic {
 	const CONTEXT_SEO = 'seo';
 
 	/**
-	 * Werte fuer Builder: zusaetzlich fertige Links und tagesabhaengige Angaben.
+	 * Werte fuer Builder: zusaetzlich fertige Links, tagesabhaengige Angaben und
+	 * das Infobanner.
 	 */
 	const CONTEXT_BUILDER = 'builder';
+
+	/**
+	 * Ja-Nein-Werte. Bricks bekommt 1 oder einen Leerstring, Etch echte
+	 * Wahrheitswerte fuer seine Bedingungen.
+	 */
+	const FLAGS = array( 'is_open', 'banner_show', 'banner_dismissible' );
 
 	/**
 	 * Haengt sich in Slim SEO, Bricks und Etch ein.
@@ -94,6 +101,17 @@ final class UNDT_Dynamic {
 		if ( $builder && UNDT_Modules::is_active( 'hours' ) ) {
 			$fields['hours_today'] = __( 'Heutige Öffnungszeit', 'unternehmensdaten' );
 			$fields['open_now']    = __( 'Geöffnet-Status', 'unternehmensdaten' );
+			$fields['is_open']     = __( 'Geöffnet (ja/nein)', 'unternehmensdaten' );
+		}
+
+		// Das Banner, um es in Bricks oder Etch selbst zu gestalten.
+		if ( $builder && UNDT_Modules::is_active( 'banner' ) ) {
+			$fields['banner_show']        = __( 'Banner: anzeigen (ja/nein)', 'unternehmensdaten' );
+			$fields['banner_type']        = __( 'Banner: Art', 'unternehmensdaten' );
+			$fields['banner_text']        = __( 'Banner: Text', 'unternehmensdaten' );
+			$fields['banner_link_text']   = __( 'Banner: Link-Text', 'unternehmensdaten' );
+			$fields['banner_link_url']    = __( 'Banner: Link-Ziel', 'unternehmensdaten' );
+			$fields['banner_dismissible'] = __( 'Banner: schließbar (ja/nein)', 'unternehmensdaten' );
 		}
 
 		return $fields;
@@ -137,6 +155,13 @@ final class UNDT_Dynamic {
 				return UNDT_Hours::is_open_now()
 					? __( 'Jetzt geöffnet', 'unternehmensdaten' )
 					: __( 'Zurzeit geschlossen', 'unternehmensdaten' );
+
+			case 'is_open':
+				return self::flag( UNDT_Modules::is_active( 'hours' ) && UNDT_Hours::has_data() && UNDT_Hours::is_open_now() );
+		}
+
+		if ( 0 === strpos( $key, 'banner_' ) ) {
+			return self::banner_value( substr( $key, 7 ) );
 		}
 
 		if ( '_link' === substr( $key, -5 ) ) {
@@ -180,6 +205,60 @@ final class UNDT_Dynamic {
 		}
 
 		return $values;
+	}
+
+	/**
+	 * Ein Ja-Nein-Wert als Text.
+	 *
+	 * @param bool $state Zustand.
+	 * @return string 1 oder Leerstring.
+	 */
+	private static function flag( $state ) {
+		return $state ? '1' : '';
+	}
+
+	/**
+	 * Eine Angabe des Infobanners.
+	 *
+	 * @param string $part show, type, text, link_text, link_url oder dismissible.
+	 * @return string
+	 */
+	private static function banner_value( $part ) {
+		if ( ! UNDT_Modules::is_active( 'banner' ) ) {
+			return '';
+		}
+
+		switch ( $part ) {
+			case 'show':
+				// Dieselbe Bedingung wie fuer das mitgelieferte Banner.
+				return self::flag( UNDT_Blocks::banner_active() );
+
+			case 'type':
+				$type = (string) UNDT_Content::value( 'banner', 'type' );
+
+				return in_array( $type, array( 'info', 'success', 'warning', 'urgent' ), true ) ? $type : 'info';
+
+			case 'text':
+				return trim( (string) UNDT_Content::value( 'banner', 'text' ) );
+
+			case 'link_url':
+				return trim( (string) UNDT_Content::value( 'banner', 'link_url' ) );
+
+			case 'link_text':
+				$text = trim( (string) UNDT_Content::value( 'banner', 'link_text' ) );
+
+				// Wie das mitgelieferte Banner: ein Link ohne Text heisst „Mehr erfahren“.
+				if ( '' === $text && '' !== self::banner_value( 'link_url' ) ) {
+					$text = __( 'Mehr erfahren', 'unternehmensdaten' );
+				}
+
+				return $text;
+
+			case 'dismissible':
+				return self::flag( (bool) UNDT_Content::value( 'banner', 'dismissible' ) );
+		}
+
+		return '';
 	}
 
 	/**
@@ -448,7 +527,7 @@ final class UNDT_Dynamic {
 	 * @return bool
 	 */
 	private static function is_link_key( $key ) {
-		if ( '_link' === substr( $key, -5 ) ) {
+		if ( '_link' === substr( $key, -5 ) || 'banner_link_url' === $key ) {
 			return true;
 		}
 
@@ -466,9 +545,20 @@ final class UNDT_Dynamic {
 	 * @return mixed
 	 */
 	public static function etch_options( $data ) {
-		if ( is_array( $data ) ) {
-			$data['undt'] = self::values( self::CONTEXT_BUILDER );
+		if ( ! is_array( $data ) ) {
+			return $data;
 		}
+
+		$values = self::values( self::CONTEXT_BUILDER );
+
+		// Echte Wahrheitswerte, damit Bedingungen wie {options.undt.banner_show} greifen.
+		foreach ( self::FLAGS as $flag ) {
+			if ( array_key_exists( $flag, $values ) ) {
+				$values[ $flag ] = '1' === $values[ $flag ];
+			}
+		}
+
+		$data['undt'] = $values;
 
 		return $data;
 	}

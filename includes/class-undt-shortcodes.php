@@ -59,6 +59,10 @@ final class UNDT_Shortcodes {
 	 * @return void
 	 */
 	public static function register_style() {
+		if ( wp_style_is( 'undt', 'registered' ) ) {
+			return;
+		}
+
 		wp_register_style( 'undt', false, array(), UNDT_VERSION );
 		wp_add_inline_style( 'undt', UNDT_Render::css() . UNDT_Blocks::css() );
 	}
@@ -66,12 +70,16 @@ final class UNDT_Shortcodes {
 	/**
 	 * Fordert das Stylesheet an.
 	 *
+	 * Block-Themes und Etch bauen die Seitenvorlage auf, bevor
+	 * wp_enqueue_scripts laeuft. Das Stylesheet wird deshalb bei Bedarf sofort
+	 * registriert. Sonst fehlte das CSS genau dort, wo Shortcodes in Vorlagen
+	 * stehen, und etwa der Hinweis fuer Screenreader wurde sichtbar.
+	 *
 	 * @return void
 	 */
 	private static function need_style() {
-		if ( wp_style_is( 'undt', 'registered' ) ) {
-			wp_enqueue_style( 'undt' );
-		}
+		self::register_style();
+		wp_enqueue_style( 'undt' );
 	}
 
 	/**
@@ -80,9 +88,11 @@ final class UNDT_Shortcodes {
 	 * [undt key="phone"]
 	 * [undt key="phone" link="1" before="Telefon: "]
 	 * [undt key="email" obfuscate="1"]
+	 * [undt key="maps_google" link="1" text="Route planen"]
 	 *
 	 * before und after werden nur ausgegeben, wenn das Feld auch einen Wert hat.
-	 * So entsteht bei einem leeren Feld kein verwaistes "Telefon: ".
+	 * So entsteht bei einem leeren Feld kein verwaistes "Telefon: ". text ersetzt
+	 * bei Links den sichtbaren Wert.
 	 *
 	 * @param array|string $atts Attribute.
 	 * @return string
@@ -92,6 +102,7 @@ final class UNDT_Shortcodes {
 			array(
 				'key'       => '',
 				'link'      => '0',
+				'text'      => '',
 				'obfuscate' => '0',
 				'before'    => '',
 				'after'     => '',
@@ -113,6 +124,7 @@ final class UNDT_Shortcodes {
 		$link     = ! empty( $atts['link'] ) && '0' !== $atts['link'];
 		$obf      = ! empty( $atts['obfuscate'] ) && '0' !== $atts['obfuscate'];
 		$fallback = '' === $atts['fallback'] ? '' : esc_html( $atts['fallback'] );
+		$label    = trim( (string) $atts['text'] );
 
 		if ( '' === trim( $value ) ) {
 			return $fallback;
@@ -120,16 +132,16 @@ final class UNDT_Shortcodes {
 
 		switch ( $field['type'] ) {
 			case 'email':
-				$html = UNDT_Render::email_link( $value, $link, $obf );
+				$html = UNDT_Render::email_link( $value, $link, $obf, $label );
 				break;
 
 			case 'tel':
-				$html = $link ? UNDT_Render::tel_link( $value ) : esc_html( $value );
+				$html = $link ? UNDT_Render::tel_link( $value, $label ) : esc_html( $value );
 				break;
 
 			case 'url':
 				$html = $link
-					? '<a href="' . esc_url( $value ) . '">' . esc_html( $value ) . '</a>'
+					? '<a href="' . esc_url( $value ) . '">' . esc_html( '' === $label ? $value : $label ) . '</a>'
 					: esc_html( $value );
 				break;
 
@@ -142,7 +154,7 @@ final class UNDT_Shortcodes {
 				if ( '' === $text ) {
 					$html = '';
 				} elseif ( $link ) {
-					$html = '<a href="' . esc_url( $target['url'] ) . '">' . esc_html( $text ) . '</a>';
+					$html = '<a href="' . esc_url( $target['url'] ) . '">' . esc_html( '' === $label ? $text : $label ) . '</a>';
 				} else {
 					$html = esc_html( $text );
 				}
@@ -564,7 +576,7 @@ final class UNDT_Shortcodes {
 			$catalog[] = array(
 				'code'  => '[undt_social]',
 				'title' => __( 'Social-Profile', 'unternehmensdaten' ),
-				'desc'  => __( 'Liste der Profile als Navigation. Jeder Link trägt eine eigene Klasse und ein data-platform-Attribut, an die sich Icons per CSS anhängen lassen.', 'unternehmensdaten' ),
+				'desc'  => __( 'Liste der Profile als Navigation, auf Wunsch mit den Symbolen der Plattformen. Jeder Link trägt zusätzlich eine eigene Klasse und ein data-platform-Attribut.', 'unternehmensdaten' ),
 				'atts'  => __( 'label: eigene Beschriftung für das aria-label der Navigation.', 'unternehmensdaten' ),
 			);
 		}

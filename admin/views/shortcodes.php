@@ -95,7 +95,7 @@ $undt_first = key( $undt_panels );
 	<!-- Einzelne Felder -->
 	<div id="undt-panel-fields" class="undt-panel" role="tabpanel" aria-labelledby="undt-tab-fields"<?php echo 'fields' === $undt_first ? '' : ' hidden'; ?>>
 		<p class="description undt-section-hint">
-			<?php esc_html_e( 'Zusätzliche Attribute: link="1" macht Telefon, E-Mail und URL anklickbar, obfuscate="1" verschleiert E-Mail-Adressen, before und after ergänzen Text, der nur erscheint, wenn das Feld auch gefüllt ist.', 'unternehmensdaten' ); ?>
+			<?php esc_html_e( 'Zusätzliche Attribute: link="1" macht Telefon, E-Mail, URL und Seiten anklickbar, text ersetzt dabei den sichtbaren Wert, etwa text="Route planen". obfuscate="1" verschleiert E-Mail-Adressen, before und after ergänzen Text, der nur erscheint, wenn das Feld auch gefüllt ist.', 'unternehmensdaten' ); ?>
 		</p>
 
 		<?php foreach ( $undt_tabs as $undt_tab => $undt_tab_label ) : ?>
@@ -197,7 +197,7 @@ $undt_first = key( $undt_panels );
 		</table>
 
 		<p class="description undt-section-hint">
-			<?php esc_html_e( 'Werte mit „(Link)“ liefern eine Adresse und gehören in Link-Felder. Öffnungszeit und Geöffnet-Status ändern sich im Lauf des Tages und fehlen deshalb bei Slim SEO; hinter einem Seiten-Cache zeigen sie den Stand der Zwischenspeicherung.', 'unternehmensdaten' ); ?>
+			<?php esc_html_e( 'Werte mit „(Link)“ liefern eine Adresse und gehören in Link-Felder. Werte mit „(ja/nein)“ eignen sich für Bedingungen: Bricks bekommt 1 oder nichts, Etch true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO; die Öffnungsangaben zeigen hinter einem Seiten-Cache den Stand der Zwischenspeicherung.', 'unternehmensdaten' ); ?>
 		</p>
 	</div>
 
