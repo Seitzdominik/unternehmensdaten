@@ -312,6 +312,16 @@ final class UNDT_Modules {
 							),
 						),
 					),
+					'layout' => array(
+						'label'   => __( 'Darstellung', 'unternehmensdaten' ),
+						'type'    => 'select',
+						'default' => 'list',
+						'choices' => array(
+							'list' => __( 'Untereinander (ein Profil je Zeile)', 'unternehmensdaten' ),
+							'row'  => __( 'Nebeneinander (in einer Reihe)', 'unternehmensdaten' ),
+						),
+						'help'    => __( 'Nebeneinander passt zu einer Reihe aus Symbolen, etwa im Footer. Einzelne Ausgaben lassen sich mit [undt_social layout="row"] davon abweichend setzen.', 'unternehmensdaten' ),
+					),
 					'show_icons'   => array(
 						'label' => __( 'Symbole anzeigen', 'unternehmensdaten' ),
 						'type'  => 'checkbox',

@@ -12,6 +12,9 @@ require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
 require UNDT_TEST_BASE . 'admin/class-undt-controls.php';
 require UNDT_TEST_BASE . 'admin/class-undt-copy.php';
 
+// Nur fuer die Versionskennung der Skripte, siehe UNDT_Dynamic_Gutenberg::editor().
+require UNDT_TEST_BASE . 'admin/class-undt-admin.php';
+
 /*
  * Attrappen fuer die Auswahl der Seitenfelder. Sie stehen hier und nicht im
  * Harness, weil nur diese Datei und test-audit-findings.php die Admin-Klasse
@@ -571,7 +574,10 @@ undt_ok( false !== strpos( $undt_html, '</svg></span><span class="screen-reader-
 undt_ok( false !== strpos( $undt_html, 'data-undt-copy="{options.undt.phone}" title="Etch: {options.undt.phone} kopieren"><span class="undt-copy__badge" aria-hidden="true"><svg class="undt-copy__icon" viewBox="0 0 110 87"' ), 'Etch-Logo im Rahmen kopiert den Etch-Ausdruck' );
 undt_ok( false === strpos( $undt_html, 'aria-hidden="true">B</span>' ) && false === strpos( $undt_html, 'aria-hidden="true">E</span>' ), 'Keine Buchstaben mehr' );
 undt_ok( false !== strpos( $undt_html, 'data-undt-copy="{undt_postal_code}"' ) && false !== strpos( $undt_html, 'data-undt-copy="{options.undt.city}"' ), 'Auch die Felder eines Paares' );
-undt_ok( 6 === substr_count( $undt_html, 'undt-copy--icon' ), 'Zwei Kuerzel je Feld, das nicht geltende ausgenommen' );
+undt_ok( 9 === substr_count( $undt_html, 'undt-copy--icon' ), 'Drei Knoepfe je Feld, das nicht geltende ausgenommen' );
+undt_ok( false !== strpos( $undt_html, 'class="undt-copy undt-copy--icon undt-copy--gutenberg" data-undt-copy="&lt;!-- wp:paragraph {&quot;metadata&quot;' ), 'Der dritte Knopf kopiert einen Block fuer Gutenberg' );
+undt_ok( false !== strpos( $undt_html, 'title="Gutenberg: Absatz mit „Telefon“ kopieren und im Editor einfügen"' ), 'Der Tooltip nennt das Feld, nicht die Auszeichnung' );
+undt_ok( false !== strpos( $undt_html, '<span class="undt-copy__badge" aria-hidden="true"><span class="dashicons dashicons-wordpress-alt"></span></span>' ), 'Das W von WordPress statt eines eigenen Logos' );
 undt_ok( false === strpos( $undt_html, '{undt_share_capital}' ) && false !== strpos( $undt_html, 'data-undt-copy="[undt key=&quot;share_capital&quot;]"' ), 'Ein Feld, das die Builder nicht aufloesen, behaelt nur den Shortcode' );
 undt_ok( false === strpos( $undt_html, '{undt_phone_link}' ), 'Die Link-Varianten stehen nur in der Referenz' );
 
@@ -603,6 +609,66 @@ undt_ok( class_exists( 'UNDT_Dynamic_SlimSeo' ) && class_exists( 'UNDT_Dynamic_B
 $GLOBALS['undt_filters'] = array();
 UNDT_Dynamic_Bricks::register();
 undt_ok( empty( $GLOBALS['undt_filters']['slim_seo_variables'] ) && ! empty( $GLOBALS['undt_filters']['bricks/dynamic_tags_list'] ), 'Jede Klasse haengt nur ihre eigenen Haken ein' );
+
+/* ------------------------------------------------- 12. Gutenberg ------- */
+
+undt_head( 'Block-Bindungen fuer den Block-Editor' );
+
+undt_seed( array( 'legal_form' => 'sole', 'vat_status' => 'standard' ), array( 'phone' => '+49 30 1', 'company_name' => 'Muster' ) );
+
+$GLOBALS['undt_bindings'] = array();
+$GLOBALS['undt_filters']  = array();
+UNDT_Dynamic::register();
+
+$undt_source = UNDT_Dynamic_Gutenberg::SOURCE;
+
+undt_ok( isset( $GLOBALS['undt_bindings'][ $undt_source ] ), 'Die Quelle ist angemeldet' );
+undt_ok( (bool) preg_match( '#^[a-z0-9-]+/[a-z0-9-]+$#', $undt_source ), 'Ihr Name entspricht dem, was WordPress zulaesst' );
+undt_ok( 'Unternehmensdaten' === $GLOBALS['undt_bindings'][ $undt_source ]['label'], 'Der Editor zeigt den Namen des Plugins' );
+undt_ok( is_callable( $GLOBALS['undt_bindings'][ $undt_source ]['get_value_callback'] ), 'Und fragt beim Rendern nach dem Wert' );
+undt_ok( ! empty( $GLOBALS['undt_filters']['enqueue_block_editor_assets'] ), 'Das Skript fuer den Editor haengt am richtigen Haken' );
+
+// Der Wert kommt aus derselben Quelle wie ueberall sonst.
+undt_ok( '+49 30 1' === UNDT_Dynamic_Gutenberg::value( array( 'key' => 'phone' ) ), 'Die Bindung liefert den Wert des Feldes' );
+undt_ok( '' === UNDT_Dynamic_Gutenberg::value( array( 'key' => 'gibt_es_nicht' ) ) && '' === UNDT_Dynamic_Gutenberg::value( array() ), 'Ein unbekannter Schluessel liefert nichts' );
+
+/*
+ * Ja-Nein-Werte fallen weg: eine 1 als Absatz waere niemandem gedient, und
+ * Bedingungen kennt der Block-Editor nicht.
+ */
+undt_ok( UNDT_Dynamic_Gutenberg::offers( 'phone' ) && ! UNDT_Dynamic_Gutenberg::offers( 'is_open' ), 'Angeboten wird, was sich lesen laesst' );
+undt_ok( '' === UNDT_Dynamic_Gutenberg::markup( 'is_open' ) && '' === UNDT_Dynamic_Gutenberg::value( array( 'key' => 'is_open' ) ), 'Fuer einen Ja-Nein-Wert gibt es keinen Block' );
+
+$undt_block = UNDT_Dynamic_Gutenberg::markup( 'phone' );
+
+undt_ok(
+	"<!-- wp:paragraph {\"metadata\":{\"bindings\":{\"content\":{\"source\":\"unternehmensdaten/feld\",\"args\":{\"key\":\"phone\"}}}}} -->\n<p>Telefon</p>\n<!-- /wp:paragraph -->" === $undt_block,
+	'Der Block sieht aus, wie ihn WordPress selbst schreiben wuerde'
+);
+
+// Der Platzhalter im Absatz ist nur fuer den Editor; ausgegeben wird der Wert.
+undt_ok( false === strpos( $undt_block, '+49 30 1' ), 'Der aktuelle Wert steht nicht im Block' );
+
+preg_match( '/<!-- wp:paragraph (.*?) -->/', $undt_block, $undt_json );
+$undt_attributes = json_decode( isset( $undt_json[1] ) ? $undt_json[1] : '', true );
+undt_ok( isset( $undt_attributes['metadata']['bindings']['content'] ), 'Die Auszeichnung ist gueltiges JSON' );
+undt_ok( $undt_source === $undt_attributes['metadata']['bindings']['content']['source'], 'Sie verweist auf die angemeldete Quelle' );
+undt_ok( 'phone' === $undt_attributes['metadata']['bindings']['content']['args']['key'], 'Und nennt das Feld' );
+
+// Das Skript im Editor bekommt Namen und Werte vom Backend.
+$undt_data = UNDT_Dynamic_Gutenberg::data();
+undt_ok( $undt_source === $undt_data['source'] && 'Telefon' === $undt_data['labels']['phone'], 'Die Daten fuer den Editor nennen Quelle und Beschriftung' );
+undt_ok( '+49 30 1' === $undt_data['values']['phone'] && ! isset( $undt_data['values']['is_open'] ), 'Sie enthalten die Werte, ohne die Ja-Nein-Werte' );
+
+$GLOBALS['undt_scripts'] = array();
+UNDT_Dynamic_Gutenberg::editor();
+undt_ok( isset( $GLOBALS['undt_scripts']['undt-bindings'] ), 'Der Editor laedt das Skript' );
+undt_ok( array( 'wp-blocks' ) === $GLOBALS['undt_scripts']['undt-bindings']['deps'], 'Es laeuft erst, wenn wp-blocks da ist' );
+undt_ok( false !== strpos( $GLOBALS['undt_scripts']['undt-bindings']['inline'], 'window.undtBindings = {"source":"unternehmensdaten/feld"' ), 'Und bekommt die Werte mitgeliefert' );
+
+$undt_js = (string) file_get_contents( UNDT_TEST_BASE . 'admin/assets/gutenberg.js' );
+undt_ok( false !== strpos( $undt_js, 'window.undtBindings' ) && false !== strpos( $undt_js, 'registerBlockBindingsSource' ), 'Skript und Backend verwenden dieselben Namen' );
+undt_ok( false !== strpos( $undt_js, '! blocks.registerBlockBindingsSource' ), 'Aeltere Fassungen ohne die Schnittstelle bleiben unbehelligt' );
 
 echo empty( $GLOBALS['undt_fails'] ) ? "\n\033[32mAlle Pruefungen bestanden\033[0m\n" : "\n\033[31m" . $GLOBALS['undt_fails'] . " Pruefungen fehlgeschlagen\033[0m\n";
 exit( empty( $GLOBALS['undt_fails'] ) ? 0 : 1 );

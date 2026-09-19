@@ -100,7 +100,7 @@ undt_a( is_plugin_active( $file ) || ( is_multisite() && is_plugin_active_for_ne
 undt_a( $imprint_id > 0 && $privacy_id > 0 && $all_id > 0 && $plain_id > 0, 'Testseiten aus seed-audit.php vorhanden' );
 
 undt_s( 'Alle Klassen laden (Parse-Fehler waeren hier fatal)' );
-foreach ( array( 'UNDT_Schema', 'UNDT_Modules', 'UNDT_Store', 'UNDT_Content', 'UNDT_Hours', 'UNDT_Sanitizer', 'UNDT_Render', 'UNDT_Blocks', 'UNDT_Shortcodes', 'UNDT_SchemaOrg', 'UNDT_Api', 'UNDT_Updater', 'UNDT_Audit', 'UNDT_Admin', 'UNDT_Fields', 'UNDT_Controls', 'UNDT_Copy', 'UNDT_Dynamic', 'UNDT_Dynamic_SlimSeo', 'UNDT_Dynamic_Bricks', 'UNDT_Dynamic_Etch', 'UNDT_Transfer' ) as $cls ) {
+foreach ( array( 'UNDT_Schema', 'UNDT_Modules', 'UNDT_Store', 'UNDT_Content', 'UNDT_Hours', 'UNDT_Sanitizer', 'UNDT_Render', 'UNDT_Blocks', 'UNDT_Shortcodes', 'UNDT_SchemaOrg', 'UNDT_Api', 'UNDT_Updater', 'UNDT_Audit', 'UNDT_Admin', 'UNDT_Fields', 'UNDT_Controls', 'UNDT_Copy', 'UNDT_Dynamic', 'UNDT_Dynamic_SlimSeo', 'UNDT_Dynamic_Bricks', 'UNDT_Dynamic_Etch', 'UNDT_Dynamic_Gutenberg', 'UNDT_Transfer' ) as $cls ) {
 	undt_a( class_exists( $cls ), 'Klasse ' . $cls );
 }
 undt_php_errors_flush( 'Klassen laden' );
@@ -189,6 +189,7 @@ foreach ( array( 'undt-imprint', 'undt-hours__table', 'undt-hours-today', 'undt-
 	undt_a( false !== strpos( $b, $needle ), 'enthaelt ' . $needle );
 }
 undt_i( 'Inline-Handle undt-inline-css: ' . preg_match_all( '/<style[^>]*id=.undt-inline-css/', $b ) . ' mal' );
+undt_a( false !== strpos( $b, '<ul class="undt-stack-list undt-social__list">' ), 'Social-Profile stehen untereinander' );
 undt_a( false !== strpos( $b, '>Impressum</a>' ), 'Footer verlinkt die veroeffentlichte Impressum-Seite' );
 undt_a( false === strpos( $b, '>Datenschutz</a>' ), 'Footer verlinkt den Entwurf NICHT' );
 undt_a( false === strpos( $b, 'Datenschutz Entwurf' ), '[undt key=page_privacy link=1] verlinkt den Entwurf NICHT (erwartet: kein Link auf unveroeffentlichte Seite)' );
@@ -315,6 +316,16 @@ foreach ( $views as $view ) {
 		undt_a( $has_select2 && preg_match( '/value=["\']' . $imprint_id . '["\'][^>]*selected/', $m2[1] ), 'Seitenauswahl page_imprint enthaelt die veroeffentlichte Seite und waehlt sie' );
 		undt_a( false !== strpos( $html, 'name="undt_company[page_imprint][url]"' ), 'Neben der Auswahl steht das Feld fuer eine eigene Adresse' );
 		undt_i( 'Auswahl page_privacy: ' . ( $has_select ? preg_replace( '/\s+/', ' ', substr( $m[1], 0, 400 ) ) : 'select nicht gefunden' ) );
+
+		/*
+		 * Seit 0.5.8 steht neben Bricks und Etch ein Knopf, der einen fertigen
+		 * Block fuer Gutenberg kopiert. Block-Bindungen gibt es erst ab
+		 * WordPress 6.5; darunter fehlt der Knopf, statt ins Leere zu greifen.
+		 */
+		undt_a(
+			( false !== strpos( $html, 'undt-copy--gutenberg' ) ) === function_exists( 'register_block_bindings_source' ),
+			'Knopf fuer den Block-Editor erscheint genau dann, wenn WordPress Block-Bindungen kennt (WP ' . $wp_version . ')'
+		);
 	}
 }
 foreach ( array( 'hours', 'prices', 'social', 'faq', 'banner', 'seo' ) as $undt_slug ) {

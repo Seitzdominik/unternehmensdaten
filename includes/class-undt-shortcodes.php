@@ -388,7 +388,14 @@ final class UNDT_Shortcodes {
 			return '';
 		}
 
-		$atts = shortcode_atts( array( 'label' => '' ), $atts, 'undt_social' );
+		$atts = shortcode_atts(
+			array(
+				'label'  => '',
+				'layout' => '',
+			),
+			$atts,
+			'undt_social'
+		);
 
 		self::need_style();
 
@@ -576,8 +583,8 @@ final class UNDT_Shortcodes {
 			$catalog[] = array(
 				'code'  => '[undt_social]',
 				'title' => __( 'Social-Profile', 'unternehmensdaten' ),
-				'desc'  => __( 'Liste der Profile als Navigation, auf Wunsch mit den Symbolen der Plattformen. Jeder Link trägt zusätzlich eine eigene Klasse und ein data-platform-Attribut.', 'unternehmensdaten' ),
-				'atts'  => __( 'label: eigene Beschriftung für das aria-label der Navigation.', 'unternehmensdaten' ),
+				'desc'  => __( 'Liste der Profile als Navigation, ein Profil je Zeile, auf Wunsch mit den Symbolen der Plattformen. Jeder Link trägt zusätzlich eine eigene Klasse und ein data-platform-Attribut.', 'unternehmensdaten' ),
+				'atts'  => __( 'label: eigene Beschriftung für das aria-label der Navigation. layout: row stellt die Profile in eine Reihe, list untereinander.', 'unternehmensdaten' ),
 			);
 		}
 

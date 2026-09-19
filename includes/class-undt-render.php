@@ -696,6 +696,8 @@ final class UNDT_Render {
 			. '.undt-dl dd{margin:0}'
 			. '.undt-list{margin:0 0 1em 1.25em;padding:0}'
 			. '.undt-inline-list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.25em}'
+			// Untereinander, aber nur so breit wie der Link: sonst reichte die Klickflaeche bis zum Rand.
+			. '.undt-stack-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:.4em}'
 			. '.undt-footer p{margin:0 0 .5em}'
 			. '@media(max-width:480px){.undt-dl__row{grid-template-columns:1fr;gap:0}}';
 

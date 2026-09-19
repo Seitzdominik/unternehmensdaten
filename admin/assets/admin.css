@@ -398,6 +398,15 @@
 	height: 11px;
 }
 
+/* Das W von WordPress kommt aus den Dashicons und ist als Schriftzeichen etwas
+   zierlicher als die beiden Logos daneben, deshalb einen Tick groesser. */
+.undt-copy__badge .dashicons {
+	width: 12px;
+	height: 12px;
+	font-size: 12px;
+	line-height: 1;
+}
+
 .undt-copy--icon:hover,
 .undt-copy--icon:focus-visible {
 	color: #2271b1 !important;
@@ -474,6 +483,12 @@
 .undt-table .undt-atts {
 	color: #646970;
 	font-size: 12px;
+}
+
+/* Fuenf Spalten auf 960 Pixel: die Schreibweisen duerfen umbrechen, sie sind
+   lang. Die Beschriftung des Blocks nicht, sie ist kurz und ein Wort. */
+.undt-table--dynamic td:last-child code {
+	white-space: nowrap;
 }
 
 .undt-empty {

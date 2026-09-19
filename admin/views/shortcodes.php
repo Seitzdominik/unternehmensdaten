@@ -43,6 +43,9 @@ $undt_dynamic_builder = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER );
 $undt_dynamic_seo     = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SEO );
 $undt_dynamic_schema  = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SCHEMA );
 
+// Block-Bindungen kennt WordPress erst ab 6.5.
+$undt_gutenberg = UNDT_Dynamic_Gutenberg::available();
+
 // Alles, was irgendwo angeboten wird; die Spalten sagen, wo.
 $undt_dynamic = $undt_dynamic_builder + $undt_dynamic_schema;
 
@@ -160,7 +163,7 @@ $undt_first = key( $undt_panels );
 	<!-- Dynamische Daten -->
 	<div id="undt-panel-dynamic" class="undt-panel" role="tabpanel" aria-labelledby="undt-tab-dynamic"<?php echo 'dynamic' === $undt_first ? '' : ' hidden'; ?>>
 		<p class="description undt-section-hint">
-			<?php esc_html_e( 'Slim SEO und Bricks führen diese Werte in ihrer Auswahl dynamischer Daten unter „Unternehmensdaten“, etwa hinter den drei Punkten neben der Meta-Beschreibung und in den Schema-Einstellungen von Slim SEO Pro. In Etch steht die Schreibweise aus der letzten Spalte in Texten und Attributen, auch mit Modifikatoren wie .toUpperCase().', 'unternehmensdaten' ); ?>
+			<?php esc_html_e( 'Slim SEO und Bricks führen diese Werte in ihrer Auswahl dynamischer Daten unter „Unternehmensdaten“, etwa hinter den drei Punkten neben der Meta-Beschreibung und in den Schema-Einstellungen von Slim SEO Pro. In Etch steht die Schreibweise aus der Etch-Spalte in Texten und Attributen, auch mit Modifikatoren wie .toUpperCase(). Gutenberg kennt keine solche Schreibweise: dort kopiert der letzte Knopf einen fertigen Absatz, der sich im Editor einfügen lässt und den Wert bei jedem Aufruf neu holt.', 'unternehmensdaten' ); ?>
 		</p>
 
 		<table class="widefat striped undt-table undt-table--dynamic">
@@ -170,6 +173,7 @@ $undt_first = key( $undt_panels );
 					<th scope="col">Slim SEO</th>
 					<th scope="col">Bricks</th>
 					<th scope="col">Etch</th>
+					<th scope="col">Gutenberg</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -207,6 +211,17 @@ $undt_first = key( $undt_panels );
 							<td><span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span></td>
 							<td><span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span></td>
 						<?php endif; ?>
+						<td>
+							<?php if ( $undt_gutenberg && UNDT_Dynamic_Gutenberg::offers( $undt_key ) ) : ?>
+								<?php UNDT_Copy::button( UNDT_Dynamic_Gutenberg::markup( $undt_key ), 'inline', __( 'Absatz-Block', 'unternehmensdaten' ) ); ?>
+							<?php elseif ( ! $undt_gutenberg ) : ?>
+								<span class="undt-empty" title="<?php esc_attr_e( 'Block-Bindungen gibt es ab WordPress 6.5', 'unternehmensdaten' ); ?>">–</span>
+							<?php elseif ( in_array( $undt_key, UNDT_Dynamic::FLAGS, true ) ) : ?>
+								<span class="undt-empty" title="<?php esc_attr_e( 'Nur für Bedingungen gedacht, als Absatz ergibt der Wert nichts', 'unternehmensdaten' ); ?>">–</span>
+							<?php else : ?>
+								<span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span>
+							<?php endif; ?>
+						</td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>
@@ -214,6 +229,10 @@ $undt_first = key( $undt_panels );
 
 		<p class="description undt-section-hint">
 			<?php esc_html_e( 'Werte mit „(Link)“ liefern eine Adresse und gehören in Link-Felder. Werte mit „(ja/nein)“ eignen sich für Bedingungen: Bricks bekommt 1 oder nichts, Etch true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO; die Öffnungsangaben zeigen hinter einem Seiten-Cache den Stand der Zwischenspeicherung. Alle Adressen der Social-Profile auf einmal gibt es nur in den Schema-Einstellungen: in einem Feld, das sich vervielfältigen lässt, etwa sameAs, wird daraus je ein Eintrag pro Profil.', 'unternehmensdaten' ); ?>
+		</p>
+
+		<p class="description undt-section-hint">
+			<?php esc_html_e( 'Zum Absatz-Block: einfügen genügt, der Editor macht aus dem kopierten Text einen Block. Was darin steht, ist nur ein Platzhalter; ausgegeben wird immer der aktuelle Wert, und ändern lässt er sich nur hier. Ein Wert mitten im Satz geht so nicht, denn die Bindung gilt für den ganzen Absatz — dafür bleibt der Shortcode aus der Registerkarte „Einzelne Felder“.', 'unternehmensdaten' ); ?>
 		</p>
 	</div>
 

@@ -42,7 +42,10 @@ mitbringt, seit 0.5.5 die Haken fuer die Schema-Einstellungen von Slim SEO Pro
 und seit 0.5.6 das Sichern und Einspielen in echtem WordPress, die Listen fuer
 openingHoursSpecification und der Knopf, der die Zeiten des ersten Tages
 uebertraegt. Seit 0.5.7 prueft der Lauf ausserdem, dass der Autoloader jede der
-neuen Klassen findet. Stand 0.5.7 sind es 202 Pruefungen.
+neuen Klassen findet. Seit 0.5.8 rendert er den Block, den das Backend zum
+Einfuegen anbietet, mit do_blocks() und vergleicht das Ergebnis mit dem Wert im
+Feld: nur so zeigt sich, ob die Block-Bindung wirklich greift. Stand 0.5.8 sind
+es 220 Pruefungen.
 
 Weder Slim SEO noch Bricks noch Etch laufen im Playground. Ihre Haken werden
 dort direkt aufgerufen. Wie sich die Anbindung mit dem echten Werkzeug
@@ -175,8 +178,12 @@ Seit 0.5.7 hat jede Aufgabe ihre eigene Klasse. Wer etwas sucht, findet es
 hier:
 
 * `UNDT_Dynamic` — welche dynamischen Werte es gibt und was darin steht.
-  `UNDT_Dynamic_SlimSeo`, `UNDT_Dynamic_Bricks` und `UNDT_Dynamic_Etch` holen
-  sie ab; ein weiteres Werkzeug kostet nur eine weitere kleine Klasse
+  `UNDT_Dynamic_SlimSeo`, `UNDT_Dynamic_Bricks`, `UNDT_Dynamic_Etch` und
+  `UNDT_Dynamic_Gutenberg` holen sie ab; ein weiteres Werkzeug kostet nur eine
+  weitere kleine Klasse. Gutenberg faellt dabei aus der Reihe: statt einer
+  Schreibweise im Text meldet es eine Block-Bindung an (`unternehmensdaten/feld`,
+  ab WordPress 6.5) und liefert dem Backend die Auszeichnung eines fertigen
+  Absatzes zum Kopieren
 * `UNDT_Fields` — das Raster einer Formularseite: Zeilen, Feldpaare, Zellen,
   Beschriftungen. `UNDT_Controls` fuellt es mit Eingabeelementen, `UNDT_Copy`
   liefert Kopierknoepfe und Referenztabellen
@@ -202,7 +209,7 @@ deshalb bei einer neuen Klasse eine Zeile mehr.
 
 ## Offline-Tests
 
-Ueber 500 Pruefungen gegen WordPress-Attrappen, ohne Playground und in wenigen
+Ueber 600 Pruefungen gegen WordPress-Attrappen, ohne Playground und in wenigen
 Sekunden:
 
     php dev/tests/test-stammdaten.php

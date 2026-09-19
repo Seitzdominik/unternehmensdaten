@@ -6,9 +6,10 @@
  * ein Werkzeug sie schreibt (syntax) und was gerade darin steht (value). Wer
  * sie abholt, steht je in einer eigenen Klasse:
  *
- *   Slim SEO  {{ undt.phone }}      UNDT_Dynamic_SlimSeo
- *   Bricks    {undt_phone}          UNDT_Dynamic_Bricks
- *   Etch      {options.undt.phone}  UNDT_Dynamic_Etch
+ *   Slim SEO   {{ undt.phone }}      UNDT_Dynamic_SlimSeo
+ *   Bricks     {undt_phone}          UNDT_Dynamic_Bricks
+ *   Etch       {options.undt.phone}  UNDT_Dynamic_Etch
+ *   Gutenberg  Block-Bindung         UNDT_Dynamic_Gutenberg
  *
  * Die Trennung hat einen praktischen Grund: die Eigenheiten der Werkzeuge
  * aendern sich haeufiger als die Werte, und ein weiteres Werkzeug kostet dann
@@ -68,6 +69,7 @@ final class UNDT_Dynamic {
 		UNDT_Dynamic_SlimSeo::register();
 		UNDT_Dynamic_Bricks::register();
 		UNDT_Dynamic_Etch::register();
+		UNDT_Dynamic_Gutenberg::register();
 	}
 
 	/**
@@ -154,6 +156,9 @@ final class UNDT_Dynamic {
 
 	/**
 	 * Die Schreibweise eines Schluessels in Slim SEO, Bricks und Etch.
+	 *
+	 * Gutenberg fehlt hier: dort steht kein Kuerzel im Text, sondern eine
+	 * Bindung am Block, siehe UNDT_Dynamic_Gutenberg::markup().
 	 *
 	 * @param string $key Schluessel aus fields().
 	 * @return array slim_seo, bricks und etch.

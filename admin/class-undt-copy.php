@@ -58,10 +58,11 @@ final class UNDT_Copy {
 	 * Die Kopierknoepfe unter einem Feld.
 	 *
 	 * Stammdaten zeigen den Shortcode, daneben stehen die Logos von Bricks und
-	 * Etch fuer die jeweilige Schreibweise. Den Tag selbst nennt nur der
-	 * Tooltip, damit unter jedem Feld eine Zeile genuegt. Felder der
-	 * Inhaltsbereiche haben keinen Shortcode, manche aber einen Wert fuer die
-	 * Builder, etwa die Angaben des Infobanners.
+	 * Etch fuer die jeweilige Schreibweise und das von WordPress fuer den
+	 * fertigen Block. Den Tag selbst nennt nur der Tooltip, damit unter jedem
+	 * Feld eine Zeile genuegt. Felder der Inhaltsbereiche haben keinen
+	 * Shortcode, manche aber einen Wert fuer die Builder, etwa die Angaben des
+	 * Infobanners.
 	 *
 	 * @param string $shortcode Shortcode, leer fuer keinen.
 	 * @param string $dynamic   Schluessel fuer Bricks und Etch, leer fuer keinen.
@@ -69,7 +70,8 @@ final class UNDT_Copy {
 	 */
 	public static function row( $shortcode, $dynamic ) {
 		// Nur, was die Builder auch tatsaechlich aufloesen.
-		$builder = '' !== $dynamic && array_key_exists( $dynamic, UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER ) );
+		$fields  = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER );
+		$builder = '' !== $dynamic && array_key_exists( $dynamic, $fields );
 
 		if ( '' === $shortcode && ! $builder ) {
 			return;
@@ -90,6 +92,23 @@ final class UNDT_Copy {
 			self::icon( $syntax['bricks'], 'bricks', 'Bricks' );
 			self::icon( $syntax['etch'], 'etch', 'Etch' );
 
+			/*
+			 * Gutenberg bekommt keinen Tag, sondern einen fertigen Absatz. Der
+			 * Tooltip nennt deshalb das Feld statt des kopierten Textes.
+			 */
+			if ( UNDT_Dynamic_Gutenberg::available() && UNDT_Dynamic_Gutenberg::offers( $dynamic ) ) {
+				self::icon(
+					UNDT_Dynamic_Gutenberg::markup( $dynamic ),
+					'gutenberg',
+					'Gutenberg',
+					sprintf(
+						/* translators: %s: Feldbezeichnung, etwa „Telefon“. */
+						__( 'Gutenberg: Absatz mit „%s“ kopieren und im Editor einfügen', 'unternehmensdaten' ),
+						$fields[ $dynamic ]
+					)
+				);
+			}
+
 			echo '</span>';
 		}
 
@@ -99,18 +118,21 @@ final class UNDT_Copy {
 	/**
 	 * Ein Kopierknopf, der statt des Textes nur ein Logo zeigt.
 	 *
-	 * @param string $text Zu kopierender Text.
-	 * @param string $icon Name des Symbols, siehe UNDT_Icons::svg().
-	 * @param string $tool Name des Werkzeugs fuer Tooltip und Screenreader.
+	 * @param string $text  Zu kopierender Text.
+	 * @param string $icon  Name des Symbols, siehe UNDT_Icons::svg().
+	 * @param string $tool  Name des Werkzeugs fuer Tooltip und Screenreader.
+	 * @param string $label Eigener Tooltip, leer fuer „Werkzeug: Tag kopieren“.
 	 * @return void
 	 */
-	private static function icon( $text, $icon, $tool ) {
-		$label = sprintf(
-			/* translators: 1: Werkzeug, etwa Bricks, 2: zu kopierender Tag. */
-			__( '%1$s: %2$s kopieren', 'unternehmensdaten' ),
-			$tool,
-			$text
-		);
+	private static function icon( $text, $icon, $tool, $label = '' ) {
+		if ( '' === $label ) {
+			$label = sprintf(
+				/* translators: 1: Werkzeug, etwa Bricks, 2: zu kopierender Tag. */
+				__( '%1$s: %2$s kopieren', 'unternehmensdaten' ),
+				$tool,
+				$text
+			);
+		}
 
 		// Das Logo sitzt in einem kleinen Rahmen, damit es als Knopf erkennbar ist.
 		printf(
@@ -118,8 +140,26 @@ final class UNDT_Copy {
 			esc_attr( $icon ),
 			esc_attr( $text ),
 			esc_attr( $label ),
-			UNDT_Icons::svg( $icon, 'undt-copy__icon' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- festes Markup.
+			self::glyph( $icon ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- festes Markup.
 		);
+	}
+
+	/**
+	 * Das Zeichen im Rahmen eines Symbol-Knopfes.
+	 *
+	 * Bricks und Etch bringen ihr Logo als SVG mit. Fuer WordPress selbst gibt
+	 * es kein eigenes: das W steht in den Dashicons, die im Backend ohnehin
+	 * geladen sind.
+	 *
+	 * @param string $icon Name des Symbols.
+	 * @return string
+	 */
+	private static function glyph( $icon ) {
+		if ( 'gutenberg' === $icon ) {
+			return '<span class="dashicons dashicons-wordpress-alt"></span>';
+		}
+
+		return UNDT_Icons::svg( $icon, 'undt-copy__icon' );
 	}
 
 	/**
@@ -129,15 +169,19 @@ final class UNDT_Copy {
 	 * Hauptsache ist, und „inline“ fuer die Feldbeschriftungen, wo eine
 	 * vollwertige Schaltflaeche je Feld die Seite zustellen wuerde.
 	 *
-	 * @param string $text  Zu kopierender Text.
-	 * @param string $style button oder inline.
+	 * @param string $text    Zu kopierender Text.
+	 * @param string $style   button oder inline.
+	 * @param string $caption Sichtbare Beschriftung, leer fuer den Text selbst.
 	 * @return void
 	 */
-	public static function button( $text, $style = 'button' ) {
+	public static function button( $text, $style = 'button', $caption = '' ) {
+		// Was kopiert wird, passt nicht immer auf einen Knopf: ein ganzer Block etwa.
+		$shown = '' === $caption ? $text : $caption;
+
 		$label = sprintf(
 			/* translators: %s: Shortcode, Tag oder Funktionsaufruf. */
 			__( '%s kopieren', 'unternehmensdaten' ),
-			$text
+			$shown
 		);
 
 		if ( 'inline' === $style ) {
@@ -145,7 +189,7 @@ final class UNDT_Copy {
 				'<button type="button" class="undt-copy undt-copy--inline" data-undt-copy="%1$s" title="%2$s"><span class="dashicons dashicons-clipboard" aria-hidden="true"></span><code>%3$s</code><span class="screen-reader-text">%2$s</span></button>',
 				esc_attr( $text ),
 				esc_attr( $label ),
-				esc_html( $text )
+				esc_html( $shown )
 			);
 
 			return;
@@ -154,7 +198,7 @@ final class UNDT_Copy {
 		printf(
 			'<button type="button" class="button button-small undt-copy" data-undt-copy="%1$s"><span class="dashicons dashicons-clipboard" aria-hidden="true"></span> <code>%2$s</code><span class="screen-reader-text">%3$s</span></button>',
 			esc_attr( $text ),
-			esc_html( $text ),
+			esc_html( $shown ),
 			esc_attr( $label )
 		);
 	}

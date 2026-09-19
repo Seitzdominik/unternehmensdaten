@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.7
+Stable tag: 0.5.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,17 +69,18 @@ Die Kartenlinks `maps_google` und `maps_apple` liegen bei der Anschrift. Bleiben
 * `[undt_hours_today]` die heute geltende Zeit, Attribute `prefix`, `closed_text`
 * `[undt_open_now]` ob gerade geöffnet ist, Attribute `open_text`, `closed_text`
 * `[undt_prices]` Preisliste, Attribute `group`, `intro`, `footnote`, `heading_level`
-* `[undt_social]` die Profile als Navigation, Attribut `label`. Symbole, Plattformnamen und der Pfeil für neue Tabs lassen sich unter Social Media schalten, die Symbolgröße über `--undt-social-icon-size`
+* `[undt_social]` die Profile als Navigation, ein Profil je Zeile, Attribute `label` und `layout` (`row` stellt sie in eine Reihe). Darstellung, Symbole, Plattformnamen und der Pfeil für neue Tabs lassen sich unter Social Media schalten, die Symbolgröße über `--undt-social-icon-size`
 * `[undt_faq]` Fragen und Antworten, Attribute `group`, `style`, `heading_level`
 * `[undt_banner]` das Infobanner an dieser Stelle
 
 == Dynamische Daten ==
 
-Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise. In den Stammdaten stehen unter jedem Feld neben dem Shortcode die Kürzel B und E: ein Klick kopiert die Schreibweise für Bricks beziehungsweise Etch, der Tooltip nennt sie.
+Slim SEO, Bricks, Etch und der Block-Editor bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise. In den Stammdaten steht unter jedem Feld neben dem Shortcode ein Knopf je Werkzeug: ein Klick kopiert die Schreibweise, der Tooltip nennt sie.
 
 * **Slim SEO** `{{ undt.phone }}`, etwa in Meta-Titel und Meta-Beschreibung hinter den drei Punkten, und mit Slim SEO Pro ebenso in den Schema-Einstellungen
 * **Bricks** `{undt_phone}` in jedem Feld für dynamische Daten, ohne dass Code-Ausführung eingeschaltet sein muss. Die Bricks-Filter für die Wortzahl und den Ersatzwert funktionieren wie gewohnt, etwa `{undt_fax @fallback:'kein Fax'}`
 * **Etch** `{options.undt.phone}` in Texten und Attributen, auch mit Modifikatoren wie `{options.undt.company_name.toUpperCase()}`
+* **Gutenberg** ein fertiger Absatz zum Einfügen, siehe unten
 
 Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
 
@@ -88,6 +89,16 @@ In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben
 Für `openingHoursSpecification` gibt es drei Listen, die zusammengehören: `{{ undt.hours_days }}`, `{{ undt.hours_opens }}` und `{{ undt.hours_closes }}`. In die drei Felder der Gruppe eingesetzt, entsteht je Tag und Zeitfenster ein Eintrag — eine Mittagspause also zwei, ein geschlossener Tag keinen. Die Gruppe muss dafür vervielfältigbar sein, angelegt wird sie nur einmal.
 
 Ein Hinweis zu Telefon und Postleitzahl: Slim SEO macht aus einem Wert, der nur aus Ziffern besteht, eine Zahl, und dabei geht eine führende Null verloren. Das betrifft jede Variable, nicht nur diese hier. Mit Leerzeichen oder Ländervorwahl geschrieben — `0151 23456789` oder `+49 151 23456789` — bleibt die Nummer als Text stehen. Die eigene Auszeichnung des Plugins und die Shortcodes geben die Nummer ohnehin unverändert aus.
+
+= Im Block-Editor =
+
+Gutenberg kennt keine Kurzschreibweise mitten im Satz. Stattdessen merkt sich seit WordPress 6.5 ein Block, woher sein Text kommt, und holt ihn bei jeder Ausgabe neu — eine Block-Bindung. Das Plugin meldet dafür die Quelle „Unternehmensdaten“ an.
+
+Der Knopf mit dem W neben Bricks und Etch kopiert deshalb keinen Tag, sondern einen fertigen Absatz. Im Editor genügt einfügen: aus dem kopierten Text wird ein richtiger Block, der den Wert anzeigt. Ändern lässt er sich dort nicht, die Angaben stehen unter Unternehmensdaten. Wer den Wert mitten im laufenden Text braucht, nimmt weiterhin den Shortcode `[undt key="phone"]`, denn eine Bindung gilt immer für den ganzen Block.
+
+Ab WordPress 6.7 zeigt der Editor den Wert selbst an, davor den Namen des Feldes als Platzhalter; ausgegeben wird in beiden Fällen der aktuelle Wert. Unter WordPress 6.4 fehlt der Knopf, dort gibt es noch keine Block-Bindungen.
+
+Wer die Auszeichnung selbst schreibt, kann dieselbe Quelle auch an Überschriften, Bilder und Buttons hängen — WordPress lässt Bindungen dort für `content`, `url`, `alt`, `title`, `text` und `rel` zu.
 
 == Page Builder ==
 
@@ -126,6 +137,8 @@ Ein REST-Endpunkt fehlt bewusst: Page Builder laufen auf dem Server und brauchen
 == Bewusste Entscheidungen ==
 
 **Keine Datenschutz- und AGB-Texte.** Deren Inhalt hängt an den tatsächlich eingesetzten Diensten und gehört in die Hand einer Rechtsberatung. Das Plugin liefert stattdessen die Datenbausteine, die in einen solchen Text eingesetzt werden.
+
+**Keine eigenen Blöcke.** Für den Block-Editor bringt das Plugin keine eigenen Blöcke mit, sondern füllt die Blöcke von WordPress über Block-Bindungen. Ein eigener Block wäre ein zweiter Ort für Gestaltung, würde eigene Skripte in den Editor laden und müsste jede Änderung der Block-API mitgehen. Ein gebundener Absatz ist dagegen ein gewöhnlicher Absatz des Themes, der nur seinen Text woanders herholt.
 
 **Keine Markenlogos für Social Media.** Plattformlogos sind geschützte Zeichen, die ein Plugin nicht ungefragt mitbringen sollte. Jeder Link trägt stattdessen eine eigene Klasse und ein `data-platform`-Attribut, an die sich ein Icon-Set des Themes per CSS anhängen lässt.
 
@@ -186,6 +199,10 @@ Mit WP-CLI geht dasselbe ohne Backend:
 * `wp undt import firma.json` spielt sie ein, mit `--yes` ohne Rückfrage
 
 == Changelog ==
+
+= 0.5.8 =
+* Neu: Der Block-Editor bekommt die Stammdaten über Block-Bindungen. Unter jedem Feld steht neben Bricks und Etch ein Knopf, der einen fertigen Absatz kopiert; im Editor genügt einfügen. Der Absatz holt den Wert bei jeder Ausgabe neu, geändert wird er weiterhin nur hier. Ab WordPress 6.5, sichtbar im Editor ab 6.7
+* Geändert: `[undt_social]` stellt die Profile untereinander dar, ein Profil je Zeile. Für eine Reihe, etwa als Symbolleiste im Footer, gibt es unter Social Media die Einstellung „Darstellung“ und das Attribut `layout="row"`
 
 = 0.5.7 =
 * Innenausbau ohne sichtbare Änderung: Die Anbindungen an Slim SEO, Bricks und Etch stehen jetzt in je einer eigenen Klasse, ebenso die Eingabeelemente und die Kopierknöpfe des Backends. Das nächste Werkzeug kostet damit nur eine weitere kleine Klasse

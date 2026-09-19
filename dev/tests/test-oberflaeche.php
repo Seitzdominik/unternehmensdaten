@@ -168,6 +168,11 @@ undt_ok( false !== strpos( $css, 'tr.undt-row--toggles > td {' ), 'Das Raster si
 undt_ok( false !== strpos( $css, '.undt-tab.is-active {' ), 'Der aktive Reiter ist gestaltet' );
 undt_ok( false !== strpos( $js, "classList.toggle( 'is-active', selected )" ) && false === strpos( $js, 'nav-tab-active' ), 'Das Skript schaltet dieselbe Klasse' );
 undt_ok( false === strpos( $view, 'nav-tab' ), 'Die Ansicht verwendet keine WordPress-Reiter mehr' );
+undt_ok( false !== strpos( $css, '.undt-copy__badge .dashicons {' ), 'Das W von WordPress ist im Rahmen gestaltet' );
+
+$reference = (string) file_get_contents( $undt_base . 'admin/views/shortcodes.php' );
+undt_ok( false !== strpos( $reference, '<th scope="col">Gutenberg</th>' ), 'Die Referenz fuehrt Gutenberg als eigene Spalte' );
+undt_ok( false !== strpos( $reference, 'UNDT_Dynamic_Gutenberg::markup( $undt_key )' ), 'Und kopiert dort denselben Block wie unter den Feldern' );
 
 /* ---------------------------------------------------------- Ergebnis ---- */
 

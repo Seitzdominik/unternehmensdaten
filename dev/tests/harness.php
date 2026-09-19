@@ -64,6 +64,34 @@ function wp_add_inline_style() {}
 function wp_enqueue_style() {}
 function wp_style_is() { return true; }
 function wp_json_encode( $d, $f = 0 ) { return json_encode( $d, $f ); }
+
+// Skripte: nur mitschreiben, damit sich Handle, Abhaengigkeiten und Daten pruefen lassen.
+$GLOBALS['undt_scripts'] = array();
+function wp_enqueue_script( $handle, $src = '', $deps = array(), $ver = false, $args = false ) {
+	$GLOBALS['undt_scripts'][ $handle ] = array( 'src' => $src, 'deps' => $deps, 'ver' => $ver, 'inline' => '' );
+}
+function wp_add_inline_script( $handle, $code, $position = 'after' ) {
+	$GLOBALS['undt_scripts'][ $handle ]['inline'] = $code;
+	return true;
+}
+
+/*
+ * Block-Bindungen, wie WordPress sie ab 6.5 kennt. Die Attrappe merkt sich die
+ * angemeldeten Quellen; serialize_block_attributes arbeitet wie das Original.
+ */
+$GLOBALS['undt_bindings'] = array();
+function register_block_bindings_source( $name, $args ) {
+	$GLOBALS['undt_bindings'][ $name ] = $args;
+	return true;
+}
+function serialize_block_attributes( $attributes ) {
+	$json = json_encode( $attributes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	$json = preg_replace( '/--/', '\\\\u002d\\\\u002d', $json );
+	$json = preg_replace( '/</', '\\\\u003c', $json );
+	$json = preg_replace( '/>/', '\\\\u003e', $json );
+	$json = preg_replace( '/&/', '\\\\u0026', $json );
+	return preg_replace( '/\\\\"/', '\\\\u0022', $json );
+}
 function date_i18n( $f, $t = null ) { return date( $f, null === $t ? time() : $t ); }
 function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['undt_options'] ) ? $GLOBALS['undt_options'][ $k ] : $d; }
 function update_option( $k, $v, $a = null ) { $GLOBALS['undt_options'][ $k ] = $v; return true; }
@@ -176,6 +204,7 @@ function undt_set_http( $code, $body ) {
 preg_match( '/^\s*\*\s*Version:\s*(\S+)/m', (string) file_get_contents( UNDT_FILE ), $undt_version_match );
 define( 'UNDT_VERSION', isset( $undt_version_match[1] ) ? $undt_version_match[1] : '0.0.0' );
 define( 'UNDT_DIR', __DIR__ );
+define( 'UNDT_URL', 'https://example.test/wp-content/plugins/unternehmensdaten/' );
 
 $base = UNDT_TEST_BASE;
 
@@ -195,6 +224,7 @@ require $base . 'includes/class-undt-dynamic.php';
 require $base . 'includes/class-undt-dynamic-slimseo.php';
 require $base . 'includes/class-undt-dynamic-bricks.php';
 require $base . 'includes/class-undt-dynamic-etch.php';
+require $base . 'includes/class-undt-dynamic-gutenberg.php';
 require $base . 'includes/class-undt-icons.php';
 require $base . 'includes/class-undt-transfer.php';
 

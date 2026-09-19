@@ -388,6 +388,10 @@ final class UNDT_Blocks {
 	 * vorlesen. Sichtbar ist dafuer hoechstens ein kleiner Pfeil. Ein versteckter
 	 * Zusatztext stand frueher im Link und wurde sichtbar, wo das CSS fehlte.
 	 *
+	 * Die Profile stehen untereinander, ein Profil je Zeile. Wer sie in einer
+	 * Reihe haben will, etwa als Symbolleiste im Footer, stellt das im Bereich
+	 * um oder setzt layout="row" am Shortcode.
+	 *
 	 * @param array $atts Attribute.
 	 * @return string
 	 */
@@ -483,10 +487,18 @@ final class UNDT_Blocks {
 			$classes .= $show_labels ? ' undt-social--icons' : ' undt-social--icons-only';
 		}
 
+		$layout = isset( $atts['layout'] ) ? (string) $atts['layout'] : '';
+
+		if ( ! in_array( $layout, array( 'list', 'row' ), true ) ) {
+			$layout = (string) UNDT_Content::value( 'social', 'layout' );
+			$layout = in_array( $layout, array( 'list', 'row' ), true ) ? $layout : 'list';
+		}
+
 		return sprintf(
-			'<nav class="%1$s" aria-label="%2$s"><ul class="undt-inline-list undt-social__list">%3$s</ul></nav>',
+			'<nav class="%1$s" aria-label="%2$s"><ul class="%3$s undt-social__list">%4$s</ul></nav>',
 			esc_attr( $classes ),
 			esc_attr( $label ),
+			'row' === $layout ? 'undt-inline-list' : 'undt-stack-list',
 			implode( '', $items )
 		);
 	}

@@ -97,7 +97,7 @@ undt_t( class_exists( 'UNDT_Hours' ), 'Autoloader findet UNDT_Hours' );
  * eigenen Klassen. Der Autoloader leitet den Dateinamen aus dem Klassennamen
  * ab, ein Tippfehler faellt deshalb erst beim ersten Zugriff auf.
  */
-foreach ( array( 'UNDT_Dynamic_SlimSeo', 'UNDT_Dynamic_Bricks', 'UNDT_Dynamic_Etch', 'UNDT_Controls', 'UNDT_Copy', 'UNDT_Transfer', 'UNDT_Cli' ) as $undt_class ) {
+foreach ( array( 'UNDT_Dynamic_SlimSeo', 'UNDT_Dynamic_Bricks', 'UNDT_Dynamic_Etch', 'UNDT_Dynamic_Gutenberg', 'UNDT_Controls', 'UNDT_Copy', 'UNDT_Transfer', 'UNDT_Cli' ) as $undt_class ) {
 	undt_t( class_exists( $undt_class ), 'Autoloader findet ' . $undt_class );
 }
 
@@ -195,6 +195,8 @@ undt_t( false !== strpos( $faq, '<details' ), 'FAQ nutzt details/summary' );
 
 $social = do_shortcode( '[undt_social]' );
 undt_t( false !== strpos( $social, 'rel="me"' ), 'Social-Profile tragen rel=me' );
+undt_t( false !== strpos( $social, '<ul class="undt-stack-list undt-social__list">' ), 'Social-Profile stehen untereinander' );
+undt_t( false !== strpos( do_shortcode( '[undt_social layout="row"]' ), '<ul class="undt-inline-list undt-social__list">' ), 'Mit layout=row stehen sie nebeneinander' );
 
 /* ---------------------------------------------------------- Frontend ----- */
 
@@ -540,6 +542,47 @@ ob_start();
 include WP_PLUGIN_DIR . '/' . $slug . '/admin/views/module.php';
 $social_html = ob_get_clean();
 undt_t( false !== strpos( $social_html, 'class="undt-select-icon__preview"' ) && false !== strpos( $social_html, 'class="undt-icon-library" hidden' ), 'Social-Seite zeigt Symbole neben der Plattform-Auswahl' );
+undt_t( false !== strpos( $social_html, 'name="undt_social[layout]"' ) && false !== strpos( $social_html, 'value="row"' ), 'Social-Seite fragt nach der Darstellung' );
+
+/* ------------------------------------------------------- Neu in 0.5.8 ---- */
+
+undt_h( 'Block-Bindungen für den Block-Editor' );
+
+undt_t( UNDT_Dynamic_Gutenberg::available(), 'Diese WordPress-Fassung kennt Block-Bindungen' );
+
+$undt_sources = class_exists( 'WP_Block_Bindings_Registry' ) ? WP_Block_Bindings_Registry::get_instance()->get_all_registered() : array();
+$undt_source  = isset( $undt_sources[ UNDT_Dynamic_Gutenberg::SOURCE ] ) ? $undt_sources[ UNDT_Dynamic_Gutenberg::SOURCE ] : null;
+
+undt_t( null !== $undt_source, 'WordPress führt die Quelle ' . UNDT_Dynamic_Gutenberg::SOURCE );
+undt_t( null !== $undt_source && 'Unternehmensdaten' === $undt_source->label, 'Im Editor heißt sie Unternehmensdaten' );
+
+/*
+ * Der eigentliche Beweis: WordPress rendert den Block, den das Backend zum
+ * Kopieren anbietet, mit dem aktuellen Wert statt mit dem Platzhalter.
+ */
+$undt_block    = UNDT_Dynamic_Gutenberg::markup( 'phone' );
+$undt_parsed   = array_values( array_filter( parse_blocks( $undt_block ), static function ( $b ) { return ! empty( $b['blockName'] ); } ) );
+$undt_rendered = do_blocks( $undt_block );
+
+undt_t( 1 === count( $undt_parsed ) && 'core/paragraph' === $undt_parsed[0]['blockName'], 'Der kopierte Text ergibt genau einen Absatz-Block' );
+undt_t( isset( $undt_parsed[0]['attrs']['metadata']['bindings']['content']['args']['key'] ) && 'phone' === $undt_parsed[0]['attrs']['metadata']['bindings']['content']['args']['key'], 'Mit der Bindung an das Feld' );
+undt_t( false !== strpos( $undt_rendered, '>' . UNDT_Store::get( 'phone' ) . '<' ), 'Ausgegeben wird der Wert: ' . wp_strip_all_tags( $undt_rendered ) );
+undt_t( false === strpos( $undt_rendered, 'Telefon' ), 'Der Platzhalter aus dem Block steht nicht mehr da' );
+undt_t( false !== strpos( do_blocks( UNDT_Dynamic_Gutenberg::markup( 'address' ) ), UNDT_Store::get( 'city' ) ), 'Auch zusammengesetzte Werte wie die Anschrift' );
+
+// Das Skript, das im Editor die Werte zeigt.
+UNDT_Dynamic_Gutenberg::editor();
+$undt_scripts = wp_scripts();
+$undt_inline  = (array) $undt_scripts->get_data( 'undt-bindings', 'before' );
+
+undt_t( isset( $undt_scripts->registered['undt-bindings'] ), 'Das Skript für den Editor ist angemeldet' );
+undt_t( isset( $undt_scripts->registered['undt-bindings'] ) && in_array( 'wp-blocks', (array) $undt_scripts->registered['undt-bindings']->deps, true ), 'Es wartet auf wp-blocks' );
+undt_t( false !== strpos( implode( '', $undt_inline ), '"phone":"' . UNDT_Store::get( 'phone' ) . '"' ), 'Und bekommt die Werte mitgeliefert' );
+undt_t( file_exists( WP_PLUGIN_DIR . '/' . $slug . '/admin/assets/gutenberg.js' ), 'Die Skriptdatei liegt im Paket' );
+
+// Kopierknöpfe unter den Feldern und in der Referenz.
+undt_t( false !== strpos( $company_html, 'undt-copy--gutenberg' ) && false !== strpos( $company_html, 'dashicons-wordpress-alt' ), 'Unter den Feldern steht der Knopf neben Bricks und Etch' );
+undt_t( false !== strpos( $shortcodes_html, '<th scope="col">Gutenberg</th>' ) && false !== strpos( $shortcodes_html, 'data-undt-copy="&lt;!-- wp:paragraph' ), 'Die Referenz führt Gutenberg als eigene Spalte' );
 
 /* ---------------------------------------------- Oberfläche des Backends -- */
 

@@ -111,7 +111,22 @@ $html = UNDT_Blocks::social( array( 'label' => '' ) );
 undt_ok( false !== strpos( $html, '<a class="undt-social__link undt-social__link--facebook" data-platform="facebook" href="https://example.test/f" rel="me noopener" target="_blank" aria-label="Facebook (öffnet in neuem Tab)"><span class="undt-social__label">Facebook</span><svg class="undt-social__external"' ), 'Voreinstellung: Name, Pfeil, Hinweis nur fuer Screenreader im Namen' );
 undt_ok( false === strpos( $html, 'undt-social__icon' ) && false === strpos( $html, 'undt-sr' ), 'Keine Symbole und kein versteckter Zusatztext' );
 undt_ok( false === strpos( strip_tags( $html ), 'neuem Tab' ), 'Der Hinweis steht nirgends als Text' );
-undt_ok( false !== strpos( $html, '<ul class="undt-inline-list undt-social__list">' ), 'Liste mit eigener Klasse' );
+undt_ok( false !== strpos( $html, '<ul class="undt-stack-list undt-social__list">' ), 'Voreinstellung: jedes Profil in einer eigenen Zeile' );
+
+// Nebeneinander gibt es weiterhin, ueber den Bereich oder am Shortcode.
+undt_seed_module( 'social', array( 'items' => $items, 'layout' => 'row' ) );
+undt_ok( false !== strpos( UNDT_Blocks::social( array( 'label' => '' ) ), '<ul class="undt-inline-list undt-social__list">' ), 'Eingestellte Reihe stellt die Profile nebeneinander' );
+undt_ok( false !== strpos( UNDT_Blocks::social( array( 'label' => '', 'layout' => 'list' ) ), '<ul class="undt-stack-list undt-social__list">' ), 'Das Attribut sticht die Einstellung' );
+
+undt_seed_module( 'social', array( 'items' => $items ) );
+undt_ok( false !== strpos( UNDT_Blocks::social( array( 'label' => '', 'layout' => 'row' ) ), '<ul class="undt-inline-list undt-social__list">' ), 'Und umgekehrt' );
+undt_ok( false !== strpos( UNDT_Blocks::social( array( 'label' => '', 'layout' => 'quer' ) ), '<ul class="undt-stack-list undt-social__list">' ), 'Ein unbekanntes Attribut faellt auf die Einstellung zurueck' );
+
+$css = UNDT_Render::css();
+undt_ok( false !== strpos( $css, '.undt-stack-list{' ) && false !== strpos( $css, 'flex-direction:column' ), 'Das Stylesheet kennt die Klasse' );
+
+undt_seed_module( 'social', array( 'items' => $items, 'new_tab' => 1 ) );
+$html = UNDT_Blocks::social( array( 'label' => '' ) );
 
 undt_seed_module( 'social', array( 'items' => $items, 'new_tab' => 1, 'new_tab_icon' => 0 ) );
 undt_ok( false === strpos( UNDT_Blocks::social( array( 'label' => '' ) ), 'undt-social__external' ), 'Pfeil laesst sich abschalten' );
@@ -204,7 +219,8 @@ ob_start();
 UNDT_Fields::rows( $banner['fields'], UNDT_Content::all( 'banner' ), 'undt_banner', array( 'with_copy' => false ) );
 $html = (string) ob_get_clean();
 undt_ok( false !== strpos( $html, 'data-undt-copy="{undt_banner_show}"' ) && false !== strpos( $html, 'data-undt-copy="{options.undt.banner_show}"' ), 'Banner anzeigen: Kopierknoepfe fuer Bricks und Etch' );
-undt_ok( 12 === substr_count( $html, 'undt-copy--icon' ), 'Sechs Felder mit je zwei Knoepfen, die automatische Ausgabe ohne' );
+undt_ok( 16 === substr_count( $html, 'undt-copy--icon' ), 'Sechs Felder mit Kuerzeln, vier davon zusaetzlich mit Block' );
+undt_ok( 4 === substr_count( $html, 'undt-copy--gutenberg' ), 'Die beiden Ja-Nein-Felder bekommen keinen Block' );
 undt_ok( false === strpos( $html, '[undt key=' ), 'Kein Shortcode im Banner' );
 
 /* ------------------------------------------------------- 5. Logos ------- */

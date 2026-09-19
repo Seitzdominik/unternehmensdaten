@@ -344,12 +344,13 @@ final class UNDT_Admin {
 	 * lange die alte Datei aus, wie die Plugin-Version gleich bleibt. Das ergibt
 	 * ein Backend, in dem das Markup schon neu und die Gestaltung noch alt ist.
 	 *
-	 * Kostet einen stat-Aufruf, und das ausschliesslich auf den eigenen Seiten.
+	 * Kostet einen stat-Aufruf, und das nur dort, wo die Datei auch geladen
+	 * wird: auf den eigenen Seiten und im Block-Editor.
 	 *
 	 * @param string $relative Pfad unterhalb des Plugin-Ordners.
 	 * @return string
 	 */
-	private static function asset_version( $relative ) {
+	public static function asset_version( $relative ) {
 		$path = UNDT_DIR . $relative;
 		$time = file_exists( $path ) ? filemtime( $path ) : 0;
 
