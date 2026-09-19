@@ -1158,10 +1158,10 @@ final class UNDT_Fields {
 		echo '<div class="undt-media" data-undt-media>';
 
 		printf(
-			'<input type="hidden" id="%1$s" name="%2$s" value="%3$d" class="undt-media__value" />',
+			'<input type="hidden" id="%1$s" name="%2$s" value="%3$s" class="undt-media__value" />',
 			esc_attr( $id ),
 			esc_attr( $name ),
-			$attachment
+			esc_attr( (string) $attachment )
 		);
 
 		echo '<div class="undt-media__preview">';

@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.3
+Stable tag: 0.5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -169,6 +169,10 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
 == Changelog ==
+
+= 0.5.4 =
+* Behoben: Im Bildfeld ging ein Wert ungeprüft in die Ausgabe. Er war zwar immer eine Zahl, wird jetzt aber wie jede andere Ausgabe abgesichert
+* „Domain Path“ und load_plugin_textdomain() sind entfallen: Übersetzungen gehören nach wp-content/languages/plugins/, im Plugin-Ordner wären sie nach der nächsten Aktualisierung fort
 
 = 0.5.3 =
 * Die Seiten des Plugins stehen in einer weißen Karte von 960 Pixeln Breite, abgesetzt vom grauen Hintergrund des Backends

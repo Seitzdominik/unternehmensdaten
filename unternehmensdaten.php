@@ -2,21 +2,20 @@
 /**
  * Plugin Name:       Unternehmensdaten
  * Description:       Zentrale Verwaltung aller Unternehmensangaben: rechtliche Pflichtangaben, Oeffnungszeiten, Preise, Social, FAQ, Infobanner und strukturierte Daten. Mit Shortcode fuer jedes Feld und fertigen Bloecken fuer Impressum und Footer.
- * Version:           0.5.3
+ * Version:           0.5.4
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Seitz
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       unternehmensdaten
- * Domain Path:       /languages
  *
  * @package Unternehmensdaten
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UNDT_VERSION', '0.5.3' );
+define( 'UNDT_VERSION', '0.5.4' );
 define( 'UNDT_FILE', __FILE__ );
 define( 'UNDT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UNDT_URL', plugin_dir_url( __FILE__ ) );
@@ -69,8 +68,13 @@ spl_autoload_register( 'undt_autoload' );
  * @return void
  */
 function undt_bootstrap() {
-	load_plugin_textdomain( 'unternehmensdaten', false, dirname( plugin_basename( UNDT_FILE ) ) . '/languages' );
-
+	/*
+	 * Kein load_plugin_textdomain: Uebersetzungen gehoeren nach
+	 * wp-content/languages/plugins/unternehmensdaten-<locale>.mo. WordPress laedt
+	 * sie von dort selbst, sobald die erste Zeichenkette gebraucht wird. Im
+	 * Plugin-Ordner waeren sie bei der naechsten Aktualisierung fort, denn die
+	 * ersetzt den ganzen Ordner.
+	 */
 	UNDT_Shortcodes::register();
 	UNDT_Api::register();
 	UNDT_Dynamic::register();
