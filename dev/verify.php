@@ -437,6 +437,14 @@ undt_t( isset( $schema_data['undt']['company_name'] ) && 'Playground GmbH' === $
 undt_t( isset( $schema_data['undt']['social_profiles'] ) && is_array( $schema_data['undt']['social_profiles'] ) && 3 === count( $schema_data['undt']['social_profiles'] ), 'Die Social-Profile kommen als Liste, für sameAs' );
 undt_t( ! isset( $seo_data['undt']['social_profiles'] ), 'In den Meta-Angaben steht die Liste nicht' );
 
+// Drei gleich lange Listen für openingHoursSpecification.
+$tage   = isset( $schema_data['undt']['hours_days'] ) ? $schema_data['undt']['hours_days'] : array();
+$von    = isset( $schema_data['undt']['hours_opens'] ) ? $schema_data['undt']['hours_opens'] : array();
+$bis    = isset( $schema_data['undt']['hours_closes'] ) ? $schema_data['undt']['hours_closes'] : array();
+
+undt_t( ! empty( $tage ) && count( $tage ) === count( $von ) && count( $von ) === count( $bis ), 'Öffnungszeiten als drei gleich lange Listen: ' . count( $tage ) . ' Einträge' );
+undt_t( in_array( 'Monday', $tage, true ) && ! in_array( '', $von, true ), 'Mit englischen Tagen und gesetzten Uhrzeiten' );
+
 $tags = apply_filters( 'bricks/dynamic_tags_list', array() );
 undt_t( in_array( '{undt_phone_link}', wp_list_pluck( $tags, 'name' ), true ), 'Bricks bekommt die Tags' );
 $rendered = apply_filters( 'bricks/dynamic_data/render_content', 'Tel. {undt_phone} {post_title}', null, 'text' );
@@ -552,6 +560,7 @@ $ui_html = ob_get_clean();
 
 undt_t( false !== strpos( $ui_html, 'class="undt-box__footer"' ), 'Auch ein Inhaltsbereich speichert im Fuß der Karte' );
 undt_t( false !== strpos( $ui_html, 'class="undt-input-time"' ) && false === strpos( $ui_html, 'class="regular-text"' ), 'Uhrzeiten bleiben schmal, alles andere nicht' );
+undt_t( false !== strpos( $ui_html, 'data-undt-hours-copy="undt-days"' ) && false !== strpos( $ui_html, 'auf alle Tage übernehmen' ), 'Der Knopf überträgt die Zeiten des ersten Tages' );
 
 $undt_slug = 'social';
 ob_start();

@@ -623,6 +623,97 @@
 				sync( event.target.closest( '[data-undt-day]' ) );
 			}
 		} );
+
+		/*
+		 * Zeiten des ersten Tages auf alle uebrigen uebertragen. Uebernommen
+		 * werden Uhrzeiten und der Schalter „geschlossen“, damit die Zeile danach
+		 * wirklich gleich aussieht.
+		 */
+		document.addEventListener( 'click', function ( event ) {
+			var button = event.target.closest ? event.target.closest( '[data-undt-hours-copy]' ) : null;
+
+			if ( ! button ) {
+				return;
+			}
+
+			var table = document.getElementById( button.getAttribute( 'data-undt-hours-copy' ) );
+			var all   = table ? Array.prototype.slice.call( table.querySelectorAll( '[data-undt-day]' ) ) : [];
+
+			if ( all.length < 2 ) {
+				return;
+			}
+
+			var quelle = all.shift();
+			var zeiten = Array.prototype.slice.call( quelle.querySelectorAll( 'input[type="time"]' ) );
+			var zu     = quelle.querySelector( '[data-undt-closed]' );
+
+			all.forEach( function ( row ) {
+				Array.prototype.slice.call( row.querySelectorAll( 'input[type="time"]' ) ).forEach( function ( feld, i ) {
+					feld.value = zeiten[ i ] ? zeiten[ i ].value : '';
+				} );
+
+				var schalter = row.querySelector( '[data-undt-closed]' );
+
+				if ( schalter && zu ) {
+					schalter.checked = zu.checked;
+				}
+
+				sync( row );
+			} );
+
+			announce( l10n.hoursCopied || l10n.copied );
+		} );
+	}
+
+	/* ------------------------------------------------- Ungespeichertes */
+
+	/*
+	 * Die Formulare des Plugins umfassen ganze Seiten. Wer das Menue wechselt,
+	 * ohne zu speichern, verliert sie sonst kommentarlos. Den Wortlaut der
+	 * Rueckfrage bestimmt der Browser, nicht diese Seite.
+	 */
+	function initDirtyGuard() {
+		var forms = Array.prototype.slice.call( document.querySelectorAll( '.undt-form' ) );
+
+		if ( ! forms.length ) {
+			return;
+		}
+
+		var dirty = false;
+
+		function markieren() {
+			dirty = true;
+		}
+
+		forms.forEach( function ( form ) {
+			form.addEventListener( 'input', markieren );
+			form.addEventListener( 'change', markieren );
+
+			// Zeilen hinzufuegen, entfernen oder verschieben aendert das Formular,
+			// loest aber weder input noch change aus.
+			form.addEventListener( 'click', function ( event ) {
+				var treffer = event.target.closest
+					? event.target.closest( '.undt-repeater__add, .undt-repeater__remove, .undt-repeater__move, .undt-media__select, .undt-media__clear, .undt-hours-copy' )
+					: null;
+
+				if ( treffer ) {
+					markieren();
+				}
+			} );
+
+			form.addEventListener( 'submit', function () {
+				dirty = false;
+			} );
+		} );
+
+		window.addEventListener( 'beforeunload', function ( event ) {
+			if ( ! dirty ) {
+				return;
+			}
+
+			event.preventDefault();
+			event.returnValue = '';
+		} );
 	}
 
 	/* ---------------------------------------------------------------- Hinweis */
@@ -757,6 +848,7 @@
 		initRepeaters();
 		initMedia();
 		initHours();
+		initDirtyGuard();
 		initHelp();
 		initLinks();
 		initIconSelects();

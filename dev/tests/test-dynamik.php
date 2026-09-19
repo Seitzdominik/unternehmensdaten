@@ -418,6 +418,44 @@ undt_ok( array() === UNDT_Dynamic::list_value( 'social_profiles' ) && '' === UND
 
 undt_set_modules( array( 'hours' => 1, 'social' => 1, 'seo' => 1 ) );
 
+/* ------------------------------ 6c. Oeffnungszeiten fuer das Schema ----- */
+
+undt_head( 'Oeffnungszeiten als openingHoursSpecification' );
+
+undt_seed_module(
+	'hours',
+	array(
+		'days' => array(
+			// Montag mit Mittagspause, Dienstag durchgehend, Mittwoch zu.
+			'mon' => array( 'closed' => 0, 'slots' => array( array( 'from' => '09:00', 'to' => '12:00' ), array( 'from' => '13:00', 'to' => '17:00' ) ) ),
+			'tue' => array( 'closed' => 0, 'slots' => array( array( 'from' => '09:00', 'to' => '17:00' ) ) ),
+			'wed' => array( 'closed' => 1, 'slots' => array( array( 'from' => '09:00', 'to' => '17:00' ) ) ),
+		),
+	)
+);
+
+$undt_schema = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SCHEMA );
+undt_ok( isset( $undt_schema['hours_days'], $undt_schema['hours_opens'], $undt_schema['hours_closes'] ), 'Drei Listen stehen zur Auswahl' );
+undt_ok( ! isset( $undt_seo['hours_days'] ) && ! isset( UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER )['hours_days'] ), 'Nur in den Schema-Einstellungen, sonst waeren es Aufzaehlungen' );
+
+$undt_tage   = UNDT_Dynamic::list_value( 'hours_days' );
+$undt_von    = UNDT_Dynamic::list_value( 'hours_opens' );
+$undt_bis    = UNDT_Dynamic::list_value( 'hours_closes' );
+
+undt_ok( array( 'Monday', 'Monday', 'Tuesday' ) === $undt_tage, 'Je Tag und Zeitfenster eine Zeile, auf Englisch wie im Schema' );
+undt_ok( array( '09:00', '13:00', '09:00' ) === $undt_von, 'Die Anfangszeiten stehen in derselben Reihenfolge' );
+undt_ok( array( '12:00', '17:00', '17:00' ) === $undt_bis, 'Und die Endzeiten dazu' );
+undt_ok( count( $undt_tage ) === count( $undt_von ) && count( $undt_von ) === count( $undt_bis ), 'Alle drei Listen sind gleich lang, sonst passte Slim SEO sie falsch zusammen' );
+undt_ok( ! in_array( 'Wednesday', $undt_tage, true ), 'Ein geschlossener Tag kommt nicht vor' );
+
+$undt_data = UNDT_Dynamic::slim_seo_schema_data( array() );
+undt_ok( array( 'Monday', 'Monday', 'Tuesday' ) === $undt_data['undt']['hours_days'], 'Die Listen stehen auch im Datensatz' );
+undt_ok( 'Monday, Monday, Tuesday' === UNDT_Dynamic::value( 'hours_days' ), 'Als Text eine Aufzaehlung, etwa in der Referenz' );
+
+undt_set_modules( array( 'hours' => 0 ) );
+undt_ok( array() === UNDT_Dynamic::list_value( 'hours_days' ) && ! isset( UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SCHEMA )['hours_opens'] ), 'Ohne Oeffnungszeiten gibt es die Listen nicht' );
+undt_set_modules( array( 'hours' => 1, 'social' => 1, 'seo' => 1 ) );
+
 /* -------------------------------------------------------- 7. Bricks ----- */
 
 undt_head( 'Bricks' );

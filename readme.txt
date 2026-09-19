@@ -83,7 +83,9 @@ Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim 
 
 Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
 
-In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu zwei, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus SEO & Schema. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
+In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu einige, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus SEO & Schema. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
+
+Für `openingHoursSpecification` gibt es drei Listen, die zusammengehören: `{{ undt.hours_days }}`, `{{ undt.hours_opens }}` und `{{ undt.hours_closes }}`. In die drei Felder der Gruppe eingesetzt, entsteht je Tag und Zeitfenster ein Eintrag — eine Mittagspause also zwei, ein geschlossener Tag keinen. Die Gruppe muss dafür vervielfältigbar sein, angelegt wird sie nur einmal.
 
 Ein Hinweis zu Telefon und Postleitzahl: Slim SEO macht aus einem Wert, der nur aus Ziffern besteht, eine Zahl, und dabei geht eine führende Null verloren. Das betrifft jede Variable, nicht nur diese hier. Mit Leerzeichen oder Ländervorwahl geschrieben — `0151 23456789` oder `+49 151 23456789` — bleibt die Nummer als Text stehen. Die eigene Auszeichnung des Plugins und die Shortcodes geben die Nummer ohnehin unverändert aus.
 
@@ -188,6 +190,9 @@ Mit WP-CLI geht dasselbe ohne Backend:
 = 0.5.6 =
 * Neu: Alle Angaben lassen sich unter Einstellungen als Datei sichern und auf einer anderen Website einspielen. Verknüpfte Seiten und Bilder bleiben dabei außen vor, sie gehören zur Ursprungsseite
 * Neu: Dieselbe Sicherung über WP-CLI mit `wp undt export` und `wp undt import`
+* Neu: Die Öffnungszeiten füllen openingHoursSpecification in den Schema-Einstellungen von Slim SEO Pro, über drei Listen, die zusammengehören
+* Neu: Unter Öffnungszeiten überträgt ein Knopf die Zeiten des ersten Tages auf alle übrigen
+* Neu: Wer eine Seite des Plugins mit ungespeicherten Änderungen verlässt, wird vom Browser gefragt
 * Die Prüfungen des Plugins laufen jetzt bei jeder Änderung automatisch mit, zusätzlich der offizielle Plugin Check. Ein Release entsteht nur, wenn sie bestehen
 
 = 0.5.5 =

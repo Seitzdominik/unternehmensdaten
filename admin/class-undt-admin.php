@@ -331,6 +331,7 @@ final class UNDT_Admin {
 				'rowAdded'    => __( 'Eintrag hinzugefügt', 'unternehmensdaten' ),
 				'rowRemoved'  => __( 'Eintrag entfernt', 'unternehmensdaten' ),
 				'rowMoved'    => __( 'Reihenfolge geändert', 'unternehmensdaten' ),
+				'hoursCopied' => __( 'Zeiten auf alle Tage übernommen', 'unternehmensdaten' ),
 			)
 		);
 	}

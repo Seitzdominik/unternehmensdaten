@@ -717,6 +717,10 @@
 	margin-bottom: 0.5em;
 }
 
+.undt-hours-edit__actions {
+	margin: 0 0 0.5em;
+}
+
 .undt-hours-edit th,
 .undt-hours-edit td {
 	padding: 6px 8px;

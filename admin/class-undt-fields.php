@@ -1135,6 +1135,25 @@ final class UNDT_Fields {
 
 		echo '</tbody></table>';
 
+		/*
+		 * Die meisten Betriebe haben an den Werktagen dieselben Zeiten. Ohne
+		 * diesen Knopf tippt man sie sechsmal ab.
+		 */
+		$order = UNDT_Hours::display_order();
+		$first = reset( $order );
+
+		printf(
+			'<p class="undt-hours-edit__actions"><button type="button" class="button undt-hours-copy" data-undt-hours-copy="%1$s">%2$s</button></p>',
+			esc_attr( $id ),
+			esc_html(
+				sprintf(
+					/* translators: %s: erster Wochentag, etwa Montag. */
+					__( 'Zeiten von %s auf alle Tage übernehmen', 'unternehmensdaten' ),
+					UNDT_Hours::day_label( $first )
+				)
+			)
+		);
+
 		printf(
 			'<p class="undt-hours-edit__hint description">%s</p>',
 			esc_html__( 'Ein Zeitfenster wird nur ausgegeben, wenn beide Uhrzeiten gesetzt sind.', 'unternehmensdaten' )

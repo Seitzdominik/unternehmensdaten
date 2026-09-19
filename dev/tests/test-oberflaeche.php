@@ -127,7 +127,30 @@ undt_ok( 1 === substr_count( $html, 'undt-row--toggles' ), 'Beim Banner stehen n
 undt_ok( false !== strpos( $html, '<tr class="undt-row"><th scope="row"><span class="undt-label-line"><label for="undt-enabled">' ), 'Der einzelne Schalter oben bleibt eine normale Zeile' );
 undt_ok( false !== strpos( $html, 'data-undt-copy="{options.undt.banner_dismissible}"' ), 'Kopierknoepfe stehen auch in einer Zelle' );
 
-/* ------------------------------------------- 5. Markup und Stylesheet --- */
+/* ------------------------------------------- 5. Handgriffe im Backend -- */
+
+undt_head( 'Zeiten uebernehmen und ungespeicherte Aenderungen' );
+
+undt_set_modules( array( 'hours' => 1 ) );
+undt_seed_module( 'hours', array( 'days' => array( 'mon' => array( 'closed' => 0, 'slots' => array( array( 'from' => '09:00', 'to' => '17:00' ) ) ) ) ) );
+
+ob_start();
+UNDT_Fields::control( 'days', array( 'type' => 'hours', 'choices' => array() ), UNDT_Content::value( 'hours', 'days' ), 'undt_hours[days]', 'undt-days' );
+$html = (string) ob_get_clean();
+
+undt_ok( false !== strpos( $html, 'data-undt-hours-copy="undt-days"' ), 'Der Knopf kennt die Tabelle, zu der er gehoert' );
+undt_ok( false !== strpos( $html, 'Zeiten von Montag auf alle Tage übernehmen' ), 'Und nennt den Tag, von dem er nimmt' );
+undt_ok( strpos( $html, 'undt-hours-copy' ) > strpos( $html, '</table>' ), 'Er steht unter der Tabelle' );
+
+$js = (string) file_get_contents( $undt_base . 'admin/assets/admin.js' );
+undt_ok( false !== strpos( $js, 'data-undt-hours-copy' ) && false !== strpos( $js, 'l10n.hoursCopied' ), 'Das Skript bedient den Knopf und meldet es Screenreadern' );
+undt_ok( false !== strpos( $js, 'function initDirtyGuard()' ) && false !== strpos( $js, 'initDirtyGuard();' ), 'Die Warnung vor ungespeicherten Aenderungen ist eingehaengt' );
+undt_ok( false !== strpos( $js, "window.addEventListener( 'beforeunload'" ) && false !== strpos( $js, 'undt-repeater__add' ), 'Sie beruecksichtigt auch hinzugefuegte Zeilen, die kein input-Ereignis ausloesen' );
+
+$admin = (string) file_get_contents( $undt_base . 'admin/class-undt-admin.php' );
+undt_ok( false !== strpos( $admin, "'hoursCopied'" ), 'Der Meldetext ist uebersetzbar' );
+
+/* ------------------------------------------- 6. Markup und Stylesheet --- */
 
 undt_head( 'Karte, Registerkarten und Stylesheet passen zusammen' );
 

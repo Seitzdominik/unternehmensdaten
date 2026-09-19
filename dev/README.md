@@ -39,8 +39,9 @@ ihrem Fuss, die Registerkarten, die einheitliche Feldbreite, die zwei Spalten
 der Rechtsform und die Schalter unter Social Media. Seit 0.5.4 ausserdem, dass
 der Plugin-Header keinen Sprachordner mehr verspricht, den das Archiv nicht
 mitbringt, seit 0.5.5 die Haken fuer die Schema-Einstellungen von Slim SEO Pro
-und seit 0.5.6 das Sichern und Einspielen in echtem WordPress. Stand 0.5.6
-sind es 192 Pruefungen.
+und seit 0.5.6 das Sichern und Einspielen in echtem WordPress, die Listen fuer
+openingHoursSpecification und der Knopf, der die Zeiten des ersten Tages
+uebertraegt. Stand 0.5.6 sind es 195 Pruefungen.
 
 Weder Slim SEO noch Bricks noch Etch laufen im Playground. Ihre Haken werden
 dort direkt aufgerufen. Wie sich die Anbindung mit dem echten Werkzeug

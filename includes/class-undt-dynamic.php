@@ -57,7 +57,7 @@ final class UNDT_Dynamic {
 	 * das sich vervielfaeltigen laesst, wird aus jeder Angabe ein Eintrag. Genau
 	 * das braucht sameAs. Ueberall sonst stehen sie als Aufzaehlung.
 	 */
-	const LISTS = array( 'social_profiles' );
+	const LISTS = array( 'social_profiles', 'hours_days', 'hours_opens', 'hours_closes' );
 
 	/**
 	 * Haengt sich in Slim SEO, Bricks und Etch ein.
@@ -135,6 +135,17 @@ final class UNDT_Dynamic {
 			$fields['social_profiles'] = __( 'Social-Profile, alle Adressen (Link)', 'unternehmensdaten' );
 		}
 
+		/*
+		 * Drei gleich lange Listen fuer openingHoursSpecification: je Tag und
+		 * Zeitfenster eine Zeile. Slim SEO baut daraus so viele Eintraege, wie die
+		 * Listen lang sind, und nimmt aus jeder den passenden Wert.
+		 */
+		if ( $schema && UNDT_Modules::is_active( 'hours' ) ) {
+			$fields['hours_days']   = __( 'Öffnungszeiten: Wochentage (Liste)', 'unternehmensdaten' );
+			$fields['hours_opens']  = __( 'Öffnungszeiten: Beginn (Liste)', 'unternehmensdaten' );
+			$fields['hours_closes'] = __( 'Öffnungszeiten: Ende (Liste)', 'unternehmensdaten' );
+		}
+
 		if ( $builder && UNDT_Modules::is_active( 'hours' ) ) {
 			$fields['hours_today'] = __( 'Heutige Öffnungszeit', 'unternehmensdaten' );
 			$fields['open_now']    = __( 'Geöffnet-Status', 'unternehmensdaten' );
@@ -177,6 +188,11 @@ final class UNDT_Dynamic {
 	public static function value( $key ) {
 		$key = (string) $key;
 
+		// Was aus mehreren Angaben besteht, steht als Text als Aufzaehlung da.
+		if ( in_array( $key, self::LISTS, true ) ) {
+			return implode( ', ', self::list_value( $key ) );
+		}
+
 		switch ( $key ) {
 			case 'address':
 				return implode( ' · ', UNDT_Render::address_parts() );
@@ -204,10 +220,6 @@ final class UNDT_Dynamic {
 				$logo = UNDT_SchemaOrg::logo();
 
 				return isset( $logo['url'] ) ? (string) $logo['url'] : '';
-
-			case 'social_profiles':
-				// Als Text eine Aufzaehlung, einzeln liefert sie list_value().
-				return implode( ', ', self::list_value( $key ) );
 		}
 
 		if ( 0 === strpos( $key, 'banner_' ) ) {
@@ -271,7 +283,54 @@ final class UNDT_Dynamic {
 			return UNDT_Modules::is_active( 'social' ) ? UNDT_SchemaOrg::same_as() : array();
 		}
 
+		$spalten = array(
+			'hours_days'   => 'day',
+			'hours_opens'  => 'opens',
+			'hours_closes' => 'closes',
+		);
+
+		if ( isset( $spalten[ $key ] ) ) {
+			$werte = array();
+
+			foreach ( self::hours_rows() as $row ) {
+				$werte[] = $row[ $spalten[ $key ] ];
+			}
+
+			return $werte;
+		}
+
 		return array();
+	}
+
+	/**
+	 * Die Oeffnungszeiten als flache Zeilen, je Tag und Zeitfenster eine.
+	 *
+	 * Die eigene Auszeichnung fasst gleiche Zeiten zu einem Eintrag mit mehreren
+	 * Tagen zusammen. Hier geht das nicht: die Schema-Einstellungen bauen aus
+	 * gleich langen Listen je einen Eintrag und nehmen aus jeder Liste den
+	 * Wert an derselben Stelle. Ein Eintrag mit mehreren Tagen liesse sich darin
+	 * nicht abbilden. Je Tag ein eigener Eintrag ist genauso gueltig.
+	 *
+	 * @return array Zeilen aus day, opens und closes.
+	 */
+	private static function hours_rows() {
+		if ( ! UNDT_Modules::is_active( 'hours' ) || ! UNDT_Hours::has_data() ) {
+			return array();
+		}
+
+		$rows = array();
+
+		foreach ( UNDT_Hours::day_keys() as $day ) {
+			foreach ( UNDT_Hours::slots( $day ) as $slot ) {
+				$rows[] = array(
+					'day'    => UNDT_Hours::schema_day( $day ),
+					'opens'  => $slot['from'],
+					'closes' => $slot['to'],
+				);
+			}
+		}
+
+		return $rows;
 	}
 
 	/**
