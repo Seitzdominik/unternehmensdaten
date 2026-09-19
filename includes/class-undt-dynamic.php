@@ -10,6 +10,10 @@
  *   Bricks    {undt_phone}          Auswahl dynamischer Daten im Builder
  *   Etch      {options.undt.phone}  ueber den Filter etch/dynamic_data/option
  *
+ * Slim SEO fuehrt zwei getrennte Listen: eine fuer die Meta-Angaben und eine
+ * fuer die Schema-Einstellungen von Slim SEO Pro. Dieselbe Schreibweise, aber
+ * eigene Haken, deshalb stehen die Werte hier zweimal.
+ *
  * Die Haken sind immer registriert. Ohne das jeweilige Werkzeug ruft sie
  * niemand auf, und die Ladereihenfolge der Plugins spielt keine Rolle.
  *
@@ -35,10 +39,25 @@ final class UNDT_Dynamic {
 	const CONTEXT_BUILDER = 'builder';
 
 	/**
+	 * Werte fuer die strukturierten Daten von Slim SEO Pro: wie SEO, dazu die
+	 * Adressen der Social-Profile fuer sameAs und die Adresse des Logos.
+	 */
+	const CONTEXT_SCHEMA = 'schema';
+
+	/**
 	 * Ja-Nein-Werte. Bricks bekommt 1 oder einen Leerstring, Etch echte
 	 * Wahrheitswerte fuer seine Bedingungen.
 	 */
 	const FLAGS = array( 'is_open', 'banner_show', 'banner_dismissible' );
+
+	/**
+	 * Werte, die aus mehreren Angaben bestehen.
+	 *
+	 * Die Schema-Ausgabe kann damit umgehen: steht so ein Wert in einem Feld,
+	 * das sich vervielfaeltigen laesst, wird aus jeder Angabe ein Eintrag. Genau
+	 * das braucht sameAs. Ueberall sonst stehen sie als Aufzaehlung.
+	 */
+	const LISTS = array( 'social_profiles' );
 
 	/**
 	 * Haengt sich in Slim SEO, Bricks und Etch ein.
@@ -49,6 +68,10 @@ final class UNDT_Dynamic {
 		// Slim SEO: Auswahl hinter den drei Punkten und die Werte beim Rendern.
 		add_filter( 'slim_seo_variables', array( __CLASS__, 'slim_seo_variables' ) );
 		add_filter( 'slim_seo_data', array( __CLASS__, 'slim_seo_data' ) );
+
+		// Slim SEO Pro: dieselbe Auswahl in den Schema-Einstellungen.
+		add_filter( 'slim_seo_schema_variables', array( __CLASS__, 'slim_seo_schema_variables' ) );
+		add_filter( 'slim_seo_schema_data', array( __CLASS__, 'slim_seo_schema_data' ) );
 
 		// Bricks: Tags in der Auswahl dynamischer Daten, einzeln und im Fliesstext.
 		add_filter( 'bricks/dynamic_tags_list', array( __CLASS__, 'bricks_tags' ) );
@@ -69,11 +92,12 @@ final class UNDT_Dynamic {
 	 * tagesabhaengigen Oeffnungsangaben, die in einer Meta-Beschreibung nichts
 	 * verloren haben.
 	 *
-	 * @param string $context CONTEXT_SEO oder CONTEXT_BUILDER.
+	 * @param string $context CONTEXT_SEO, CONTEXT_BUILDER oder CONTEXT_SCHEMA.
 	 * @return array Schluessel => Beschriftung.
 	 */
 	public static function fields( $context = self::CONTEXT_SEO ) {
 		$builder = self::CONTEXT_BUILDER === $context;
+		$schema  = self::CONTEXT_SCHEMA === $context;
 		$profile = UNDT_Store::profile();
 		$fields  = array();
 
@@ -97,6 +121,19 @@ final class UNDT_Dynamic {
 		}
 
 		$fields['address'] = __( 'Anschrift in einer Zeile', 'unternehmensdaten' );
+
+		/*
+		 * Fuer die strukturierten Daten: die Profile als sameAs und das Logo als
+		 * Adresse. Beides steht sonst nur in der eigenen Auszeichnung, und wer sie
+		 * Slim SEO ueberlaesst, pflegte es bisher zweimal.
+		 */
+		if ( ( $builder || $schema ) && UNDT_Modules::is_active( 'seo' ) ) {
+			$fields['logo_url'] = __( 'Logo (Link)', 'unternehmensdaten' );
+		}
+
+		if ( $schema && UNDT_Modules::is_active( 'social' ) ) {
+			$fields['social_profiles'] = __( 'Social-Profile, alle Adressen (Link)', 'unternehmensdaten' );
+		}
 
 		if ( $builder && UNDT_Modules::is_active( 'hours' ) ) {
 			$fields['hours_today'] = __( 'Heutige Öffnungszeit', 'unternehmensdaten' );
@@ -158,6 +195,19 @@ final class UNDT_Dynamic {
 
 			case 'is_open':
 				return self::flag( UNDT_Modules::is_active( 'hours' ) && UNDT_Hours::has_data() && UNDT_Hours::is_open_now() );
+
+			case 'logo_url':
+				if ( ! UNDT_Modules::is_active( 'seo' ) ) {
+					return '';
+				}
+
+				$logo = UNDT_SchemaOrg::logo();
+
+				return isset( $logo['url'] ) ? (string) $logo['url'] : '';
+
+			case 'social_profiles':
+				// Als Text eine Aufzaehlung, einzeln liefert sie list_value().
+				return implode( ', ', self::list_value( $key ) );
 		}
 
 		if ( 0 === strpos( $key, 'banner_' ) ) {
@@ -194,17 +244,34 @@ final class UNDT_Dynamic {
 	 * Jeder angebotene Schluessel ist enthalten, auch mit leerem Wert: Slim SEO
 	 * liesse einen fehlenden Schluessel sonst als {{ undt.… }} im Text stehen.
 	 *
-	 * @param string $context CONTEXT_SEO oder CONTEXT_BUILDER.
+	 * @param string $context CONTEXT_SEO, CONTEXT_BUILDER oder CONTEXT_SCHEMA.
 	 * @return array
 	 */
 	public static function values( $context = self::CONTEXT_SEO ) {
 		$values = array();
 
 		foreach ( array_keys( self::fields( $context ) ) as $key ) {
-			$values[ $key ] = self::value( $key );
+			// Nur die strukturierten Daten koennen mehrere Angaben verarbeiten.
+			$values[ $key ] = self::CONTEXT_SCHEMA === $context && in_array( $key, self::LISTS, true )
+				? self::list_value( $key )
+				: self::value( $key );
 		}
 
 		return $values;
+	}
+
+	/**
+	 * Ein Wert, der aus mehreren Angaben besteht.
+	 *
+	 * @param string $key Schluessel aus LISTS.
+	 * @return array Liste von Zeichenketten.
+	 */
+	public static function list_value( $key ) {
+		if ( 'social_profiles' === $key ) {
+			return UNDT_Modules::is_active( 'social' ) ? UNDT_SchemaOrg::same_as() : array();
+		}
+
+		return array();
 	}
 
 	/**
@@ -298,13 +365,38 @@ final class UNDT_Dynamic {
 	 * @return mixed
 	 */
 	public static function slim_seo_variables( $variables ) {
+		return self::slim_seo_group( $variables, self::CONTEXT_SEO );
+	}
+
+	/**
+	 * Traegt die Werte in die Auswahl der Schema-Einstellungen ein.
+	 *
+	 * Slim SEO Pro baut seine Auswahl aus einem eigenen Haken. Ohne ihn stehen in
+	 * den Schema-Einstellungen nur Beitrag, Begriff, Benutzer und Website, und
+	 * Angaben wie die Social-Profile muesste man dort ein zweites Mal pflegen.
+	 *
+	 * @param mixed $variables Gruppen aus label und options.
+	 * @return mixed
+	 */
+	public static function slim_seo_schema_variables( $variables ) {
+		return self::slim_seo_group( $variables, self::CONTEXT_SCHEMA );
+	}
+
+	/**
+	 * Haengt die eigene Gruppe an eine Auswahl von Slim SEO an.
+	 *
+	 * @param mixed  $variables Gruppen aus label und options.
+	 * @param string $context   Kontext, dessen Werte angeboten werden.
+	 * @return mixed
+	 */
+	private static function slim_seo_group( $variables, $context ) {
 		if ( ! is_array( $variables ) ) {
 			return $variables;
 		}
 
 		$options = array();
 
-		foreach ( self::fields( self::CONTEXT_SEO ) as $key => $label ) {
+		foreach ( self::fields( $context ) as $key => $label ) {
 			$options[ 'undt.' . $key ] = $label;
 		}
 
@@ -325,6 +417,20 @@ final class UNDT_Dynamic {
 	public static function slim_seo_data( $data ) {
 		if ( is_array( $data ) ) {
 			$data['undt'] = self::values( self::CONTEXT_SEO );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Liefert den Schema-Einstellungen die Werte fuer {{ undt.… }}.
+	 *
+	 * @param mixed $data Daten, mit denen Slim SEO Pro die Variablen ersetzt.
+	 * @return mixed
+	 */
+	public static function slim_seo_schema_data( $data ) {
+		if ( is_array( $data ) ) {
+			$data['undt'] = self::values( self::CONTEXT_SCHEMA );
 		}
 
 		return $data;

@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.4
+Stable tag: 0.5.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,11 +77,15 @@ Die Kartenlinks `maps_google` und `maps_apple` liegen bei der Anschrift. Bleiben
 
 Slim SEO, Bricks und Etch bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise. In den Stammdaten stehen unter jedem Feld neben dem Shortcode die Kürzel B und E: ein Klick kopiert die Schreibweise für Bricks beziehungsweise Etch, der Tooltip nennt sie.
 
-* **Slim SEO** `{{ undt.phone }}`, etwa in Meta-Titel und Meta-Beschreibung hinter den drei Punkten
+* **Slim SEO** `{{ undt.phone }}`, etwa in Meta-Titel und Meta-Beschreibung hinter den drei Punkten, und mit Slim SEO Pro ebenso in den Schema-Einstellungen
 * **Bricks** `{undt_phone}` in jedem Feld für dynamische Daten, ohne dass Code-Ausführung eingeschaltet sein muss. Die Bricks-Filter für die Wortzahl und den Ersatzwert funktionieren wie gewohnt, etwa `{undt_fax @fallback:'kein Fax'}`
 * **Etch** `{options.undt.phone}` in Texten und Attributen, auch mit Modifikatoren wie `{options.undt.company_name.toUpperCase()}`
 
 Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
+
+In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu zwei, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus SEO & Schema. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
+
+Ein Hinweis zu Telefon und Postleitzahl: Slim SEO macht aus einem Wert, der nur aus Ziffern besteht, eine Zahl, und dabei geht eine führende Null verloren. Das betrifft jede Variable, nicht nur diese hier. Mit Leerzeichen oder Ländervorwahl geschrieben — `0151 23456789` oder `+49 151 23456789` — bleibt die Nummer als Text stehen. Die eigene Auszeichnung des Plugins und die Shortcodes geben die Nummer ohnehin unverändert aus.
 
 == Page Builder ==
 
@@ -169,6 +173,11 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
 == Changelog ==
+
+= 0.5.5 =
+* Neu: Die Schema-Einstellungen von Slim SEO Pro führen die Unternehmensdaten jetzt ebenfalls in ihrer Auswahl. Sie haben eine eigene Liste, deshalb blieben sie bisher leer
+* Neu: `{{ undt.social_profiles }}` liefert dort die Adressen aller Social-Profile. In einem Feld, das sich vervielfältigen lässt, etwa sameAs, wird aus jedem Profil ein Eintrag
+* Neu: `{{ undt.logo_url }}` liefert die Adresse des Logos aus SEO & Schema, in den Schema-Einstellungen sowie in Bricks und Etch
 
 = 0.5.4 =
 * Behoben: Im Bildfeld ging ein Wert ungeprüft in die Ausgabe. Er war zwar immer eine Zahl, wird jetzt aber wie jede andere Ausgabe abgesichert

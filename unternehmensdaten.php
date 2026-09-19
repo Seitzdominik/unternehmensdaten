@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Unternehmensdaten
  * Description:       Zentrale Verwaltung aller Unternehmensangaben: rechtliche Pflichtangaben, Oeffnungszeiten, Preise, Social, FAQ, Infobanner und strukturierte Daten. Mit Shortcode fuer jedes Feld und fertigen Bloecken fuer Impressum und Footer.
- * Version:           0.5.4
+ * Version:           0.5.5
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Seitz
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UNDT_VERSION', '0.5.4' );
+define( 'UNDT_VERSION', '0.5.5' );
 define( 'UNDT_FILE', __FILE__ );
 define( 'UNDT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UNDT_URL', plugin_dir_url( __FILE__ ) );

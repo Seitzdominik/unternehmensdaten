@@ -292,9 +292,12 @@ final class UNDT_SchemaOrg {
 	/**
 	 * Das Logo als ImageObject.
 	 *
+	 * Oeffentlich, weil UNDT_Dynamic daraus die Adresse fuer die Schema-Felder
+	 * von Slim SEO nimmt.
+	 *
 	 * @return array
 	 */
-	private static function logo() {
+	public static function logo() {
 		$id = (int) UNDT_Content::value( 'seo', 'logo' );
 
 		if ( $id <= 0 ) {
@@ -383,9 +386,12 @@ final class UNDT_SchemaOrg {
 	/**
 	 * Die Social-Profile als sameAs.
 	 *
+	 * Oeffentlich, weil UNDT_Dynamic dieselbe Liste fuer die Schema-Felder von
+	 * Slim SEO anbietet.
+	 *
 	 * @return array
 	 */
-	private static function same_as() {
+	public static function same_as() {
 		$urls = array();
 
 		foreach ( UNDT_Content::rows( 'social', 'items' ) as $row ) {

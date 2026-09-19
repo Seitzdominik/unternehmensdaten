@@ -39,8 +39,12 @@ $undt_panels = array(
 	'builder' => __( 'Page Builder', 'unternehmensdaten' ),
 );
 
-$undt_dynamic     = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER );
-$undt_dynamic_seo = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SEO );
+$undt_dynamic_builder = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER );
+$undt_dynamic_seo     = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SEO );
+$undt_dynamic_schema  = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SCHEMA );
+
+// Alles, was irgendwo angeboten wird; die Spalten sagen, wo.
+$undt_dynamic = $undt_dynamic_builder + $undt_dynamic_schema;
 
 if ( empty( $undt_modules ) ) {
 	unset( $undt_panels['modules'] );
@@ -156,7 +160,7 @@ $undt_first = key( $undt_panels );
 	<!-- Dynamische Daten -->
 	<div id="undt-panel-dynamic" class="undt-panel" role="tabpanel" aria-labelledby="undt-tab-dynamic"<?php echo 'dynamic' === $undt_first ? '' : ' hidden'; ?>>
 		<p class="description undt-section-hint">
-			<?php esc_html_e( 'Slim SEO und Bricks führen diese Werte in ihrer Auswahl dynamischer Daten unter „Unternehmensdaten“, etwa hinter den drei Punkten neben der Meta-Beschreibung. In Etch steht die Schreibweise aus der letzten Spalte in Texten und Attributen, auch mit Modifikatoren wie .toUpperCase().', 'unternehmensdaten' ); ?>
+			<?php esc_html_e( 'Slim SEO und Bricks führen diese Werte in ihrer Auswahl dynamischer Daten unter „Unternehmensdaten“, etwa hinter den drei Punkten neben der Meta-Beschreibung und in den Schema-Einstellungen von Slim SEO Pro. In Etch steht die Schreibweise aus der letzten Spalte in Texten und Attributen, auch mit Modifikatoren wie .toUpperCase().', 'unternehmensdaten' ); ?>
 		</p>
 
 		<table class="widefat striped undt-table undt-table--dynamic">
@@ -187,21 +191,29 @@ $undt_first = key( $undt_panels );
 							</p>
 						</td>
 						<td>
-							<?php if ( isset( $undt_dynamic_seo[ $undt_key ] ) ) : ?>
+							<?php if ( isset( $undt_dynamic_seo[ $undt_key ] ) || isset( $undt_dynamic_schema[ $undt_key ] ) ) : ?>
 								<?php UNDT_Fields::copy_button( $undt_syntax['slim_seo'], 'inline' ); ?>
+								<?php if ( ! isset( $undt_dynamic_seo[ $undt_key ] ) ) : ?>
+									<span class="undt-basis"><?php esc_html_e( 'nur in den Schema-Einstellungen', 'unternehmensdaten' ); ?></span>
+								<?php endif; ?>
 							<?php else : ?>
 								<span class="undt-empty" title="<?php esc_attr_e( 'Nur für Builder gedacht', 'unternehmensdaten' ); ?>">–</span>
 							<?php endif; ?>
 						</td>
-						<td><?php UNDT_Fields::copy_button( $undt_syntax['bricks'], 'inline' ); ?></td>
-						<td><?php UNDT_Fields::copy_button( $undt_syntax['etch'], 'inline' ); ?></td>
+						<?php if ( isset( $undt_dynamic_builder[ $undt_key ] ) ) : ?>
+							<td><?php UNDT_Fields::copy_button( $undt_syntax['bricks'], 'inline' ); ?></td>
+							<td><?php UNDT_Fields::copy_button( $undt_syntax['etch'], 'inline' ); ?></td>
+						<?php else : ?>
+							<td><span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span></td>
+							<td><span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span></td>
+						<?php endif; ?>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>
 		</table>
 
 		<p class="description undt-section-hint">
-			<?php esc_html_e( 'Werte mit „(Link)“ liefern eine Adresse und gehören in Link-Felder. Werte mit „(ja/nein)“ eignen sich für Bedingungen: Bricks bekommt 1 oder nichts, Etch true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO; die Öffnungsangaben zeigen hinter einem Seiten-Cache den Stand der Zwischenspeicherung.', 'unternehmensdaten' ); ?>
+			<?php esc_html_e( 'Werte mit „(Link)“ liefern eine Adresse und gehören in Link-Felder. Werte mit „(ja/nein)“ eignen sich für Bedingungen: Bricks bekommt 1 oder nichts, Etch true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO; die Öffnungsangaben zeigen hinter einem Seiten-Cache den Stand der Zwischenspeicherung. Alle Adressen der Social-Profile auf einmal gibt es nur in den Schema-Einstellungen: in einem Feld, das sich vervielfältigen lässt, etwa sameAs, wird daraus je ein Eintrag pro Profil.', 'unternehmensdaten' ); ?>
 		</p>
 	</div>
 
