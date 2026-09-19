@@ -12,6 +12,9 @@ defined( 'ABSPATH' ) || exit;
 
 $undt_settings = UNDT_Modules::settings();
 $undt_option   = UNDT_Modules::OPTION_SETTINGS;
+
+// Ergebnis eines Imports, einmalig nach der Weiterleitung.
+$undt_report = UNDT_Transfer::take_report();
 ?>
 <div class="wrap undt-wrap">
 	<h1><?php esc_html_e( 'Einstellungen', 'unternehmensdaten' ); ?></h1>
@@ -22,6 +25,12 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 	<?php if ( isset( $_GET['undt-checked'] ) ) : ?>
 		<div class="notice notice-success is-dismissible inline">
 			<p><?php esc_html_e( 'Die Suche nach Aktualisierungen wurde durchgeführt.', 'unternehmensdaten' ); ?></p>
+		</div>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $undt_report ) ) : ?>
+		<div class="notice notice-<?php echo isset( $undt_report['error'] ) ? 'error' : 'success'; ?> is-dismissible inline">
+			<p><?php echo esc_html( UNDT_Transfer::summary( $undt_report ) ); ?></p>
 		</div>
 	<?php endif; ?>
 
@@ -199,6 +208,52 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 			<?php submit_button( __( 'Jetzt nach Aktualisierungen suchen', 'unternehmensdaten' ), 'secondary', 'submit', false ); ?>
 		</form>
 	<?php endif; ?>
+
+	<h2 class="undt-section-title"><?php esc_html_e( 'Sichern und übertragen', 'unternehmensdaten' ); ?></h2>
+	<p class="description undt-section-hint">
+		<?php esc_html_e( 'Die Sicherung enthält alle Angaben dieses Plugins als JSON-Datei: Stammdaten, Rechtsform, Inhaltsbereiche und Einstellungen. Eingespielt auf einer anderen Website ist die Einrichtung dort schon zur Hälfte erledigt. Verknüpfte Seiten und Bilder werden dabei nicht übernommen, denn sie gehören zur Ursprungsseite.', 'unternehmensdaten' ); ?>
+	</p>
+
+	<div class="undt-box"><div class="undt-box__body">
+		<table class="form-table" role="presentation">
+			<tbody>
+				<tr class="undt-row">
+					<th scope="row"><?php esc_html_e( 'Sicherung', 'unternehmensdaten' ); ?></th>
+					<td>
+						<?php // Eigene Formulare, weil sich Formulare nicht verschachteln lassen. ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+							<input type="hidden" name="action" value="undt_export" />
+							<?php wp_nonce_field( 'undt_export' ); ?>
+							<?php submit_button( __( 'Datei herunterladen', 'unternehmensdaten' ), 'secondary', 'submit', false ); ?>
+						</form>
+						<p class="description">
+							<?php esc_html_e( 'Enthält keine Passwörter und keine Angaben über Besucher.', 'unternehmensdaten' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr class="undt-row">
+					<th scope="row"><label for="undt-import-file"><?php esc_html_e( 'Einspielen', 'unternehmensdaten' ); ?></label></th>
+					<td>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" class="undt-import">
+							<input type="hidden" name="action" value="undt_import" />
+							<?php wp_nonce_field( 'undt_import' ); ?>
+							<input type="file" id="undt-import-file" name="undt_file" accept="application/json,.json" required />
+							<p class="undt-import__confirm">
+								<label>
+									<input type="checkbox" name="undt_confirm" value="1" required />
+									<?php esc_html_e( 'Die vorhandenen Angaben dürfen überschrieben werden.', 'unternehmensdaten' ); ?>
+								</label>
+							</p>
+							<?php submit_button( __( 'Datei einspielen', 'unternehmensdaten' ), 'secondary', 'submit', false ); ?>
+						</form>
+						<p class="description">
+							<?php esc_html_e( 'Alle Angaben durchlaufen dieselbe Prüfung wie das Formular. Vor dem Einspielen lohnt sich eine eigene Sicherung.', 'unternehmensdaten' ); ?>
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div></div>
 
 	<h2 class="undt-section-title"><?php esc_html_e( 'Für Entwicklerinnen und Entwickler', 'unternehmensdaten' ); ?></h2>
 	<p class="description undt-section-hint">

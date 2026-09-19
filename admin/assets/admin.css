@@ -1110,3 +1110,15 @@
 .undt-recheck {
 	margin: 1em 0 2em;
 }
+
+/* ------------------------------------------------ Sichern und Einspielen */
+
+.undt-import input[type="file"] {
+	display: block;
+	max-width: 100%;
+	margin-bottom: 8px;
+}
+
+.undt-import__confirm {
+	margin: 0 0 10px;
+}

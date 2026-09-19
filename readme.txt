@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.5
+Stable tag: 0.5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -172,7 +172,23 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_auto_banner` legt fest, wo das Banner automatisch am Seitenanfang erscheint. Standard ist überall außer in der Oberfläche von Etch und Bricks
 * `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
+== Sichern und übertragen ==
+
+Unter Einstellungen liegt eine Sicherung aller Angaben als JSON-Datei: Stammdaten, Rechtsform, Inhaltsbereiche und die Einstellungen selbst. Dieselbe Datei auf einer anderen Website eingespielt, ist die Einrichtung dort zur Hälfte erledigt — gerade wenn mehrere Websites ähnlich aufgebaut sind.
+
+Was nur zur Ursprungsseite gehört, bleibt beim Einspielen weg: die Verknüpfungen zu Seiten und das Logo, denn deren IDs zeigen auf der neuen Website auf etwas anderes. Eine eigene Adresse wie `/impressum/` bleibt dagegen erhalten. Welche Felder neu zu wählen sind, nennt die Meldung nach dem Einspielen. Alle Werte durchlaufen dieselbe Prüfung wie das Formular.
+
+Mit WP-CLI geht dasselbe ohne Backend:
+
+* `wp undt export > firma.json` schreibt die Sicherung
+* `wp undt import firma.json` spielt sie ein, mit `--yes` ohne Rückfrage
+
 == Changelog ==
+
+= 0.5.6 =
+* Neu: Alle Angaben lassen sich unter Einstellungen als Datei sichern und auf einer anderen Website einspielen. Verknüpfte Seiten und Bilder bleiben dabei außen vor, sie gehören zur Ursprungsseite
+* Neu: Dieselbe Sicherung über WP-CLI mit `wp undt export` und `wp undt import`
+* Die Prüfungen des Plugins laufen jetzt bei jeder Änderung automatisch mit, zusätzlich der offizielle Plugin Check. Ein Release entsteht nur, wenn sie bestehen
 
 = 0.5.5 =
 * Neu: Die Schema-Einstellungen von Slim SEO Pro führen die Unternehmensdaten jetzt ebenfalls in ihrer Auswahl. Sie haben eine eigene Liste, deshalb blieben sie bisher leer

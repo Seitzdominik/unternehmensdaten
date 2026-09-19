@@ -3,9 +3,22 @@ build/
 *.zip
 update.json
 
-# Entwicklungswerkzeuge, die nicht ausgeliefert werden
-dev/
-build.ps1
+# Ergebnisse der Pruefungen. Sie entstehen bei jedem Durchlauf neu und sagen
+# nur etwas ueber den Rechner aus, auf dem sie liefen.
+dev/result.txt
+dev/result-previous.txt
+dev/audit/matrix.log
+dev/audit/server.log
+dev/audit/pids.txt
+dev/audit/html-*.html
+dev/audit/result-*.txt
+dev/audit/debug-*.log
+dev/audit/requests-*.log
+
+# Das Archiv des Audits gegen 0.4.0: mehrere Megabyte gerenderte Seiten und
+# Protokolle. Der Bericht steht in dev/audit-report.md, die Pruefung zu jedem
+# Befund in dev/tests/test-audit-findings.php.
+dev/audit/ergebnisse-0.4.0/
 
 # Betriebssystem und Editor
 .DS_Store

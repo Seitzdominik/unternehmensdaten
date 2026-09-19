@@ -1,0 +1,100 @@
+name: Prüfungen
+
+# Laeuft bei jedem Push auf main und bei jedem Pull Request. Zweck: was auf dem
+# Entwicklungsrechner gruen ist, soll auch hier gruen sein, bevor ein Tag daraus
+# ein Release macht, das sich auf allen Kundenseiten selbst installiert.
+#
+# Die Offline-Pruefungen brauchen kein WordPress und sind in Sekunden durch. Der
+# Plugin Check prueft genau das Archiv, das ausgeliefert wird, mit denselben
+# Regeln wie das Verzeichnis auf wordpress.org.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    name: Offline-Prüfungen mit PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Faellt eine Version durch, sollen die anderen trotzdem ihr Ergebnis
+      # zeigen: sonst raet man, ob es an der Version liegt oder am Code.
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.3', '8.5']
+
+    steps:
+      # Die Actions sind an Commits gebunden, nicht an Tags, siehe release.yml.
+      - name: Repository holen
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: PHP bereitstellen
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Syntax aller PHP-Dateien
+        run: |
+          set -euo pipefail
+          php -r 'echo "PHP ", PHP_VERSION, PHP_EOL;'
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
+          echo "Alle PHP-Dateien sind syntaktisch fehlerfrei."
+
+      - name: Prüfdateien abarbeiten
+        run: |
+          set -euo pipefail
+
+          for datei in dev/tests/test-*.php; do
+            echo "== $datei"
+            php "$datei"
+          done
+
+  plugin-check:
+    name: Plugin Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository holen
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Archivinhalt spiegeln
+        # Geprueft wird, was auch ausgeliefert wird. Dieselben Ausschluesse wie
+        # beim Bauen in release.yml, sonst pruefte der Check die Werkzeuge mit.
+        run: |
+          set -euo pipefail
+
+          mkdir -p build/unternehmensdaten
+
+          rsync -a ./ build/unternehmensdaten/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.gitignore' \
+            --exclude '.gitattributes' \
+            --exclude 'build' \
+            --exclude 'dev' \
+            --exclude 'node_modules' \
+            --exclude '*.zip' \
+            --exclude 'update.json' \
+            --exclude 'build.ps1'
+
+      - name: Plugin Check
+        uses: WordPress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9
+        with:
+          build-dir: './build/unternehmensdaten'
+          # Zwei Pruefungen bleiben bewusst aussen vor, beide gelten nur fuer
+          # Plugins im Verzeichnis von wordpress.org: der eigene Updater ueber
+          # GitHub-Releases (plugin_updater) und die deutsche readme
+          # (plugin_readme). Begruendung in dev/README.md unter „Plugin Check“.
+          # Alles andere, etwa late_escaping und i18n_usage, bleibt scharf.
+          exclude-checks: 'plugin_updater,plugin_readme'

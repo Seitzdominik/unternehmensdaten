@@ -90,6 +90,19 @@ jobs:
           find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
           echo "Alle PHP-Dateien sind syntaktisch fehlerfrei."
 
+      - name: Offline-Prüfungen
+        # Dieselben Dateien wie in tests.yml, hier als Sperre: ein Tag soll kein
+        # Release erzeugen, das die Pruefungen nicht besteht. Sie laufen gegen
+        # WordPress-Attrappen, brauchen also keine Installation, und die
+        # PHP-Version ist die aelteste unterstuetzte.
+        run: |
+          set -euo pipefail
+
+          for datei in dev/tests/test-*.php; do
+            echo "== $datei"
+            php "$datei"
+          done
+
       - name: Archiv bauen
         run: |
           set -euo pipefail
