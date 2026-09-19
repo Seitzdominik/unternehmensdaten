@@ -100,7 +100,7 @@ undt_a( is_plugin_active( $file ) || ( is_multisite() && is_plugin_active_for_ne
 undt_a( $imprint_id > 0 && $privacy_id > 0 && $all_id > 0 && $plain_id > 0, 'Testseiten aus seed-audit.php vorhanden' );
 
 undt_s( 'Alle Klassen laden (Parse-Fehler waeren hier fatal)' );
-foreach ( array( 'UNDT_Schema', 'UNDT_Modules', 'UNDT_Store', 'UNDT_Content', 'UNDT_Hours', 'UNDT_Sanitizer', 'UNDT_Render', 'UNDT_Blocks', 'UNDT_Shortcodes', 'UNDT_SchemaOrg', 'UNDT_Api', 'UNDT_Updater', 'UNDT_Audit', 'UNDT_Admin', 'UNDT_Fields' ) as $cls ) {
+foreach ( array( 'UNDT_Schema', 'UNDT_Modules', 'UNDT_Store', 'UNDT_Content', 'UNDT_Hours', 'UNDT_Sanitizer', 'UNDT_Render', 'UNDT_Blocks', 'UNDT_Shortcodes', 'UNDT_SchemaOrg', 'UNDT_Api', 'UNDT_Updater', 'UNDT_Audit', 'UNDT_Admin', 'UNDT_Fields', 'UNDT_Controls', 'UNDT_Copy', 'UNDT_Dynamic', 'UNDT_Dynamic_SlimSeo', 'UNDT_Dynamic_Bricks', 'UNDT_Dynamic_Etch', 'UNDT_Transfer' ) as $cls ) {
 	undt_a( class_exists( $cls ), 'Klasse ' . $cls );
 }
 undt_php_errors_flush( 'Klassen laden' );

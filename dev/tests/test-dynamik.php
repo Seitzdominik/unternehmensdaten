@@ -9,6 +9,8 @@
  */
 require __DIR__ . '/harness.php';
 require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-controls.php';
+require UNDT_TEST_BASE . 'admin/class-undt-copy.php';
 
 /*
  * Attrappen fuer die Auswahl der Seitenfelder. Sie stehen hier und nicht im
@@ -111,7 +113,7 @@ $GLOBALS['undt_posts'] = array(
 
 function undt_render_control( $key, $value ) {
 	ob_start();
-	UNDT_Fields::control( $key, UNDT_Schema::field( $key ), $value, 'undt_company[' . $key . ']', 'undt-' . $key );
+	UNDT_Controls::render( $key, UNDT_Schema::field( $key ), $value, 'undt_company[' . $key . ']', 'undt-' . $key );
 	return (string) ob_get_clean();
 }
 
@@ -180,7 +182,7 @@ undt_ok( 1 === count( array_filter( $undt_issues, static function ( $i ) { retur
 
 undt_head( 'Seitenfeld: Auswahl im Formular' );
 
-undt_ok( array( 'page' => 'Seiten', 'legal' => 'Rechtstexte' ) === UNDT_Fields::link_post_types(), 'Seiten und eigene Typen, ohne Beitraege, Produkte, Medien, Bricks-Vorlagen und nicht verlinkbare Typen' );
+undt_ok( array( 'page' => 'Seiten', 'legal' => 'Rechtstexte' ) === UNDT_Controls::link_post_types(), 'Seiten und eigene Typen, ohne Beitraege, Produkte, Medien, Bricks-Vorlagen und nicht verlinkbare Typen' );
 
 add_filter(
 	'undt_link_post_types',
@@ -190,7 +192,7 @@ add_filter(
 		return $types;
 	}
 );
-undt_ok( array( 'page' => 'Seiten', 'legal' => 'Rechtstexte', 'post' => 'Beiträge' ) === UNDT_Fields::link_post_types(), 'Filter ergaenzt Typen, unbekannte fallen weg' );
+undt_ok( array( 'page' => 'Seiten', 'legal' => 'Rechtstexte', 'post' => 'Beiträge' ) === UNDT_Controls::link_post_types(), 'Filter ergaenzt Typen, unbekannte fallen weg' );
 remove_all_filters( 'undt_link_post_types' );
 
 $undt_html = undt_render_control( 'page_terms', '12' );
@@ -228,7 +230,7 @@ undt_head( 'Wiederholungsfelder: Knoepfe' );
 
 $undt_social = UNDT_Modules::get( 'social' );
 ob_start();
-UNDT_Fields::control( 'items', $undt_social['fields']['items'], array( array( 'platform' => 'youtube', 'label' => '', 'url' => 'https://example.test/yt' ) ), 'undt_social[items]', 'undt-items' );
+UNDT_Controls::render( 'items', $undt_social['fields']['items'], array( array( 'platform' => 'youtube', 'label' => '', 'url' => 'https://example.test/yt' ) ), 'undt_social[items]', 'undt-items' );
 $undt_html = (string) ob_get_clean();
 
 // Eine Zeile plus Vorlage: jeder Knopf kommt zweimal vor.
@@ -362,17 +364,17 @@ undt_ok( array_key_exists( 'fax', $undt_values ) && '' === $undt_values['fax'], 
 
 undt_head( 'Slim SEO' );
 
-$undt_vars = UNDT_Dynamic::slim_seo_variables( array( array( 'label' => 'Post', 'options' => array( 'post.title' => 'Titel' ) ) ) );
+$undt_vars = UNDT_Dynamic_SlimSeo::variables( array( array( 'label' => 'Post', 'options' => array( 'post.title' => 'Titel' ) ) ) );
 $undt_last = end( $undt_vars );
 undt_ok( 2 === count( $undt_vars ) && 'Post' === $undt_vars[0]['label'], 'Bestehende Gruppen bleiben' );
 undt_ok( 'Unternehmensdaten' === $undt_last['label'], 'Eigene Gruppe „Unternehmensdaten“' );
 undt_ok( isset( $undt_last['options']['undt.phone'] ) && 'Telefon' === $undt_last['options']['undt.phone'], 'Schluessel in der Form undt.phone' );
 undt_ok( count( $undt_last['options'] ) === count( $undt_seo ), 'Genau die SEO-Auswahl' );
-undt_ok( 'kaputt' === UNDT_Dynamic::slim_seo_variables( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
+undt_ok( 'kaputt' === UNDT_Dynamic_SlimSeo::variables( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
 
-$undt_data = UNDT_Dynamic::slim_seo_data( array( 'post' => array( 'title' => 'X' ) ), 5, 0 );
+$undt_data = UNDT_Dynamic_SlimSeo::data( array( 'post' => array( 'title' => 'X' ) ), 5, 0 );
 undt_ok( 'X' === $undt_data['post']['title'] && 'Müller & Söhne' === $undt_data['undt']['company_name'], 'Werte stehen unter undt bereit' );
-undt_ok( null === UNDT_Dynamic::slim_seo_data( null ), 'Fremder Typ wird durchgereicht' );
+undt_ok( null === UNDT_Dynamic_SlimSeo::data( null ), 'Fremder Typ wird durchgereicht' );
 
 /* ---------------------------------------- 6b. Slim SEO: Schema ---------- */
 
@@ -397,17 +399,17 @@ undt_ok( isset( $undt_schema['social_profiles'] ) && isset( $undt_schema['logo_u
 undt_ok( ! isset( $undt_schema['banner_text'] ) && ! isset( $undt_schema['open_now'] ), 'Banner und Oeffnungsangaben bleiben den Buildern vorbehalten' );
 undt_ok( ! isset( $undt_seo['social_profiles'] ), 'In den Meta-Angaben gibt es die Profilliste nicht, dort waere sie eine Aufzaehlung' );
 
-$undt_vars = UNDT_Dynamic::slim_seo_schema_variables( array( array( 'label' => 'Post', 'options' => array( 'post.title' => 'Titel' ) ) ) );
+$undt_vars = UNDT_Dynamic_SlimSeo::schema_variables( array( array( 'label' => 'Post', 'options' => array( 'post.title' => 'Titel' ) ) ) );
 $undt_last = end( $undt_vars );
 undt_ok( 2 === count( $undt_vars ) && 'Unternehmensdaten' === $undt_last['label'], 'Eigene Gruppe neben den Gruppen von Slim SEO' );
 undt_ok( isset( $undt_last['options']['undt.social_profiles'] ), 'Die Profile stehen als undt.social_profiles in der Auswahl' );
-undt_ok( 'kaputt' === UNDT_Dynamic::slim_seo_schema_variables( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
+undt_ok( 'kaputt' === UNDT_Dynamic_SlimSeo::schema_variables( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
 
-$undt_data = UNDT_Dynamic::slim_seo_schema_data( array( 'post' => array( 'title' => 'X' ) ) );
+$undt_data = UNDT_Dynamic_SlimSeo::schema_data( array( 'post' => array( 'title' => 'X' ) ) );
 undt_ok( 'X' === $undt_data['post']['title'] && 'Müller & Söhne' === $undt_data['undt']['company_name'], 'Werte stehen unter undt bereit' );
 undt_ok( array( 'https://linkedin.test/firma', 'https://instagram.test/firma' ) === $undt_data['undt']['social_profiles'], 'Die Profile kommen als Liste, leere Zeilen fallen weg' );
 undt_ok( 'https://example.test/logo.png' === $undt_data['undt']['logo_url'], 'Das Logo kommt als Adresse' );
-undt_ok( null === UNDT_Dynamic::slim_seo_schema_data( null ), 'Fremder Typ wird durchgereicht' );
+undt_ok( null === UNDT_Dynamic_SlimSeo::schema_data( null ), 'Fremder Typ wird durchgereicht' );
 
 undt_ok( 'https://linkedin.test/firma, https://instagram.test/firma' === UNDT_Dynamic::value( 'social_profiles' ), 'Als Text eine Aufzaehlung, etwa in der Referenz' );
 
@@ -448,7 +450,7 @@ undt_ok( array( '12:00', '17:00', '17:00' ) === $undt_bis, 'Und die Endzeiten da
 undt_ok( count( $undt_tage ) === count( $undt_von ) && count( $undt_von ) === count( $undt_bis ), 'Alle drei Listen sind gleich lang, sonst passte Slim SEO sie falsch zusammen' );
 undt_ok( ! in_array( 'Wednesday', $undt_tage, true ), 'Ein geschlossener Tag kommt nicht vor' );
 
-$undt_data = UNDT_Dynamic::slim_seo_schema_data( array() );
+$undt_data = UNDT_Dynamic_SlimSeo::schema_data( array() );
 undt_ok( array( 'Monday', 'Monday', 'Tuesday' ) === $undt_data['undt']['hours_days'], 'Die Listen stehen auch im Datensatz' );
 undt_ok( 'Monday, Monday, Tuesday' === UNDT_Dynamic::value( 'hours_days' ), 'Als Text eine Aufzaehlung, etwa in der Referenz' );
 
@@ -460,42 +462,42 @@ undt_set_modules( array( 'hours' => 1, 'social' => 1, 'seo' => 1 ) );
 
 undt_head( 'Bricks' );
 
-$undt_tags = UNDT_Dynamic::bricks_tags( array( array( 'name' => '{post_title}', 'label' => 'Titel', 'group' => 'Post' ) ) );
+$undt_tags = UNDT_Dynamic_Bricks::tags( array( array( 'name' => '{post_title}', 'label' => 'Titel', 'group' => 'Post' ) ) );
 $undt_names = wp_list_pluck( $undt_tags, 'name' );
 undt_ok( '{post_title}' === $undt_names[0], 'Bestehende Tags bleiben' );
 undt_ok( in_array( '{undt_phone}', $undt_names, true ) && in_array( '{undt_phone_link}', $undt_names, true ), 'Tags in der Form {undt_phone}' );
 undt_ok( 'Unternehmensdaten' === $undt_tags[1]['group'], 'Eigene Gruppe' );
-undt_ok( 'kaputt' === UNDT_Dynamic::bricks_tags( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
+undt_ok( 'kaputt' === UNDT_Dynamic_Bricks::tags( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
 
-undt_ok( 'Müller &amp; Söhne' === UNDT_Dynamic::bricks_render_tag( 'undt_company_name', null, 'text' ), 'Tag ohne Klammern wird escaped aufgeloest' );
-undt_ok( 'Müller &amp; Söhne' === UNDT_Dynamic::bricks_render_tag( '{undt_company_name}', null, 'text' ), 'Tag mit Klammern ebenso' );
-undt_ok( 'post_title' === UNDT_Dynamic::bricks_render_tag( 'post_title', null, 'text' ), 'Fremder Tag bleibt unberuehrt' );
-undt_ok( 'undt_gibt_es_nicht' === UNDT_Dynamic::bricks_render_tag( 'undt_gibt_es_nicht', null, 'text' ), 'Unbekannter eigener Tag bleibt unberuehrt' );
-undt_ok( 'undt_share_capital' === UNDT_Dynamic::bricks_render_tag( 'undt_share_capital', null, 'text' ), 'Nicht geltender Tag bleibt unberuehrt' );
-undt_ok( 'tel:+493012345' === UNDT_Dynamic::bricks_render_tag( 'undt_phone_link', null, 'link' ), 'Link-Kontext liefert die rohe Adresse' );
-undt_ok( 'https://example.test/?p=10' === UNDT_Dynamic::bricks_render_tag( 'undt_page_imprint', null, 'link' ), 'Seitenfeld im Link-Kontext' );
-undt_ok( '+49 (30) 123-45' === UNDT_Dynamic::bricks_render_tag( 'undt_phone', null, 'link' ), 'Textwert im Link-Kontext bleibt Text' );
-undt_ok( array( 'x' ) === UNDT_Dynamic::bricks_render_tag( array( 'x' ) ), 'Fremder Typ wird durchgereicht' );
+undt_ok( 'Müller &amp; Söhne' === UNDT_Dynamic_Bricks::render_tag( 'undt_company_name', null, 'text' ), 'Tag ohne Klammern wird escaped aufgeloest' );
+undt_ok( 'Müller &amp; Söhne' === UNDT_Dynamic_Bricks::render_tag( '{undt_company_name}', null, 'text' ), 'Tag mit Klammern ebenso' );
+undt_ok( 'post_title' === UNDT_Dynamic_Bricks::render_tag( 'post_title', null, 'text' ), 'Fremder Tag bleibt unberuehrt' );
+undt_ok( 'undt_gibt_es_nicht' === UNDT_Dynamic_Bricks::render_tag( 'undt_gibt_es_nicht', null, 'text' ), 'Unbekannter eigener Tag bleibt unberuehrt' );
+undt_ok( 'undt_share_capital' === UNDT_Dynamic_Bricks::render_tag( 'undt_share_capital', null, 'text' ), 'Nicht geltender Tag bleibt unberuehrt' );
+undt_ok( 'tel:+493012345' === UNDT_Dynamic_Bricks::render_tag( 'undt_phone_link', null, 'link' ), 'Link-Kontext liefert die rohe Adresse' );
+undt_ok( 'https://example.test/?p=10' === UNDT_Dynamic_Bricks::render_tag( 'undt_page_imprint', null, 'link' ), 'Seitenfeld im Link-Kontext' );
+undt_ok( '+49 (30) 123-45' === UNDT_Dynamic_Bricks::render_tag( 'undt_phone', null, 'link' ), 'Textwert im Link-Kontext bleibt Text' );
+undt_ok( array( 'x' ) === UNDT_Dynamic_Bricks::render_tag( array( 'x' ) ), 'Fremder Typ wird durchgereicht' );
 
 undt_ok(
-	'Tel. +49 (30) 123-45, {post_title}, {undt_gibt_es_nicht}, Müller &amp; Söhne' === UNDT_Dynamic::bricks_render_content( 'Tel. {undt_phone}, {post_title}, {undt_gibt_es_nicht}, {undt_company_name}', null, 'text' ),
+	'Tel. +49 (30) 123-45, {post_title}, {undt_gibt_es_nicht}, Müller &amp; Söhne' === UNDT_Dynamic_Bricks::render_content( 'Tel. {undt_phone}, {post_title}, {undt_gibt_es_nicht}, {undt_company_name}', null, 'text' ),
 	'Im Fliesstext werden nur die eigenen Tags ersetzt'
 );
-undt_ok( 'ohne Tags' === UNDT_Dynamic::bricks_render_content( 'ohne Tags' ), 'Text ohne Tags bleibt gleich' );
-undt_ok( '<a href="tel:+493012345">' === UNDT_Dynamic::bricks_render_content( '<a href="{undt_phone_link}">', null, 'link' ), 'Link im Fliesstext' );
-undt_ok( 42 === UNDT_Dynamic::bricks_render_content( 42 ), 'Fremder Typ wird durchgereicht' );
+undt_ok( 'ohne Tags' === UNDT_Dynamic_Bricks::render_content( 'ohne Tags' ), 'Text ohne Tags bleibt gleich' );
+undt_ok( '<a href="tel:+493012345">' === UNDT_Dynamic_Bricks::render_content( '<a href="{undt_phone_link}">', null, 'link' ), 'Link im Fliesstext' );
+undt_ok( 42 === UNDT_Dynamic_Bricks::render_content( 42 ), 'Fremder Typ wird durchgereicht' );
 
 // Bricks reicht fremde Tags samt Klammern und Filtern weiter.
-undt_ok( 'Müller…' === UNDT_Dynamic::bricks_render_tag( '{undt_company_name:1}', null, 'text' ), 'Zahl begrenzt die Woerter' );
-undt_ok( 'Müller &amp; Söhne…' === UNDT_Dynamic::bricks_render_tag( '{undt_address:3}', null, 'text' ), 'Wortgrenze vor dem Escaping' );
-undt_ok( 'keine Faxnummer' === UNDT_Dynamic::bricks_render_tag( "{undt_fax @fallback:'keine Faxnummer'}", null, 'text' ), '@fallback ersetzt einen leeren Wert' );
-undt_ok( 'keins' === UNDT_Dynamic::bricks_render_tag( '{undt_fax @fallback:keins}', null, 'text' ), '@fallback auch ohne Anfuehrungszeichen' );
-undt_ok( '+49 (30) 123-45' === UNDT_Dynamic::bricks_render_tag( "{undt_phone @fallback:'x'}", null, 'text' ), '@fallback greift nur bei leerem Wert' );
-undt_ok( 'tel:+493012345' === UNDT_Dynamic::bricks_render_tag( '{undt_phone_link:1}', null, 'link' ), 'Wortgrenze gilt nicht fuer Adressen' );
-undt_ok( '{undt_gibt_es_nicht:3}' === UNDT_Dynamic::bricks_render_tag( '{undt_gibt_es_nicht:3}', null, 'text' ), 'Unbekannter Tag mit Filter bleibt unberuehrt' );
-undt_ok( '{post_title:3}' === UNDT_Dynamic::bricks_render_tag( '{post_title:3}', null, 'text' ), 'Fremder Tag mit Filter bleibt unberuehrt' );
+undt_ok( 'Müller…' === UNDT_Dynamic_Bricks::render_tag( '{undt_company_name:1}', null, 'text' ), 'Zahl begrenzt die Woerter' );
+undt_ok( 'Müller &amp; Söhne…' === UNDT_Dynamic_Bricks::render_tag( '{undt_address:3}', null, 'text' ), 'Wortgrenze vor dem Escaping' );
+undt_ok( 'keine Faxnummer' === UNDT_Dynamic_Bricks::render_tag( "{undt_fax @fallback:'keine Faxnummer'}", null, 'text' ), '@fallback ersetzt einen leeren Wert' );
+undt_ok( 'keins' === UNDT_Dynamic_Bricks::render_tag( '{undt_fax @fallback:keins}', null, 'text' ), '@fallback auch ohne Anfuehrungszeichen' );
+undt_ok( '+49 (30) 123-45' === UNDT_Dynamic_Bricks::render_tag( "{undt_phone @fallback:'x'}", null, 'text' ), '@fallback greift nur bei leerem Wert' );
+undt_ok( 'tel:+493012345' === UNDT_Dynamic_Bricks::render_tag( '{undt_phone_link:1}', null, 'link' ), 'Wortgrenze gilt nicht fuer Adressen' );
+undt_ok( '{undt_gibt_es_nicht:3}' === UNDT_Dynamic_Bricks::render_tag( '{undt_gibt_es_nicht:3}', null, 'text' ), 'Unbekannter Tag mit Filter bleibt unberuehrt' );
+undt_ok( '{post_title:3}' === UNDT_Dynamic_Bricks::render_tag( '{post_title:3}', null, 'text' ), 'Fremder Tag mit Filter bleibt unberuehrt' );
 undt_ok(
-	"A – B Müller… C {undt_nix @fallback:'y'}" === UNDT_Dynamic::bricks_render_content( "A {undt_fax @fallback:'–'} B {undt_company_name:1} C {undt_nix @fallback:'y'}", null, 'text' ),
+	"A – B Müller… C {undt_nix @fallback:'y'}" === UNDT_Dynamic_Bricks::render_content( "A {undt_fax @fallback:'–'} B {undt_company_name:1} C {undt_nix @fallback:'y'}", null, 'text' ),
 	'Filter wirken auch im Fliesstext'
 );
 
@@ -503,10 +505,10 @@ undt_ok(
 
 undt_head( 'Etch' );
 
-$undt_etch = UNDT_Dynamic::etch_options( array( 'andere' => 1 ) );
+$undt_etch = UNDT_Dynamic_Etch::options( array( 'andere' => 1 ) );
 undt_ok( 1 === $undt_etch['andere'] && 'Müller & Söhne' === $undt_etch['undt']['company_name'], 'Werte stehen unter options.undt bereit' );
 undt_ok( 'tel:+493012345' === $undt_etch['undt']['phone_link'], 'Mit den Builder-Links' );
-undt_ok( false === UNDT_Dynamic::etch_options( false ), 'Fremder Typ wird durchgereicht' );
+undt_ok( false === UNDT_Dynamic_Etch::options( false ), 'Fremder Typ wird durchgereicht' );
 
 /* ------------------------------------------ 9. Banner und Page Builder --- */
 
@@ -590,6 +592,17 @@ UNDT_Dynamic::register();
 foreach ( array( 'slim_seo_variables', 'slim_seo_data', 'slim_seo_schema_variables', 'slim_seo_schema_data', 'bricks/dynamic_tags_list', 'bricks/dynamic_data/render_tag', 'bricks/dynamic_data/render_content', 'bricks/frontend/render_data', 'etch/dynamic_data/option' ) as $undt_hook ) {
 	undt_ok( ! empty( $GLOBALS['undt_filters'][ $undt_hook ] ), 'Haken ' . $undt_hook );
 }
+
+/*
+ * Seit 0.5.7 haengt je Werkzeug eine eigene Klasse an den Werten. Ein einziger
+ * Aufruf meldet weiterhin alle an, damit der Start des Plugins nichts davon
+ * wissen muss.
+ */
+undt_ok( class_exists( 'UNDT_Dynamic_SlimSeo' ) && class_exists( 'UNDT_Dynamic_Bricks' ) && class_exists( 'UNDT_Dynamic_Etch' ), 'Je Werkzeug eine Klasse' );
+
+$GLOBALS['undt_filters'] = array();
+UNDT_Dynamic_Bricks::register();
+undt_ok( empty( $GLOBALS['undt_filters']['slim_seo_variables'] ) && ! empty( $GLOBALS['undt_filters']['bricks/dynamic_tags_list'] ), 'Jede Klasse haengt nur ihre eigenen Haken ein' );
 
 echo empty( $GLOBALS['undt_fails'] ) ? "\n\033[32mAlle Pruefungen bestanden\033[0m\n" : "\n\033[31m" . $GLOBALS['undt_fails'] . " Pruefungen fehlgeschlagen\033[0m\n";
 exit( empty( $GLOBALS['undt_fails'] ) ? 0 : 1 );

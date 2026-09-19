@@ -87,7 +87,7 @@ $undt_first = key( $undt_panels );
 		<p class="description undt-section-hint">
 			<?php esc_html_e( 'Diese Blöcke geben semantisches HTML aus und übernehmen Schrift und Farben vom Theme. Die Überschriftenebene lässt sich anpassen, damit sich der Block in die Gliederung der Seite einfügt.', 'unternehmensdaten' ); ?>
 		</p>
-		<?php UNDT_Fields::shortcode_table( UNDT_Shortcodes::catalog() ); ?>
+		<?php UNDT_Copy::table( UNDT_Shortcodes::catalog() ); ?>
 	</div>
 
 	<?php if ( isset( $undt_panels['modules'] ) ) : ?>
@@ -96,7 +96,7 @@ $undt_first = key( $undt_panels );
 			<p class="description undt-section-hint">
 				<?php esc_html_e( 'Aufgeführt ist nur, was gerade aktiv ist. Abgeschaltete Bereiche geben nichts aus.', 'unternehmensdaten' ); ?>
 			</p>
-			<?php UNDT_Fields::shortcode_table( $undt_modules ); ?>
+			<?php UNDT_Copy::table( $undt_modules ); ?>
 		</div>
 	<?php endif; ?>
 
@@ -142,7 +142,7 @@ $undt_first = key( $undt_panels );
 									<span class="undt-basis"><?php echo esc_html( $undt_field['basis'] ); ?></span>
 								<?php endif; ?>
 							</td>
-							<td><?php UNDT_Fields::copy_button( '[undt key="' . $undt_key . '"]' ); ?></td>
+							<td><?php UNDT_Copy::button( '[undt key="' . $undt_key . '"]' ); ?></td>
 							<td>
 								<?php if ( '' === $undt_short ) : ?>
 									<em class="undt-empty"><?php esc_html_e( 'noch nicht ausgefüllt', 'unternehmensdaten' ); ?></em>
@@ -192,7 +192,7 @@ $undt_first = key( $undt_panels );
 						</td>
 						<td>
 							<?php if ( isset( $undt_dynamic_seo[ $undt_key ] ) || isset( $undt_dynamic_schema[ $undt_key ] ) ) : ?>
-								<?php UNDT_Fields::copy_button( $undt_syntax['slim_seo'], 'inline' ); ?>
+								<?php UNDT_Copy::button( $undt_syntax['slim_seo'], 'inline' ); ?>
 								<?php if ( ! isset( $undt_dynamic_seo[ $undt_key ] ) ) : ?>
 									<span class="undt-basis"><?php esc_html_e( 'nur in den Schema-Einstellungen', 'unternehmensdaten' ); ?></span>
 								<?php endif; ?>
@@ -201,8 +201,8 @@ $undt_first = key( $undt_panels );
 							<?php endif; ?>
 						</td>
 						<?php if ( isset( $undt_dynamic_builder[ $undt_key ] ) ) : ?>
-							<td><?php UNDT_Fields::copy_button( $undt_syntax['bricks'], 'inline' ); ?></td>
-							<td><?php UNDT_Fields::copy_button( $undt_syntax['etch'], 'inline' ); ?></td>
+							<td><?php UNDT_Copy::button( $undt_syntax['bricks'], 'inline' ); ?></td>
+							<td><?php UNDT_Copy::button( $undt_syntax['etch'], 'inline' ); ?></td>
 						<?php else : ?>
 							<td><span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span></td>
 							<td><span class="undt-empty" title="<?php esc_attr_e( 'Nur für die strukturierten Daten gedacht', 'unternehmensdaten' ); ?>">–</span></td>
@@ -240,7 +240,7 @@ $undt_first = key( $undt_panels );
 				<?php foreach ( $undt_sources as $undt_source => $undt_meta ) : ?>
 					<tr class="undt-searchable" data-undt-text="<?php echo esc_attr( strtolower( $undt_source . ' ' . $undt_meta['label'] . ' ' . $undt_meta['fields'] ) ); ?>">
 						<td>
-							<?php UNDT_Fields::copy_button( $undt_source ); ?>
+							<?php UNDT_Copy::button( $undt_source ); ?>
 							<?php if ( ! UNDT_Modules::is_active( $undt_meta['module'] ) ) : ?>
 								<p class="description undt-empty"><?php esc_html_e( 'Bereich abgeschaltet, liefert derzeit nichts.', 'unternehmensdaten' ); ?></p>
 							<?php endif; ?>
@@ -275,7 +275,7 @@ $undt_first = key( $undt_panels );
 				?>
 				<?php foreach ( $undt_functions as $undt_call => $undt_desc ) : ?>
 					<tr class="undt-searchable" data-undt-text="<?php echo esc_attr( strtolower( $undt_call . ' ' . $undt_desc ) ); ?>">
-						<td><?php UNDT_Fields::copy_button( $undt_call ); ?></td>
+						<td><?php UNDT_Copy::button( $undt_call ); ?></td>
 						<td><?php echo esc_html( $undt_desc ); ?></td>
 					</tr>
 				<?php endforeach; ?>
@@ -292,8 +292,8 @@ $undt_first = key( $undt_panels );
 						<p class="description">
 							<?php esc_html_e( 'Einzelwerte stehen in der Auswahl dynamischer Daten unter „Unternehmensdaten“, siehe Registerkarte „Dynamische Daten“. Die Query-Namen stehen im Schleifen-Dialog zur Auswahl, die Felder der laufenden Schleife liest undt_loop() über das echo-Tag:', 'unternehmensdaten' ); ?>
 						</p>
-						<?php UNDT_Fields::copy_button( '{undt_phone}' ); ?>
-						<?php UNDT_Fields::copy_button( "{echo:undt_loop('question')}" ); ?>
+						<?php UNDT_Copy::button( '{undt_phone}' ); ?>
+						<?php UNDT_Copy::button( "{echo:undt_loop('question')}" ); ?>
 						<p class="description">
 							<?php esc_html_e( 'Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. Zusätzlich muss unter Bricks, Einstellungen, Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein. Die Tags aus der Auswahl brauchen das nicht.', 'unternehmensdaten' ); ?>
 						</p>
@@ -305,8 +305,8 @@ $undt_first = key( $undt_panels );
 						<p class="description">
 							<?php esc_html_e( 'Einzelwerte stehen unter options.undt bereit. Schleifen entstehen in einem Code-Element über undt_query():', 'unternehmensdaten' ); ?>
 						</p>
-						<?php UNDT_Fields::copy_button( '{options.undt.phone}' ); ?>
-						<?php UNDT_Fields::copy_button( "foreach ( undt_query( 'undt_faq' ) as \$row ) { echo esc_html( \$row['question'] ); }" ); ?>
+						<?php UNDT_Copy::button( '{options.undt.phone}' ); ?>
+						<?php UNDT_Copy::button( "foreach ( undt_query( 'undt_faq' ) as \$row ) { echo esc_html( \$row['question'] ); }" ); ?>
 					</td>
 				</tr>
 				<tr class="undt-searchable" data-undt-text="breakdance php code block loop">

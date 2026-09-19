@@ -93,6 +93,15 @@ undt_t( class_exists( 'UNDT_Modules' ), 'Autoloader findet UNDT_Modules' );
 undt_t( class_exists( 'UNDT_Hours' ), 'Autoloader findet UNDT_Hours' );
 
 /*
+ * Seit 0.5.7 stehen die Werkzeug-Anbindungen und die Eingabeelemente in
+ * eigenen Klassen. Der Autoloader leitet den Dateinamen aus dem Klassennamen
+ * ab, ein Tippfehler faellt deshalb erst beim ersten Zugriff auf.
+ */
+foreach ( array( 'UNDT_Dynamic_SlimSeo', 'UNDT_Dynamic_Bricks', 'UNDT_Dynamic_Etch', 'UNDT_Controls', 'UNDT_Copy', 'UNDT_Transfer', 'UNDT_Cli' ) as $undt_class ) {
+	undt_t( class_exists( $undt_class ), 'Autoloader findet ' . $undt_class );
+}
+
+/*
  * Seit 0.5.4 ohne eigenen Sprachordner: der Header darf auf keinen zeigen, die
  * Textdomäne bleibt, und WordPress lädt Übersetzungen bei Bedarf selbst aus
  * wp-content/languages/plugins.
@@ -369,7 +378,7 @@ if ( ! post_type_exists( 'bricks_template' ) ) {
 $recht_id = wp_insert_post( array( 'post_type' => 'undt_recht', 'post_status' => 'publish', 'post_title' => 'AGB als Rechtstext' ) );
 wp_insert_post( array( 'post_type' => 'undt_vorlage', 'post_status' => 'publish', 'post_title' => 'Nur eine Vorlage' ) );
 
-$link_types = UNDT_Fields::link_post_types();
+$link_types = UNDT_Controls::link_post_types();
 undt_t( isset( $link_types['page'], $link_types['undt_recht'] ), 'Seitenfelder wählen aus Seiten und eigenen Inhaltstypen: ' . implode( ', ', array_keys( $link_types ) ) );
 undt_t( ! isset( $link_types['undt_vorlage'] ) && ! isset( $link_types['bricks_template'] ) && ! isset( $link_types['post'] ) && ! isset( $link_types['attachment'] ), 'Vorlagen, Bricks-Vorlagen, Beiträge und Medien fehlen in der Auswahl' );
 

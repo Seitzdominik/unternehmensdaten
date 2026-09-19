@@ -9,6 +9,8 @@
  */
 require __DIR__ . '/harness.php';
 require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-controls.php';
+require UNDT_TEST_BASE . 'admin/class-undt-copy.php';
 
 function wp_list_pluck( $list, $field ) {
 	return array_map( static function ( $item ) use ( $field ) { return is_object( $item ) ? $item->$field : $item[ $field ]; }, $list );
@@ -84,7 +86,7 @@ undt_ok( false === strpos( $html, 'regular-text' ), 'Keine halbbreiten Felder me
 // test-dynamik.php.
 
 ob_start();
-UNDT_Fields::control( 'when', array( 'type' => 'time', 'choices' => array() ), '09:00', 'undt_x[when]', 'undt-when' );
+UNDT_Controls::render( 'when', array( 'type' => 'time', 'choices' => array() ), '09:00', 'undt_x[when]', 'undt-when' );
 $html = (string) ob_get_clean();
 undt_ok( false !== strpos( $html, 'class="undt-input-time"' ), 'Uhrzeiten bleiben schmal' );
 
@@ -135,7 +137,7 @@ undt_set_modules( array( 'hours' => 1 ) );
 undt_seed_module( 'hours', array( 'days' => array( 'mon' => array( 'closed' => 0, 'slots' => array( array( 'from' => '09:00', 'to' => '17:00' ) ) ) ) ) );
 
 ob_start();
-UNDT_Fields::control( 'days', array( 'type' => 'hours', 'choices' => array() ), UNDT_Content::value( 'hours', 'days' ), 'undt_hours[days]', 'undt-days' );
+UNDT_Controls::render( 'days', array( 'type' => 'hours', 'choices' => array() ), UNDT_Content::value( 'hours', 'days' ), 'undt_hours[days]', 'undt-days' );
 $html = (string) ob_get_clean();
 
 undt_ok( false !== strpos( $html, 'data-undt-hours-copy="undt-days"' ), 'Der Knopf kennt die Tabelle, zu der er gehoert' );

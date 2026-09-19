@@ -9,6 +9,8 @@
  */
 require __DIR__ . '/harness.php';
 require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-controls.php';
+require UNDT_TEST_BASE . 'admin/class-undt-copy.php';
 
 function wp_list_pluck( $list, $field ) {
 	return array_map( static function ( $item ) use ( $field ) { return is_object( $item ) ? $item->$field : $item[ $field ]; }, $list );
@@ -150,7 +152,7 @@ undt_ok( isset( $rows[0]['icon'], $rows[0]['new_tab'] ) && false !== strpos( $ro
 
 $social = UNDT_Modules::get( 'social' );
 ob_start();
-UNDT_Fields::control( 'items', $social['fields']['items'], $items, 'undt_social[items]', 'undt-items' );
+UNDT_Controls::render( 'items', $social['fields']['items'], $items, 'undt_social[items]', 'undt-items' );
 $html = (string) ob_get_clean();
 undt_ok( false !== strpos( $html, '<span class="undt-select-icon"><span class="undt-select-icon__preview" aria-hidden="true"><svg' ), 'Im Backend steht das Symbol neben der Auswahl' );
 undt_ok( false !== strpos( $html, 'name="undt_social[items][0][platform]" data-undt-icon-select>' ), 'Die Auswahl meldet sich beim Skript' );
@@ -174,26 +176,26 @@ undt_ok( 'warning' === UNDT_Dynamic::value( 'banner_type' ), 'Art' );
 undt_ok( "Betriebsferien\nbis Montag" === UNDT_Dynamic::value( 'banner_text' ), 'Text' );
 undt_ok( 'Mehr erfahren' === UNDT_Dynamic::value( 'banner_link_text' ), 'Link ohne Text heisst wie im Banner' );
 undt_ok( '' === UNDT_Dynamic::value( 'banner_dismissible' ), 'Nicht schliessbar ergibt leer' );
-undt_ok( 'https://example.test/ferien' === UNDT_Dynamic::bricks_render_tag( '{undt_banner_link_url}', null, 'link' ), 'Link-Ziel im Link-Kontext von Bricks' );
-undt_ok( '1' === UNDT_Dynamic::bricks_render_tag( '{undt_banner_show}', null, 'text' ), 'Bricks bekommt 1' );
+undt_ok( 'https://example.test/ferien' === UNDT_Dynamic_Bricks::render_tag( '{undt_banner_link_url}', null, 'link' ), 'Link-Ziel im Link-Kontext von Bricks' );
+undt_ok( '1' === UNDT_Dynamic_Bricks::render_tag( '{undt_banner_show}', null, 'text' ), 'Bricks bekommt 1' );
 
-$etch = UNDT_Dynamic::etch_options( array() );
+$etch = UNDT_Dynamic_Etch::options( array() );
 undt_ok( true === $etch['undt']['banner_show'] && false === $etch['undt']['banner_dismissible'], 'Etch bekommt echte Wahrheitswerte' );
 undt_ok( 'warning' === $etch['undt']['banner_type'] && is_string( $etch['undt']['banner_text'] ), 'Die uebrigen Werte bleiben Text' );
 
 undt_seed_module( 'banner', array( 'enabled' => 1, 'text' => '' ) );
 undt_ok( '' === UNDT_Dynamic::value( 'banner_show' ), 'Ohne Text gilt das Banner als aus' );
 undt_ok( 'info' === UNDT_Dynamic::value( 'banner_type' ) && '' === UNDT_Dynamic::value( 'banner_link_text' ), 'Voreinstellungen ohne Link' );
-undt_ok( false === UNDT_Dynamic::etch_options( array() )['undt']['banner_show'], 'Etch bekommt false' );
+undt_ok( false === UNDT_Dynamic_Etch::options( array() )['undt']['banner_show'], 'Etch bekommt false' );
 
 undt_set_modules( array( 'hours' => 1, 'social' => 1, 'banner' => 0 ) );
 undt_ok( ! isset( UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER )['banner_text'] ) && '' === UNDT_Dynamic::value( 'banner_type' ), 'Abgeschaltetes Banner liefert nichts' );
 undt_set_modules( array( 'hours' => 1, 'social' => 1, 'banner' => 1 ) );
 
 $GLOBALS['undt_now'] = '2026-09-14 10:00:00'; // Montag.
-undt_ok( '1' === UNDT_Dynamic::value( 'is_open' ) && true === UNDT_Dynamic::etch_options( array() )['undt']['is_open'], 'Geoeffnet als Ja-Nein-Wert' );
+undt_ok( '1' === UNDT_Dynamic::value( 'is_open' ) && true === UNDT_Dynamic_Etch::options( array() )['undt']['is_open'], 'Geoeffnet als Ja-Nein-Wert' );
 $GLOBALS['undt_now'] = '2026-09-14 12:00:00';
-undt_ok( '' === UNDT_Dynamic::value( 'is_open' ) && false === UNDT_Dynamic::etch_options( array() )['undt']['is_open'], 'Geschlossen als Ja-Nein-Wert' );
+undt_ok( '' === UNDT_Dynamic::value( 'is_open' ) && false === UNDT_Dynamic_Etch::options( array() )['undt']['is_open'], 'Geschlossen als Ja-Nein-Wert' );
 $GLOBALS['undt_now'] = '2026-09-10 10:30:00';
 
 // Die Felder des Banners bekommen Kopierknoepfe, aber keinen Shortcode.

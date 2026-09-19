@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.6
+Stable tag: 0.5.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -186,6 +186,9 @@ Mit WP-CLI geht dasselbe ohne Backend:
 * `wp undt import firma.json` spielt sie ein, mit `--yes` ohne Rückfrage
 
 == Changelog ==
+
+= 0.5.7 =
+* Innenausbau ohne sichtbare Änderung: Die Anbindungen an Slim SEO, Bricks und Etch stehen jetzt in je einer eigenen Klasse, ebenso die Eingabeelemente und die Kopierknöpfe des Backends. Das nächste Werkzeug kostet damit nur eine weitere kleine Klasse
 
 = 0.5.6 =
 * Neu: Alle Angaben lassen sich unter Einstellungen als Datei sichern und auf einer anderen Website einspielen. Verknüpfte Seiten und Bilder bleiben dabei außen vor, sie gehören zur Ursprungsseite

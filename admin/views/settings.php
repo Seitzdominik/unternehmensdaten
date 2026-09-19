@@ -56,7 +56,7 @@ $undt_report = UNDT_Transfer::take_report();
 						</th>
 						<td>
 							<?php
-							UNDT_Fields::toggle(
+							UNDT_Controls::toggle(
 								$undt_option . '[modules][' . $undt_slug . ']',
 								'undt-module-' . $undt_slug,
 								! empty( $undt_settings['modules'][ $undt_slug ] )
@@ -95,7 +95,7 @@ $undt_report = UNDT_Transfer::take_report();
 					</th>
 					<td>
 						<?php
-						UNDT_Fields::toggle(
+						UNDT_Controls::toggle(
 							$undt_option . '[updates]',
 							'undt-updates',
 							! empty( $undt_settings['updates'] )
@@ -172,7 +172,7 @@ $undt_report = UNDT_Transfer::take_report();
 					</th>
 					<td>
 						<?php
-						UNDT_Fields::toggle(
+						UNDT_Controls::toggle(
 							$undt_option . '[keep_data]',
 							'undt-keep-data',
 							! empty( $undt_settings['keep_data'] )

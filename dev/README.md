@@ -41,7 +41,8 @@ der Plugin-Header keinen Sprachordner mehr verspricht, den das Archiv nicht
 mitbringt, seit 0.5.5 die Haken fuer die Schema-Einstellungen von Slim SEO Pro
 und seit 0.5.6 das Sichern und Einspielen in echtem WordPress, die Listen fuer
 openingHoursSpecification und der Knopf, der die Zeiten des ersten Tages
-uebertraegt. Stand 0.5.6 sind es 195 Pruefungen.
+uebertraegt. Seit 0.5.7 prueft der Lauf ausserdem, dass der Autoloader jede der
+neuen Klassen findet. Stand 0.5.7 sind es 202 Pruefungen.
 
 Weder Slim SEO noch Bricks noch Etch laufen im Playground. Ihre Haken werden
 dort direkt aufgerufen. Wie sich die Anbindung mit dem echten Werkzeug
@@ -167,6 +168,25 @@ einer Veroeffentlichung gehoeren sie trotzdem dazu, siehe oben.
 Die Artefakte der Laeufe (`dev/result.txt`, `dev/audit/html-*.html`,
 `dev/audit/result-*.txt`, Protokolle und `dev/audit/ergebnisse-0.4.0/`) stehen
 in `.gitignore`. Sie entstehen bei jedem Durchlauf neu.
+
+## Aufbau des Plugins
+
+Seit 0.5.7 hat jede Aufgabe ihre eigene Klasse. Wer etwas sucht, findet es
+hier:
+
+* `UNDT_Dynamic` — welche dynamischen Werte es gibt und was darin steht.
+  `UNDT_Dynamic_SlimSeo`, `UNDT_Dynamic_Bricks` und `UNDT_Dynamic_Etch` holen
+  sie ab; ein weiteres Werkzeug kostet nur eine weitere kleine Klasse
+* `UNDT_Fields` — das Raster einer Formularseite: Zeilen, Feldpaare, Zellen,
+  Beschriftungen. `UNDT_Controls` fuellt es mit Eingabeelementen, `UNDT_Copy`
+  liefert Kopierknoepfe und Referenztabellen
+* `UNDT_Transfer` und `UNDT_Cli` — Sichern und Einspielen, im Backend und auf
+  der Kommandozeile
+
+Der Autoloader leitet den Dateinamen aus dem Klassennamen ab
+(`UNDT_Dynamic_SlimSeo` → `includes/class-undt-dynamic-slimseo.php`). Die
+Offline-Pruefungen laden die Klassen dagegen einzeln, `harness.php` braucht
+deshalb bei einer neuen Klasse eine Zeile mehr.
 
 ## Hinweise
 

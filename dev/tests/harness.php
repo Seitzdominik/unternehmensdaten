@@ -192,6 +192,9 @@ require $base . 'includes/class-undt-blocks.php';
 require $base . 'includes/class-undt-schemaorg.php';
 require $base . 'includes/class-undt-api.php';
 require $base . 'includes/class-undt-dynamic.php';
+require $base . 'includes/class-undt-dynamic-slimseo.php';
+require $base . 'includes/class-undt-dynamic-bricks.php';
+require $base . 'includes/class-undt-dynamic-etch.php';
 require $base . 'includes/class-undt-icons.php';
 require $base . 'includes/class-undt-transfer.php';
 

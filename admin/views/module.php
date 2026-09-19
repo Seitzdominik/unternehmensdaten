@@ -104,7 +104,7 @@ $undt_data = UNDT_Content::all( $undt_slug );
 							<strong><?php echo esc_html( $undt_item['title'] ); ?></strong>
 							<p class="description"><?php echo esc_html( $undt_item['desc'] ); ?></p>
 						</td>
-						<td><?php UNDT_Fields::copy_button( $undt_item['code'] ); ?></td>
+						<td><?php UNDT_Copy::button( $undt_item['code'] ); ?></td>
 						<td class="undt-atts"><?php echo esc_html( $undt_item['atts'] ); ?></td>
 					</tr>
 				<?php endforeach; ?>

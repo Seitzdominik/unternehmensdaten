@@ -10,6 +10,8 @@
  */
 require __DIR__ . '/harness.php';
 require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-controls.php';
+require UNDT_TEST_BASE . 'admin/class-undt-copy.php';
 
 /*
  * Attrappen fuer die Seitenauswahl. Sie stehen hier und nicht im Harness, weil
@@ -127,10 +129,10 @@ undt_head( 'F-06: Seitenauswahl kennzeichnet unveroeffentlichte Seiten' );
 
 $page              = new WP_Post();
 $page->post_status = 'draft';
-undt_ok( 'Datenschutz (Entwurf)' === UNDT_Fields::page_status_label( 'Datenschutz', $page ), 'Ein Entwurf traegt seinen Status im Namen' );
+undt_ok( 'Datenschutz (Entwurf)' === UNDT_Controls::page_status_label( 'Datenschutz', $page ), 'Ein Entwurf traegt seinen Status im Namen' );
 $page->post_status = 'publish';
-undt_ok( 'Datenschutz' === UNDT_Fields::page_status_label( 'Datenschutz', $page ), 'Eine veroeffentlichte Seite bleibt unveraendert' );
-undt_ok( 'Datenschutz' === UNDT_Fields::page_status_label( 'Datenschutz', null ), 'Ohne Seitenobjekt bleibt der Titel unveraendert' );
+undt_ok( 'Datenschutz' === UNDT_Controls::page_status_label( 'Datenschutz', $page ), 'Eine veroeffentlichte Seite bleibt unveraendert' );
+undt_ok( 'Datenschutz' === UNDT_Controls::page_status_label( 'Datenschutz', null ), 'Ohne Seitenobjekt bleibt der Titel unveraendert' );
 
 /* ------------------------------------------- SEO-Erkennung ------------- */
 
@@ -246,7 +248,7 @@ undt_ok( false !== strpos( $imprint, 'Gewerbeamt Stadt' ) && false !== strpos( $
 undt_head( 'H-04: Attributnamen im Schalter' );
 
 ob_start();
-UNDT_Fields::toggle( 'feld', 'undt-feld', false, array( 'data-undt-ok' => '1', 'onmouseover="alert(1)" x' => 'y' ) );
+UNDT_Controls::toggle( 'feld', 'undt-feld', false, array( 'data-undt-ok' => '1', 'onmouseover="alert(1)" x' => 'y' ) );
 $toggle = ob_get_clean();
 undt_ok( false !== strpos( $toggle, 'data-undt-ok="1"' ) && false === strpos( $toggle, 'onmouseover' ), 'Nur schlichte Attributnamen gelangen in den Schalter' );
 
@@ -275,7 +277,7 @@ if ( ! function_exists( 'wp_get_attachment_image' ) ) {
 }
 
 ob_start();
-UNDT_Fields::control( 'logo', array( 'type' => 'media', 'choices' => array() ), '12"><script>alert(1)</script>', 'undt_seo[logo]', 'undt-logo' );
+UNDT_Controls::render( 'logo', array( 'type' => 'media', 'choices' => array() ), '12"><script>alert(1)</script>', 'undt_seo[logo]', 'undt-logo' );
 $media = (string) ob_get_clean();
 
 undt_ok( false !== strpos( $media, 'value="12"' ), 'Das Bildfeld gibt die ID aus' );
