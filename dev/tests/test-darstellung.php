@@ -8,7 +8,7 @@
  * selbst, siehe dev/verify.php.
  */
 require __DIR__ . '/harness.php';
-require dirname( __DIR__, 2 ) . '/unternehmensdaten/admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
 
 function wp_list_pluck( $list, $field ) {
 	return array_map( static function ( $item ) use ( $field ) { return is_object( $item ) ? $item->$field : $item[ $field ]; }, $list );

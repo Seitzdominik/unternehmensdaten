@@ -9,7 +9,7 @@
  * und dev/audit/env.php.
  */
 require __DIR__ . '/harness.php';
-require dirname( __DIR__, 2 ) . '/unternehmensdaten/admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
 
 /*
  * Attrappen fuer die Seitenauswahl. Sie stehen hier und nicht im Harness, weil
@@ -175,7 +175,15 @@ undt_ok( ! isset( $transient->response['unternehmensdaten/unternehmensdaten.php'
 
 undt_head( 'F-02 und F-14: Release-Workflow' );
 
-$workflows = dirname( __DIR__, 2 ) . '/unternehmensdaten/.github/workflows/';
+/*
+ * Die Pruefungen laufen aus zwei Ablagen: aus dem Entwicklungsordner, wo das
+ * Plugin unter unternehmensdaten/ liegt, und aus dem Repository, wo es selbst
+ * die Wurzel bildet. Findet der Harness den Pfad nicht, faellt alles Weitere
+ * mit irrefuehrenden Meldungen aus.
+ */
+undt_ok( is_file( UNDT_TEST_BASE . 'unternehmensdaten.php' ), 'Der Plugin-Pfad stimmt, unabhaengig von der Ablage' );
+
+$workflows = UNDT_TEST_BASE . '.github/workflows/';
 $yml       = (string) file_get_contents( $workflows . 'release.yml' );
 $tests_yml = (string) file_get_contents( $workflows . 'tests.yml' );
 
@@ -273,7 +281,7 @@ $media = (string) ob_get_clean();
 undt_ok( false !== strpos( $media, 'value="12"' ), 'Das Bildfeld gibt die ID aus' );
 undt_ok( false === strpos( $media, '<script' ) && false === strpos( $media, 'alert' ), 'Alles andere kommt nicht durch' );
 
-$haupt = (string) file_get_contents( dirname( __DIR__, 2 ) . '/unternehmensdaten/unternehmensdaten.php' );
+$haupt = (string) file_get_contents( UNDT_TEST_BASE . 'unternehmensdaten.php' );
 
 undt_ok( false === strpos( $haupt, 'Domain Path' ), 'Keine Kopfzeile, die auf einen Ordner zeigt, den es nicht gibt' );
 undt_ok( false === strpos( $haupt, 'load_plugin_textdomain(' ), 'Uebersetzungen laedt WordPress selbst aus wp-content/languages/plugins' );

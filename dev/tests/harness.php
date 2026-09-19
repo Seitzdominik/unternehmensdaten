@@ -108,7 +108,21 @@ function checked( $a, $b = true, $e = true ) { return (string) $a === (string) $
 
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'MINUTE_IN_SECONDS', 60 );
-define( 'UNDT_FILE', dirname( __DIR__, 2 ) . '/unternehmensdaten/unternehmensdaten.php' );
+/*
+ * Zwei Ablagen, ein Plugin: im Entwicklungsordner liegt es unter
+ * unternehmensdaten/, im Repository bildet es selbst die Wurzel. Der Pfad wird
+ * deshalb gesucht, damit dieselben Pruefungen hier wie dort laufen.
+ */
+$undt_wurzel = dirname( __DIR__, 2 );
+
+define(
+	'UNDT_TEST_BASE',
+	is_file( $undt_wurzel . '/unternehmensdaten/unternehmensdaten.php' )
+		? $undt_wurzel . '/unternehmensdaten/'
+		: $undt_wurzel . '/'
+);
+
+define( 'UNDT_FILE', UNDT_TEST_BASE . 'unternehmensdaten.php' );
 define( 'UNDT_UPDATE_REPO', 'Seitzdominik/unternehmensdaten' );
 
 $GLOBALS['undt_transients'] = array();
@@ -163,7 +177,7 @@ preg_match( '/^\s*\*\s*Version:\s*(\S+)/m', (string) file_get_contents( UNDT_FIL
 define( 'UNDT_VERSION', isset( $undt_version_match[1] ) ? $undt_version_match[1] : '0.0.0' );
 define( 'UNDT_DIR', __DIR__ );
 
-$base = dirname( __DIR__, 2 ) . '/unternehmensdaten/';
+$base = UNDT_TEST_BASE;
 
 require $base . 'includes/class-undt-schema.php';
 require $base . 'includes/class-undt-store.php';

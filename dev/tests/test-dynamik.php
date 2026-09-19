@@ -8,7 +8,7 @@
  * Test auf der Testseite.
  */
 require __DIR__ . '/harness.php';
-require dirname( __DIR__, 2 ) . '/unternehmensdaten/admin/class-undt-fields.php';
+require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
 
 /*
  * Attrappen fuer die Auswahl der Seitenfelder. Sie stehen hier und nicht im
