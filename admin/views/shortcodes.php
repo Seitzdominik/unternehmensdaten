@@ -61,18 +61,22 @@ $undt_first = key( $undt_panels );
 		<input type="search" id="undt-filter" class="regular-text" placeholder="<?php esc_attr_e( 'Suchen, etwa Telefon, Öffnungszeiten oder Query …', 'unternehmensdaten' ); ?>" />
 	</p>
 
-	<div class="nav-tab-wrapper undt-tabs" role="tablist">
+	<div class="undt-box">
+
+	<div class="undt-tabs" role="tablist">
 		<?php foreach ( $undt_panels as $undt_panel => $undt_label ) : ?>
 			<button
 				type="button"
 				role="tab"
 				id="undt-tab-<?php echo esc_attr( $undt_panel ); ?>"
-				class="nav-tab<?php echo $undt_panel === $undt_first ? ' nav-tab-active' : ''; ?>"
+				class="undt-tab<?php echo $undt_panel === $undt_first ? ' is-active' : ''; ?>"
 				aria-controls="undt-panel-<?php echo esc_attr( $undt_panel ); ?>"
 				aria-selected="<?php echo $undt_panel === $undt_first ? 'true' : 'false'; ?>"
 			><?php echo esc_html( $undt_label ); ?></button>
 		<?php endforeach; ?>
 	</div>
+
+	<div class="undt-box__body">
 
 	<!-- Rechtliche Blöcke -->
 	<div id="undt-panel-blocks" class="undt-panel" role="tabpanel" aria-labelledby="undt-tab-blocks"<?php echo 'blocks' === $undt_first ? '' : ' hidden'; ?>>
@@ -310,6 +314,9 @@ $undt_first = key( $undt_panels );
 			</p>
 		</div>
 	</div>
+
+	</div><!-- .undt-box__body -->
+	</div><!-- .undt-box -->
 
 	<p class="undt-no-results" hidden><?php esc_html_e( 'Keine Treffer.', 'unternehmensdaten' ); ?></p>
 </div>

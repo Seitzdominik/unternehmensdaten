@@ -19,7 +19,8 @@
    Bildschirmbreite gezogene Formulare und Fliesstexte werden sonst unlesbar
    lang, und das Auge verliert beim Zeilenwechsel den Anschluss. */
 .undt-wrap {
-	max-width: 950px;
+	--undt-width: 960px;
+	max-width: var(--undt-width);
 }
 
 .undt-wrap .undt-context {
@@ -30,22 +31,112 @@
 	margin: 1.5em 0;
 }
 
-/* Registerkarten: .nav-tab ist fuer Links gestaltet, Buttons brauchen einen Reset. */
-.undt-tabs .nav-tab {
-	font-family: inherit;
-	font-size: 14px;
-	line-height: 1.71428571;
-	cursor: pointer;
+/* ------------------------------------------------------------------ Karte */
+
+/* Formulare und Listen stehen in einer weissen Karte. Der graue Hintergrund
+   des Backends bleibt als Rahmen stehen, die Karte fasst zusammen, was
+   zusammengehoert, und alle Felder darin enden an derselben Kante. */
+.undt-box {
+	margin: 1em 0;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.undt-tabs .nav-tab:focus-visible {
-	outline: 2px solid #2271b1;
-	outline-offset: -2px;
+.undt-box__body {
+	padding: 8px 24px 20px;
+}
+
+/* Die Schaltflaeche sitzt als Fuss auf der Karte auf, abgesetzt vom Formular.
+   So ist auch bei langen Seiten zu sehen, wo das Formular endet. */
+.undt-box__footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 24px;
+	border-top: 1px solid #f0f0f1;
+	border-radius: 0 0 6px 6px;
+	background: #f6f7f7;
+}
+
+.undt-box__footer p,
+.undt-box__footer .submit {
+	margin: 0;
+	padding: 0;
+}
+
+/* Auf schmalen Bildschirmen zaehlt jeder Pixel Inhalt. */
+@media screen and (max-width: 782px) {
+	.undt-box__body,
+	.undt-box__footer {
+		padding-right: 16px;
+		padding-left: 16px;
+	}
+
+	.undt-tabs {
+		padding: 0 4px;
+	}
+}
+
+/* Keine zweite Tiefe: Listentabellen in der Karte tragen nur noch ihre Linien. */
+.undt-box__body .widefat {
+	border-color: #e0e0e1;
 	box-shadow: none;
 }
 
+.undt-box__body > :first-child,
+.undt-box__body > .undt-panel > :first-child {
+	margin-top: 1em;
+}
+
+.undt-box__body > :last-child,
+.undt-box__body > .undt-panel > :last-child {
+	margin-bottom: 0;
+}
+
+/* Registerkarten als Kopf der Karte: eine Linie unter dem aktiven Reiter statt
+   eines Kastens. Der negative Rand legt diese Linie ueber die Trennlinie. */
+.undt-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 0;
+	padding: 0 12px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.undt-tab {
+	margin: 0 0 -1px;
+	padding: 13px 12px;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	background: none;
+	color: #50575e;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.5;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.undt-tab:hover {
+	color: #2271b1;
+}
+
+.undt-tab.is-active {
+	border-bottom-color: #2271b1;
+	color: #1d2327;
+}
+
+.undt-tab:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: -2px;
+	border-radius: 2px;
+}
+
 .undt-panel {
-	padding-top: 0.5em;
+	padding-top: 0;
 }
 
 .undt-section-title {
@@ -259,6 +350,16 @@
 	margin: 0 4px 0 0;
 }
 
+/* Die Logos stehen am rechten Rand des Feldes. Neben dem Shortcode standen sie
+   ihm zu dicht auf den Fuessen, und ueber die Seite hinweg ergibt die rechte
+   Kante eine ruhige Linie. */
+.undt-copy-row__keys {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: auto;
+}
+
 /* Nur das Logo in einem kleinen Rahmen, der Tag steht im Tooltip. Die
    Klickflaeche ist groesser als der Rahmen, damit sie sich auch mit dem Finger
    treffen laesst. */
@@ -315,12 +416,46 @@
 	color: #d63638 !important;
 }
 
+/* --------------------------------------------------------- Formularzeilen */
+
+.undt-box .form-table {
+	margin-top: 0;
+}
+
+/* Eine feine Linie zwischen den Zeilen: in langen Formularen verrutscht das
+   Auge sonst leicht von der Beschriftung zum falschen Feld. */
+.undt-box .form-table > tbody > tr + tr > th,
+.undt-box .form-table > tbody > tr + tr > td {
+	border-top: 1px solid #f0f0f1;
+}
+
+.undt-box .form-table th,
+.undt-box .form-table td {
+	padding: 16px 0;
+}
+
 /* Etwas mehr Platz in der ersten Spalte, damit der Shortcode dort hineinpasst. */
 @media screen and (min-width: 783px) {
-	.undt-wrap .form-table th {
-		width: 190px;
-		padding-right: 16px;
+	.undt-box .form-table th {
+		width: 220px;
+		padding-right: 24px;
+		vertical-align: top;
 	}
+}
+
+/* Alle Eingaben enden an derselben Kante. Ohne das stehen Textfeld, Auswahl
+   und mehrzeiliges Feld unterschiedlich weit rechts, und die Seite wirkt
+   verschachtelt. Uhrzeit und Datum bleiben schmal, sie tragen eine eigene
+   Klasse. */
+.undt-box .form-table td > input[type="text"],
+.undt-box .form-table td > input[type="url"],
+.undt-box .form-table td > input[type="email"],
+.undt-box .form-table td > input[type="tel"],
+.undt-box .form-table td > input[type="number"],
+.undt-box .form-table td > select,
+.undt-box .form-table td > textarea {
+	width: 100%;
+	max-width: 100%;
 }
 
 /* Tabellen */
@@ -364,7 +499,7 @@
 
 /* Diese Zelle spannt beide Spalten des form-table-Rasters. */
 .undt-row--wide > td {
-	padding: 20px 0 0;
+	padding: 16px 0;
 }
 
 .undt-field-title {
@@ -554,20 +689,17 @@
 
 /* ------------------------------------------------------ Seitenfelder */
 
+/* Auswahl und eigene Adresse stehen untereinander und enden beide an der
+   Kante der Spalte, damit die Seitenfelder nicht aus der Reihe fallen. */
 .undt-link {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px 8px;
+	display: grid;
+	gap: 6px;
 }
 
-.undt-link select {
-	max-width: 100%;
-}
-
+.undt-link select,
 .undt-link .undt-link__url {
-	flex: 1 1 16em;
-	max-width: 25em;
+	width: 100%;
+	max-width: 100%;
 	margin: 0;
 }
 
@@ -791,6 +923,94 @@
 .undt-basis--inline {
 	display: inline;
 	margin-left: 0.6em;
+}
+
+/* ------------------------------------------------------- Fragenraster */
+
+/* Die Fragen zur Rechtsform sind kurz und ihre Antwort ist meist ein Schalter.
+   In einer Spalte stuende rechts neben jeder Frage eine halbe Bildschirmbreite
+   Nichts, deshalb zwei Spalten. Die Zellen einer Zeile sind gleich hoch, ihre
+   Trennlinien stehen dadurch ueber beide Spalten auf derselben Hoehe. */
+.undt-cards {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 40px;
+	margin: 0;
+}
+
+.undt-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 14px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+/* Eine Auswahl braucht die ganze Breite der Zelle, ihre Beschriftung steht
+   darueber. */
+.undt-card--stacked {
+	display: block;
+}
+
+.undt-card--full {
+	grid-column: 1 / -1;
+}
+
+.undt-card__label {
+	display: block;
+	color: #1d2327;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+.undt-card__text {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* In einer Zelle stuenden die Kopierknoepfe am rechten Rand zwischen
+   Beschriftung und Schalter. Hier gehoeren sie unter die Beschriftung. */
+.undt-card .undt-copy-row__keys {
+	margin-left: 0;
+}
+
+.undt-card__control {
+	flex: 0 0 auto;
+}
+
+.undt-card--stacked .undt-card__control {
+	margin-top: 8px;
+}
+
+.undt-card--stacked select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.undt-card .undt-basis {
+	margin-top: 3px;
+}
+
+/* Dasselbe Raster in einer Formularzeile, etwa fuer die Schalter unter Social
+   Media. Die Zellen bringen ihre eigenen Abstaende mit, deshalb steht die
+   Tabellenzelle darum eng. */
+.undt-box .form-table > tbody > tr.undt-row--toggles > td {
+	padding: 0;
+}
+
+/* Die Linie unter der letzten Zelle ist zugleich die Linie der Zeile. */
+.undt-box .form-table > tbody > tr.undt-row--toggles + tr > th,
+.undt-box .form-table > tbody > tr.undt-row--toggles + tr > td {
+	border-top: 0;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-cards {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
 }
 
 /* --------------------------------------------------------- Tab-Zähler */

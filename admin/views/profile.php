@@ -37,54 +37,22 @@ $undt_option    = UNDT_Store::OPTION_PROFILE;
 	<form method="post" action="options.php" class="undt-form">
 		<?php settings_fields( UNDT_Admin::GROUP_PROFILE ); ?>
 
-		<table class="form-table" role="presentation">
-			<tbody>
-				<?php
-				foreach ( $undt_questions as $undt_key => $undt_question ) {
-					$undt_question = array_merge(
-						array(
-							'label'     => $undt_key,
-							'type'      => 'checkbox',
-							'choices'   => array(),
-							'help'      => '',
-							'basis'     => '',
-							'when'      => array(),
-							'required'  => false,
-							'shortcode' => false,
-							'default'   => '',
-						),
-						$undt_question
-					);
+		<div class="undt-box">
+			<div class="undt-box__body">
+				<div class="undt-cards">
+					<?php
+					foreach ( $undt_questions as $undt_key => $undt_question ) {
+						$undt_value = isset( $undt_profile[ $undt_key ] ) ? $undt_profile[ $undt_key ] : '';
 
-					$undt_value = isset( $undt_profile[ $undt_key ] ) ? $undt_profile[ $undt_key ] : '';
-
-					// Abhaengige Fragen werden per JavaScript ein- und ausgeblendet.
-					$undt_attr = '';
-
-					if ( ! empty( $undt_question['when'] ) ) {
-						$undt_attr = ' data-undt-when="' . esc_attr( (string) wp_json_encode( $undt_question['when'] ) ) . '"';
+						UNDT_Fields::question_card( $undt_key, $undt_question, $undt_value, $undt_option );
 					}
+					?>
+				</div>
+			</div>
 
-					echo '<tr class="undt-row undt-question"' . $undt_attr . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bereits escaped.
-					echo '<th scope="row"><label for="undt-' . esc_attr( $undt_key ) . '">' . esc_html( $undt_question['label'] ) . '</label>';
-
-					// Das Fragezeichen gehoert neben die Frage, die Fundstelle darunter.
-					UNDT_Fields::help( $undt_key, $undt_question );
-
-					if ( '' !== $undt_question['basis'] ) {
-						echo '<span class="undt-basis">' . esc_html( $undt_question['basis'] ) . '</span>';
-					}
-
-					echo '</th><td>';
-
-					UNDT_Fields::control( $undt_key, $undt_question, $undt_value, $undt_option . '[' . $undt_key . ']', 'undt-' . $undt_key );
-
-					echo '</td></tr>';
-				}
-				?>
-			</tbody>
-		</table>
-
-		<?php submit_button( __( 'Speichern und Felder anpassen', 'unternehmensdaten' ) ); ?>
+			<div class="undt-box__footer">
+				<?php submit_button( __( 'Speichern und Felder anpassen', 'unternehmensdaten' ), 'primary', 'submit', false ); ?>
+			</div>
+		</div>
 	</form>
 </div>

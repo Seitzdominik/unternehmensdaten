@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.2
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -169,6 +169,17 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
 
 == Changelog ==
+
+= 0.5.3 =
+* Die Seiten des Plugins stehen in einer weißen Karte von 960 Pixeln Breite, abgesetzt vom grauen Hintergrund des Backends
+* Alle Eingabefelder enden an derselben Kante, statt je nach Feldart unterschiedlich weit zu reichen. Uhrzeit und Datum bleiben schmal
+* Der Speichern-Knopf sitzt im Fuß der Karte
+* Die Registerkarten der Stammdaten und der Shortcode-Referenz tragen nur noch eine Linie unter dem aktiven Reiter
+* Rechtsform & Umfang zeigt die Fragen in zwei Spalten, die Rechtsform selbst über beide
+* Mehrere Schalter hintereinander, etwa unter Social Media, stehen ebenfalls in zwei Spalten
+* Die Kopierknöpfe für Bricks und Etch stehen am rechten Rand des Feldes, mit Abstand zum Shortcode
+* Feine Trennlinien zwischen den Formularzeilen
+* Bei den Rechtsseiten stehen Auswahl und eigene Adresse untereinander und sind gleich breit
 
 = 0.5.2 =
 * Behoben: In Block-Themes und mit Etch fehlte das CSS des Plugins, wenn ein Shortcode in der Seitenvorlage stand und das automatische Banner aus war. Dadurch wurde der Hinweis „(öffnet in neuem Tab)“ sichtbar und Listen bekamen die Abstände des Browsers

@@ -51,21 +51,27 @@ $undt_data = UNDT_Content::all( $undt_slug );
 	<form method="post" action="options.php" class="undt-form">
 		<?php settings_fields( UNDT_Admin::module_group( $undt_slug ) ); ?>
 
-		<table class="form-table" role="presentation">
-			<tbody>
-				<?php
-				// Einzelfeld-Shortcodes gibt es nur für die Stammdaten.
-				UNDT_Fields::rows(
-					$undt_module['fields'],
-					$undt_data,
-					$undt_module['option'],
-					array( 'with_copy' => false )
-				);
-				?>
-			</tbody>
-		</table>
+		<div class="undt-box">
+			<div class="undt-box__body">
+				<table class="form-table" role="presentation">
+					<tbody>
+						<?php
+						// Einzelfeld-Shortcodes gibt es nur für die Stammdaten.
+						UNDT_Fields::rows(
+							$undt_module['fields'],
+							$undt_data,
+							$undt_module['option'],
+							array( 'with_copy' => false )
+						);
+						?>
+					</tbody>
+				</table>
+			</div>
 
-		<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ) ); ?>
+			<div class="undt-box__footer">
+				<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ), 'primary', 'submit', false ); ?>
+			</div>
+		</div>
 	</form>
 
 	<?php
@@ -80,6 +86,8 @@ $undt_data = UNDT_Content::all( $undt_slug );
 
 	<?php if ( ! empty( $undt_own ) ) : ?>
 		<h2 class="undt-section-title"><?php esc_html_e( 'Shortcodes dieses Bereichs', 'unternehmensdaten' ); ?></h2>
+
+		<div class="undt-box"><div class="undt-box__body">
 
 		<table class="widefat striped undt-table">
 			<thead>
@@ -102,5 +110,7 @@ $undt_data = UNDT_Content::all( $undt_slug );
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+
+		</div></div>
 	<?php endif; ?>
 </div>

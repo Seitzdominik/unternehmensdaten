@@ -47,7 +47,7 @@
 				var panel    = document.getElementById( item.getAttribute( 'aria-controls' ) );
 				var selected = item === tab;
 
-				item.classList.toggle( 'nav-tab-active', selected );
+				item.classList.toggle( 'is-active', selected );
 				item.setAttribute( 'aria-selected', selected ? 'true' : 'false' );
 				item.setAttribute( 'tabindex', selected ? '0' : '-1' );
 

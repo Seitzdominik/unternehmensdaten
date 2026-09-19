@@ -76,6 +76,8 @@ usort(
 			<?php endforeach; ?>
 		</p>
 
+		<div class="undt-box"><div class="undt-box__body">
+
 		<table class="widefat striped undt-table undt-audit">
 			<thead>
 				<tr>
@@ -116,9 +118,12 @@ usort(
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+
+		</div></div>
 	<?php endif; ?>
 
 	<h2 class="undt-section-title"><?php esc_html_e( 'Was geprüft wird', 'unternehmensdaten' ); ?></h2>
+	<div class="undt-box"><div class="undt-box__body">
 	<ul class="undt-list">
 		<li><?php esc_html_e( 'Alle Pflichtangaben nach § 5 DDG, soweit sie sich aus der gewählten Rechtsform ergeben.', 'unternehmensdaten' ); ?></li>
 		<li><?php esc_html_e( 'Der zweite Kommunikationsweg neben der E-Mail-Adresse.', 'unternehmensdaten' ); ?></li>
@@ -129,6 +134,7 @@ usort(
 		<li><?php esc_html_e( 'Die Erklärung zur Barrierefreiheit nach dem BFSG.', 'unternehmensdaten' ); ?></li>
 		<li><?php esc_html_e( 'Veraltete Rechtsgrundlagen und der abgeschaltete Link zur EU-Streitbeilegungsplattform auf den verknüpften Rechtsseiten.', 'unternehmensdaten' ); ?></li>
 	</ul>
+	</div></div>
 
 	<div class="notice notice-warning inline undt-disclaimer">
 		<p>

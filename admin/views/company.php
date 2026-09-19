@@ -82,7 +82,9 @@ $undt_first = key( $undt_tabs );
 	<form method="post" action="options.php" class="undt-form">
 		<?php settings_fields( UNDT_Admin::GROUP_COMPANY ); ?>
 
-		<div class="nav-tab-wrapper undt-tabs" role="tablist">
+		<div class="undt-box">
+
+		<div class="undt-tabs" role="tablist">
 			<?php foreach ( $undt_tabs as $undt_tab => $undt_label ) : ?>
 				<?php if ( empty( $undt_grouped[ $undt_tab ] ) ) : ?>
 					<?php continue; ?>
@@ -95,7 +97,7 @@ $undt_first = key( $undt_tabs );
 					type="button"
 					role="tab"
 					id="undt-tab-<?php echo esc_attr( $undt_tab ); ?>"
-					class="nav-tab<?php echo $undt_tab === $undt_first ? ' nav-tab-active' : ''; ?>"
+					class="undt-tab<?php echo $undt_tab === $undt_first ? ' is-active' : ''; ?>"
 					aria-controls="undt-panel-<?php echo esc_attr( $undt_tab ); ?>"
 					aria-selected="<?php echo $undt_tab === $undt_first ? 'true' : 'false'; ?>"
 					title="<?php echo esc_attr( sprintf( /* translators: 1: ausgefüllte Pflichtangaben, 2: Pflichtangaben insgesamt. */ _n( '%1$d von %2$d Pflichtangabe ausgefüllt', '%1$d von %2$d Pflichtangaben ausgefüllt', (int) $undt_bar['total'], 'unternehmensdaten' ), (int) $undt_bar['done'], (int) $undt_bar['total'] ) ); ?>"
@@ -110,6 +112,8 @@ $undt_first = key( $undt_tabs );
 					</span><?php endif; ?></button>
 			<?php endforeach; ?>
 		</div>
+
+		<div class="undt-box__body">
 
 		<?php foreach ( $undt_tabs as $undt_tab => $undt_label ) : ?>
 			<?php if ( empty( $undt_grouped[ $undt_tab ] ) ) : ?>
@@ -164,6 +168,12 @@ $undt_first = key( $undt_tabs );
 			</div>
 		<?php endforeach; ?>
 
-		<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ) ); ?>
+		</div><!-- .undt-box__body -->
+
+		<div class="undt-box__footer">
+			<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ), 'primary', 'submit', false ); ?>
+		</div>
+
+		</div><!-- .undt-box -->
 	</form>
 </div>

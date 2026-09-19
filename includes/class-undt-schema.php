@@ -313,7 +313,8 @@ final class UNDT_Schema {
 	/**
 	 * Fragen des Einrichtungsassistenten.
 	 *
-	 * Jede Antwort schaltet Feldblöcke frei oder aus.
+	 * Jede Antwort schaltet Feldblöcke frei oder aus. Die Fragen stehen im
+	 * Backend in zwei Spalten; `full` gibt einer Frage beide.
 	 *
 	 * @return array
 	 */
@@ -329,6 +330,8 @@ final class UNDT_Schema {
 				'type'    => 'select',
 				'choices' => $forms,
 				'help'    => __( 'Steuert, welche Register-, Vertretungs- und Kapitalangaben verlangt werden.', 'unternehmensdaten' ),
+				// Die Leitfrage der Seite, und ihre Auswahl ist die laengste.
+				'full'    => true,
 			),
 			'is_regulated'       => array(
 				'label' => __( 'Wird ein reglementierter Beruf ausgeübt?', 'unternehmensdaten' ),

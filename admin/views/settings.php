@@ -28,6 +28,9 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 	<form method="post" action="options.php" class="undt-form">
 		<?php settings_fields( UNDT_Admin::GROUP_SETTINGS ); ?>
 
+		<div class="undt-box">
+		<div class="undt-box__body">
+
 		<h2 class="undt-section-title"><?php esc_html_e( 'Sichtbare Bereiche', 'unternehmensdaten' ); ?></h2>
 		<p class="description undt-section-hint">
 			<?php esc_html_e( 'Abgeschaltete Bereiche verschwinden aus dem Menü, ihre Shortcodes geben nichts mehr aus und ihr CSS entfällt. Die eingetragenen Daten bleiben erhalten und sind nach dem Wiedereinschalten unverändert da.', 'unternehmensdaten' ); ?>
@@ -174,7 +177,13 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 			</tbody>
 		</table>
 
-		<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ) ); ?>
+		</div><!-- .undt-box__body -->
+
+		<div class="undt-box__footer">
+			<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ), 'primary', 'submit', false ); ?>
+		</div>
+
+		</div><!-- .undt-box -->
 	</form>
 
 	<?php if ( UNDT_Updater::enabled() && '' !== UNDT_Updater::repo() ) : ?>
@@ -195,6 +204,7 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 	<p class="description undt-section-hint">
 		<?php esc_html_e( 'Diese Filter stehen bereit:', 'unternehmensdaten' ); ?>
 	</p>
+	<div class="undt-box"><div class="undt-box__body">
 	<table class="widefat striped undt-table">
 		<tbody>
 			<tr><td><code>undt_fields</code></td><td><?php esc_html_e( 'Eigene Stammdaten-Felder ergänzen. Sie durchlaufen automatisch Sanitisierung, Escaping und Shortcode-Auflösung.', 'unternehmensdaten' ); ?></td></tr>
@@ -210,4 +220,5 @@ $undt_option   = UNDT_Modules::OPTION_SETTINGS;
 			<tr><td><code>undt_link_post_types</code></td><td><?php esc_html_e( 'Festlegen, aus welchen Inhaltstypen die Seitenfelder wählen. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen.', 'unternehmensdaten' ); ?></td></tr>
 		</tbody>
 	</table>
+	</div></div>
 </div>

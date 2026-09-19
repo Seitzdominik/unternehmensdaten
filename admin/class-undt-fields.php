@@ -65,6 +65,24 @@ final class UNDT_Fields {
 				}
 			}
 
+			/*
+			 * Mehrere Schalter hintereinander stehen in zwei Spalten. Einzeln
+			 * bliebe neben jedem eine halbe Zeile leer.
+			 */
+			if ( 'checkbox' === $field['type'] && '' === $field['pair'] ) {
+				$run = self::toggle_run( $fields, $key );
+
+				if ( count( $run ) > 1 ) {
+					foreach ( array_keys( $run ) as $member ) {
+						$handled[ $member ] = true;
+					}
+
+					self::toggle_grid( $run, $values, $option_name, $args );
+
+					continue;
+				}
+			}
+
 			$handled[ $key ] = true;
 
 			$value = array_key_exists( $key, $values ) ? $values[ $key ] : $field['default'];
@@ -248,6 +266,170 @@ final class UNDT_Fields {
 		self::control( $key, $field, $value, $name, $id );
 
 		echo '</td></tr>';
+	}
+
+	/**
+	 * Eine Frage des Einrichtungsassistenten als Zelle eines zweispaltigen Rasters.
+	 *
+	 * Die Fragen sind kurz und fast alle mit einem Schalter beantwortet. In einer
+	 * einzigen Spalte stuende neben jeder Frage eine halbe Bildschirmbreite
+	 * Nichts, und die Seite waere doppelt so lang. Eine Auswahl braucht dagegen
+	 * die ganze Zelle, ihre Beschriftung steht deshalb darueber.
+	 *
+	 * @param string $key         Feldschluessel.
+	 * @param array  $question    Fragedefinition.
+	 * @param mixed  $value       Aktueller Wert.
+	 * @param string $option_name Name der Option, wird zum Formularnamen.
+	 * @return void
+	 */
+	public static function question_card( $key, array $question, $value, $option_name ) {
+		$question = array_merge(
+			array(
+				'label'     => $key,
+				'type'      => 'checkbox',
+				'choices'   => array(),
+				'help'      => '',
+				'basis'     => '',
+				'when'      => array(),
+				'required'  => false,
+				'shortcode' => false,
+				'default'   => '',
+				'full'      => false,
+			),
+			$question
+		);
+
+		self::card(
+			$key,
+			$question,
+			$value,
+			$option_name,
+			array(
+				'with_copy'   => false,
+				'extra_class' => 'undt-question',
+			)
+		);
+	}
+
+	/**
+	 * Eine Zelle des zweispaltigen Rasters.
+	 *
+	 * Links die Beschriftung, rechts das Eingabeelement. Eine Auswahl bekommt die
+	 * ganze Zelle, ihre Beschriftung steht dann darueber.
+	 *
+	 * @param string $key         Feldschluessel.
+	 * @param array  $field       Felddefinition.
+	 * @param mixed  $value       Aktueller Wert.
+	 * @param string $option_name Name der Option, wird zum Formularnamen.
+	 * @param array  $args        with_copy, section_basis und extra_class.
+	 * @return void
+	 */
+	private static function card( $key, array $field, $value, $option_name, array $args ) {
+		$args = array_merge(
+			array(
+				'with_copy'     => true,
+				'section_basis' => '',
+				'extra_class'   => '',
+			),
+			$args
+		);
+
+		$id   = 'undt-' . $key;
+		$name = $option_name . '[' . $key . ']';
+
+		$classes = 'undt-card';
+
+		if ( '' !== $args['extra_class'] ) {
+			$classes .= ' ' . $args['extra_class'];
+		}
+
+		if ( 'checkbox' !== $field['type'] ) {
+			$classes .= ' undt-card--stacked';
+		}
+
+		if ( ! empty( $field['full'] ) ) {
+			$classes .= ' undt-card--full';
+		}
+
+		// Abhaengige Felder werden per JavaScript ein- und ausgeblendet.
+		$attr = empty( $field['when'] )
+			? ''
+			: ' data-undt-when="' . esc_attr( (string) wp_json_encode( $field['when'] ) ) . '"';
+
+		echo '<div class="' . esc_attr( $classes ) . '"' . $attr . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bereits escaped.
+
+		echo '<div class="undt-card__text">';
+		self::label( $key, $field, $id, 'undt-card__label' );
+		self::basis( $field, $args['section_basis'] );
+
+		$shortcode = $args['with_copy'] && ! empty( $field['shortcode'] ) ? '[undt key="' . $key . '"]' : '';
+		$dynamic   = '' !== $shortcode ? $key : ( isset( $field['dynamic'] ) ? (string) $field['dynamic'] : '' );
+
+		self::copy_row( $shortcode, $dynamic );
+
+		echo '</div>';
+
+		echo '<div class="undt-card__control">';
+		self::control( $key, $field, $value, $name, $id );
+		echo '</div>';
+
+		echo '</div>';
+	}
+
+	/**
+	 * Mehrere Schalter nebeneinander in zwei Spalten.
+	 *
+	 * Ein Schalter braucht keine halbe Bildschirmbreite. Stehen mehrere
+	 * hintereinander, wie bei Social Media, ergibt eine Spalte eine unnoetig
+	 * lange Seite.
+	 *
+	 * @param array  $group       Felddefinitionen der Schalter.
+	 * @param array  $values      Gespeicherte Werte.
+	 * @param string $option_name Name der Option.
+	 * @param array  $args        with_copy und section_basis.
+	 * @return void
+	 */
+	private static function toggle_grid( array $group, array $values, $option_name, array $args ) {
+		echo '<tr class="undt-row undt-row--wide undt-row--toggles"><td colspan="2">';
+		echo '<div class="undt-cards">';
+
+		foreach ( $group as $key => $field ) {
+			$value = array_key_exists( $key, $values ) ? $values[ $key ] : $field['default'];
+
+			self::card( $key, $field, $value, $option_name, $args );
+		}
+
+		echo '</div></td></tr>';
+	}
+
+	/**
+	 * Die Schalter, die unmittelbar auf einen Schalter folgen.
+	 *
+	 * @param array  $fields Alle Felder des Abschnitts.
+	 * @param string $start  Schluessel des ersten Schalters.
+	 * @return array Felddefinitionen, Schluessel ist der Feldname.
+	 */
+	private static function toggle_run( array $fields, $start ) {
+		$run     = array();
+		$reached = false;
+
+		foreach ( $fields as $key => $field ) {
+			if ( $key === $start ) {
+				$reached = true;
+			}
+
+			if ( ! $reached ) {
+				continue;
+			}
+
+			if ( 'checkbox' !== $field['type'] || '' !== $field['pair'] ) {
+				break;
+			}
+
+			$run[ $key ] = $field;
+		}
+
+		return $run;
 	}
 
 	/* ------------------------------------------------- Bausteine der Zeile */
@@ -437,6 +619,12 @@ final class UNDT_Fields {
 					'date'  => 'date',
 				);
 
+				/*
+				 * Alles ausser Uhrzeit und Datum nimmt die ganze Breite der Spalte:
+				 * large-text ist die Klasse, die WordPress dafuer vorsieht. Felder
+				 * unterschiedlicher Breite untereinander lassen eine Seite
+				 * verschachtelt wirken, auch wenn jedes fuer sich passt.
+				 */
 				$classes = array(
 					'time' => 'undt-input-time',
 					'date' => 'undt-input-date',
@@ -458,7 +646,7 @@ final class UNDT_Fields {
 					esc_attr( $id ),
 					esc_attr( $name ),
 					esc_attr( (string) $value ),
-					esc_attr( isset( $classes[ $field['type'] ] ) ? $classes[ $field['type'] ] : 'regular-text' ),
+					esc_attr( isset( $classes[ $field['type'] ] ) ? $classes[ $field['type'] ] : 'large-text' ),
 					'' === $placeholder ? '' : ' placeholder="' . esc_attr( $placeholder ) . '"'
 				);
 		}
@@ -662,7 +850,7 @@ final class UNDT_Fields {
 		echo '</select>';
 
 		printf(
-			'<input type="text" inputmode="url" spellcheck="false" id="%1$s-url" name="%2$s" value="%3$s" class="regular-text undt-link__url" placeholder="%4$s" aria-label="%5$s" data-undt-link-url%6$s />',
+			'<input type="text" inputmode="url" spellcheck="false" id="%1$s-url" name="%2$s" value="%3$s" class="large-text undt-link__url" placeholder="%4$s" aria-label="%5$s" data-undt-link-url%6$s />',
 			esc_attr( $id ),
 			esc_attr( $name . '[url]' ),
 			esc_attr( $url ),
@@ -1109,8 +1297,13 @@ final class UNDT_Fields {
 		if ( $builder ) {
 			$syntax = UNDT_Dynamic::syntax( $dynamic );
 
+			// Die Logos stehen am rechten Rand des Feldes, mit Abstand zum Shortcode.
+			echo '<span class="undt-copy-row__keys">';
+
 			self::copy_icon( $syntax['bricks'], 'bricks', 'Bricks' );
 			self::copy_icon( $syntax['etch'], 'etch', 'Etch' );
+
+			echo '</span>';
 		}
 
 		echo '</div>';
