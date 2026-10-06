@@ -183,6 +183,23 @@ final class UNDT_Icons {
 	}
 
 	/**
+	 * Bereinigt fertiges HTML eines Bausteins, ohne die Symbole zu verlieren.
+	 *
+	 * wp_kses_post() kennt kein SVG; in den Vorschauen im Backend fehlten
+	 * dadurch die Social-Symbole und der Pfeil fuer neue Tabs. Skripte, etwa
+	 * das zum Schliessen des Banners, fallen samt Inhalt weg: wp_kses entfernt
+	 * nur das Element, der Code stuende sonst als Text in der Vorschau.
+	 *
+	 * @param string $html HTML.
+	 * @return string
+	 */
+	public static function kses( $html ) {
+		$html = (string) preg_replace( '#<script\b[^>]*>.*?</script>#is', '', (string) $html );
+
+		return wp_kses( $html, array_merge( wp_kses_allowed_html( 'post' ), self::allowed() ) );
+	}
+
+	/**
 	 * Die erlaubten Elemente und Attribute eines Symbols.
 	 *
 	 * @return array

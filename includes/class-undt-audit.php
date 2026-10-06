@@ -19,7 +19,8 @@ final class UNDT_Audit {
 	/**
 	 * Fuehrt alle Pruefungen durch.
 	 *
-	 * @return array Liste aus array( level, title, detail, basis ).
+	 * @return array Liste aus array( level, title, detail, basis, tab, field ), field ist das
+	 *               Feld, in das die Uebersicht springt.
 	 */
 	public static function run() {
 		$issues = array_merge(
@@ -104,6 +105,8 @@ final class UNDT_Audit {
 				'detail' => $field['help'],
 				'basis'  => $field['basis'],
 				'tab'    => $field['tab'],
+				'field'  => $key,
+				'kind'   => 'missing',
 			);
 		}
 
@@ -127,6 +130,7 @@ final class UNDT_Audit {
 				'detail' => __( 'Neben der E-Mail-Adresse ist ein weiterer, unmittelbarer Kommunikationsweg erforderlich. Üblicherweise eine Telefonnummer, ersatzweise ein Kontaktformular mit zugesagter Antwort binnen 60 Minuten.', 'unternehmensdaten' ),
 				'basis'  => '§ 5 Abs. 1 Nr. 2 DDG, EuGH C-649/17',
 				'tab'    => 'contact',
+				'field'  => 'phone',
 			);
 		}
 
@@ -145,6 +149,7 @@ final class UNDT_Audit {
 					'detail' => __( 'Der Zusatz muss als "UG (haftungsbeschränkt)" ausgeschrieben werden. Die Abkürzung allein genügt nicht und kann zur persönlichen Haftung führen.', 'unternehmensdaten' ),
 					'basis'  => '§ 5a Abs. 1 GmbHG',
 					'tab'    => 'company',
+					'field'  => 'company_name',
 				);
 			}
 		}
@@ -157,6 +162,7 @@ final class UNDT_Audit {
 				'detail' => __( 'Sobald das Stammkapital genannt wird, muss auch der Gesamtbetrag der ausstehenden Einlagen angegeben werden, falls nicht alle in Geld zu leistenden Einlagen eingezahlt sind. Sind alle Einlagen voll eingezahlt, kann dieser Punkt ignoriert werden.', 'unternehmensdaten' ),
 				'basis'  => '§ 5 Abs. 1 Nr. 1 DDG',
 				'tab'    => 'register',
+				'field'  => 'outstanding_contributions',
 			);
 		}
 
@@ -168,6 +174,7 @@ final class UNDT_Audit {
 				'detail' => __( 'Das BFSG gilt seit dem 28.06.2025. Für Dienstleistungen an Verbraucher ist eine Erklärung zur Barrierefreiheit erforderlich, sofern die Kleinstunternehmen-Ausnahme nicht greift. Sie ist eine eigene, dauerhaft erreichbare Seite neben Impressum und Datenschutz.', 'unternehmensdaten' ),
 				'basis'  => 'Anlage 3 zu §§ 14, 28 BFSG',
 				'tab'    => 'consumer',
+				'field'  => 'page_accessibility',
 			);
 		}
 
@@ -179,6 +186,7 @@ final class UNDT_Audit {
 				'detail' => __( 'Für den Hinweis auf das Beschwerderecht in der Datenschutzerklärung wird die zuständige Landesbehörde benötigt. Die europäischen Aufsichtsbehörden prüfen die Informationspflichten nach Art. 12 bis 14 DSGVO 2026 koordiniert.', 'unternehmensdaten' ),
 				'basis'  => 'Art. 13 Abs. 2 lit. d, Art. 77 DSGVO',
 				'tab'    => 'consumer',
+				'field'  => 'privacy_authority',
 			);
 		}
 
@@ -198,6 +206,7 @@ final class UNDT_Audit {
 					'detail' => __( 'Die Angaben müssen ständig verfügbar sein. Eine Seite im Entwurfsstatus wird im Footer nicht verlinkt.', 'unternehmensdaten' ),
 					'basis'  => '§ 5 Abs. 1 DDG',
 					'tab'    => 'consumer',
+					'field'  => $key,
 				);
 			}
 		}
@@ -242,6 +251,12 @@ final class UNDT_Audit {
 				'basis'  => '§ 25 TDDDG',
 			),
 		);
+
+		$imprint = self::wrong_imprint_page();
+
+		if ( null !== $imprint ) {
+			$issues[] = $imprint;
+		}
 
 		$ids = array();
 
@@ -292,5 +307,43 @@ final class UNDT_Audit {
 		}
 
 		return $issues;
+	}
+
+	/**
+	 * Ob das Impressum auf eine Seite zeigt, auf der gar kein Impressum steht.
+	 *
+	 * Das passiert, wenn beim Einrichten die falsche Seite gewaehlt wurde. Der
+	 * Link im Footer fuehrt dann zwar irgendwohin, die Pflichtangaben fehlen dort
+	 * aber. Eine eigene Adresse laesst sich von hier aus nicht pruefen, ebenso
+	 * wenig ein Impressum, das ohne den Baustein von Hand geschrieben wurde: das
+	 * erkennt die Pruefung an der Ueberschrift „Impressum“ im Inhalt.
+	 *
+	 * @return array|null
+	 */
+	private static function wrong_imprint_page() {
+		$id = UNDT_Store::page_id( 'page_imprint' );
+
+		if ( $id < 1 || 'publish' !== get_post_status( $id ) || UNDT_Usage::on_post( $id, 'imprint' ) ) {
+			return null;
+		}
+
+		$post = get_post( $id );
+
+		if ( $post instanceof WP_Post && false !== stripos( $post->post_content, 'impressum' ) ) {
+			return null;
+		}
+
+		return array(
+			'level'  => 'warning',
+			'title'  => sprintf(
+				/* translators: %s: Titel der verknuepften Seite. */
+				__( 'Impressum ist mit der Seite „%s“ verknüpft', 'unternehmensdaten' ),
+				get_the_title( $id )
+			),
+			'detail' => __( 'Auf dieser Seite steht kein Impressum. Wähle die richtige Seite aus.', 'unternehmensdaten' ),
+			'basis'  => '',
+			'tab'    => 'consumer',
+			'field'  => 'page_imprint',
+		);
 	}
 }

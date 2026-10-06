@@ -41,7 +41,7 @@ $undt_json = json_encode( $undt_export, JSON_UNESCAPED_UNICODE );
 undt_ok( false !== strpos( $undt_json, 'Müller & Söhne' ), 'Umlaute ueberstehen die Datei' );
 undt_ok( false === strpos( strtolower( $undt_json ), 'password' ) && false === strpos( $undt_json, 'undt_update_info' ), 'Keine Passwoerter, kein Zwischenspeicher des Updaters' );
 
-undt_ok( 'unternehmensdaten-example.test-' . gmdate( 'Y-m-d' ) . '.json' === UNDT_Transfer::filename(), 'Der Dateiname nennt Website und Tag' );
+undt_ok( 'firmendaten-mueller-soehne-2026-09-10.json' === UNDT_Transfer::filename(), 'Der Dateiname nennt Firma und Tag' );
 
 /* ------------------------------------------------- 2. Abwehr ------------ */
 
@@ -98,7 +98,7 @@ undt_ok( 'Neustadt' === UNDT_Store::get( 'city' ), 'Gewoehnliche Werte kommen un
 
 undt_ok( in_array( 'page_imprint', $undt_bericht['dropped'], true ), 'Die Seiten-ID der anderen Website wird verworfen' );
 undt_ok( 0 === UNDT_Store::page_id( 'page_imprint' ), 'Und ist danach leer, statt auf einen fremden Beitrag zu zeigen' );
-undt_ok( in_array( 'seo.logo', $undt_bericht['dropped'], true ) && 0 === (int) UNDT_Content::value( 'seo', 'logo' ), 'Auch die Bild-ID' );
+undt_ok( ! array_key_exists( 'logo', UNDT_Content::all( 'seo' ) ), 'Das Logo-Feld frueherer Fassungen kommt nicht mehr an' );
 
 $undt_ziel = UNDT_Store::link( 'page_privacy' );
 undt_ok( is_array( $undt_ziel ) && '/datenschutz/' === $undt_ziel['url'], 'Eine eigene Adresse bleibt, sie gilt auf jeder Website' );
@@ -131,7 +131,7 @@ undt_head( 'Rueckmeldung' );
 
 $undt_text = UNDT_Transfer::summary( $undt_bericht );
 undt_ok( false !== strpos( $undt_text, 'Bereiche eingespielt' ), 'Der Bericht nennt die Zahl der Bereiche' );
-undt_ok( false !== strpos( $undt_text, 'page_imprint' ), 'Und was neu auszuwaehlen ist' );
+undt_ok( false !== strpos( $undt_text, 'Seite: Impressum' ) && false === strpos( $undt_text, 'page_imprint' ), 'Und was neu auszuwaehlen ist, mit Bezeichnung statt Schluessel' );
 undt_ok( 'Kaputt.' === UNDT_Transfer::summary( array( 'error' => 'Kaputt.' ) ), 'Ein Fehler steht als Satz darin' );
 
 /* ---------------------------------------------------------- Ergebnis ---- */

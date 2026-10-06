@@ -94,7 +94,8 @@ function serialize_block_attributes( $attributes ) {
 }
 function date_i18n( $f, $t = null ) { return date( $f, null === $t ? time() : $t ); }
 function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['undt_options'] ) ? $GLOBALS['undt_options'][ $k ] : $d; }
-function update_option( $k, $v, $a = null ) { $GLOBALS['undt_options'][ $k ] = $v; return true; }
+// Wie WordPress: angemeldete Sanitizer laufen beim Speichern mit, siehe register_setting.
+function update_option( $k, $v, $a = null ) { $GLOBALS['undt_options'][ $k ] = apply_filters( 'sanitize_option_' . $k, $v, $k, $v ); return true; }
 function get_permalink( $id ) { return 'https://example.test/?p=' . (int) $id; }
 function get_post_status( $id ) { return isset( $GLOBALS['undt_posts'][ $id ] ) ? $GLOBALS['undt_posts'][ $id ]['status'] : false; }
 function get_the_title( $id ) { return isset( $GLOBALS['undt_posts'][ $id ] ) ? $GLOBALS['undt_posts'][ $id ]['title'] : ''; }
@@ -128,8 +129,9 @@ function admin_url( $p = '' ) { return 'https://example.test/wp-admin/' . $p; }
 function wp_get_attachment_image_src( $id, $size = 'full' ) { return $id > 0 ? array( 'https://example.test/logo.png', 512, 512 ) : false; }
 function wp_kses_post( $t ) { return $t; }
 function wp_kses( $t, $a ) { return $t; }
-function selected( $a, $b, $e = true ) { return (string) $a === (string) $b ? ' selected="selected"' : ''; }
-function checked( $a, $b = true, $e = true ) { return (string) $a === (string) $b ? ' checked="checked"' : ''; }
+function wp_kses_allowed_html( $c = '' ) { return array(); }
+function selected( $a, $b, $e = true ) { $r = (string) $a === (string) $b ? ' selected="selected"' : ''; if ( $e ) { echo $r; } return $r; }
+function checked( $a, $b = true, $e = true ) { $r = (string) $a === (string) $b ? ' checked="checked"' : ''; if ( $e ) { echo $r; } return $r; }
 
 
 /* ------------------------------------------------ Stubs fuer den Updater --- */
@@ -160,10 +162,12 @@ $GLOBALS['undt_http_calls'] = 0;
 class WP_Error {
 	public $code;
 	public $msg;
-	// Wie in WordPress: erst der Schluessel, dann die Meldung.
-	public function __construct( $c = '', $m = '' ) { $this->code = $c; $this->msg = $m; }
+	public $data;
+	// Wie in WordPress: erst der Schluessel, dann die Meldung, dann Daten.
+	public function __construct( $c = '', $m = '', $d = '' ) { $this->code = $c; $this->msg = $m; $this->data = $d; }
 	public function get_error_code() { return $this->code; }
 	public function get_error_message() { return $this->msg; }
+	public function get_error_data() { return $this->data; }
 }
 
 function is_wp_error( $t ) { return $t instanceof WP_Error; }
@@ -245,6 +249,98 @@ function block_core_social_link_services( $service = '', $field = '' ) {
 }
 require $base . 'includes/class-undt-updater.php';
 
+/* ------------------------------------------ Stubs fuer Rechte und Backend --- */
+
+/*
+ * Der angemeldete Benutzer: Rollen und Grundrechte. current_user_can laeuft wie
+ * in WordPress ueber den Filter user_has_cap, damit UNDT_Access mitspielt.
+ */
+$GLOBALS['undt_user']      = array( 'roles' => array( 'administrator' ), 'caps' => array( 'manage_options' => true, 'edit_posts' => true ) );
+$GLOBALS['undt_user_meta'] = array();
+
+function current_user_can( $cap ) {
+	$user = (object) array( 'ID' => 1, 'roles' => $GLOBALS['undt_user']['roles'] );
+	$all  = apply_filters( 'user_has_cap', $GLOBALS['undt_user']['caps'], array( $cap ), array( $cap, 1 ), $user );
+	return ! empty( $all[ $cap ] );
+}
+function wp_roles() {
+	return (object) array(
+		'roles' => array(
+			'administrator' => array( 'name' => 'Administrator', 'capabilities' => array( 'manage_options' => true, 'edit_posts' => true ) ),
+			'editor'        => array( 'name' => 'Editor', 'capabilities' => array( 'edit_posts' => true ) ),
+			'author'        => array( 'name' => 'Author', 'capabilities' => array( 'edit_posts' => true ) ),
+			'shop_manager'  => array( 'name' => 'Shop manager', 'capabilities' => array( 'edit_posts' => true ) ),
+			'subscriber'    => array( 'name' => 'Subscriber', 'capabilities' => array( 'read' => true ) ),
+		),
+	);
+}
+function translate_user_role( $name ) { return $name; }
+function get_user_meta( $id, $key, $single = false ) { return isset( $GLOBALS['undt_user_meta'][ $key ] ) ? $GLOBALS['undt_user_meta'][ $key ] : ''; }
+function update_user_meta( $id, $key, $value ) { $GLOBALS['undt_user_meta'][ $key ] = $value; return true; }
+function get_template() { return isset( $GLOBALS['undt_template'] ) ? $GLOBALS['undt_template'] : 'etch-theme'; }
+function wp_get_theme( $slug = '' ) {
+	return new class( $slug ) {
+		private $slug;
+		public function __construct( $slug ) { $this->slug = $slug; }
+		public function exists() { return in_array( $this->slug, isset( $GLOBALS['undt_themes'] ) ? $GLOBALS['undt_themes'] : array( 'bricks' ), true ); }
+	};
+}
+function wp_create_nonce( $action ) { return 'nonce-' . $action; }
+function submit_button( $text, $type = 'primary', $name = 'submit', $wrap = true ) { echo '<input type="submit" name="' . esc_attr( $name ) . '" class="button button-' . esc_attr( $type ) . '" value="' . esc_attr( $text ) . '" />'; }
+function register_setting( $group, $option, $args = array() ) {
+	if ( isset( $args['sanitize_callback'] ) ) {
+		add_filter( 'sanitize_option_' . $option, $args['sanitize_callback'] );
+	}
+}
+
+/*
+ * Datenbank fuer UNDT_Usage: liefert, was in $GLOBALS['undt_db_posts'] und
+ * $GLOBALS['undt_db_meta'] steht, und merkt sich die Abfragen.
+ */
+if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
+if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
+$GLOBALS['undt_db_posts']   = array();
+$GLOBALS['undt_db_meta']    = array();
+$GLOBALS['undt_db_queries'] = 0;
+class UNDT_Test_Wpdb {
+	public $posts    = 'wp_posts';
+	public $postmeta = 'wp_postmeta';
+	public function esc_like( $t ) { return addcslashes( $t, '_%\\' ); }
+	public function prepare( $sql, ...$args ) { return vsprintf( str_replace( '%s', "'%s'", $sql ), $args ); }
+	public function get_results( $sql, $output = null ) {
+		++$GLOBALS['undt_db_queries'];
+		return false !== strpos( $sql, $this->postmeta ) ? $GLOBALS['undt_db_meta'] : $GLOBALS['undt_db_posts'];
+	}
+}
+$GLOBALS['wpdb'] = new UNDT_Test_Wpdb();
+if ( ! function_exists( 'get_the_modified_date' ) ) { function get_the_modified_date( $f = '', $id = 0 ) { return '5.10.'; } }
+
+require $base . 'admin/class-undt-access.php';
+require $base . 'admin/class-undt-ui-icons.php';
+require $base . 'admin/class-undt-ui.php';
+require $base . 'admin/class-undt-nav.php';
+require $base . 'admin/class-undt-autosave.php';
+require $base . 'admin/class-undt-admin.php';
+require $base . 'includes/class-undt-usage.php';
+require $base . 'admin/class-undt-todo.php';
+require $base . 'admin/class-undt-overview.php';
+require $base . 'includes/class-undt-authorities.php';
+require $base . 'admin/class-undt-company-view.php';
+require $base . 'admin/class-undt-embed.php';
+
+/* ------------------------------------------ Stubs fuer Etappe 4 (0.6.0) --- */
+
+$GLOBALS['undt_theme_mods'] = array();
+function get_theme_mod( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['undt_theme_mods'] ) ? $GLOBALS['undt_theme_mods'][ $k ] : $d; }
+function wp_date( $f, $t = null ) { $d = null === $t ? current_datetime() : ( new DateTimeImmutable( '@' . (int) $t ) )->setTimezone( new DateTimeZone( 'Europe/Berlin' ) ); return $d->format( $f ); }
+function sanitize_title( $t ) { return trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( strtr( (string) $t, array( 'ä' => 'ae', 'ö' => 'oe', 'ü' => 'ue', 'ß' => 'ss', 'Ä' => 'ae', 'Ö' => 'oe', 'Ü' => 'ue' ) ) ) ), '-' ); }
+function add_option( $k, $v = '', $dep = '', $a = null ) { if ( array_key_exists( $k, $GLOBALS['undt_options'] ) ) { return false; } $GLOBALS['undt_options'][ $k ] = $v; return true; }
+if ( ! function_exists( 'delete_option' ) ) { function delete_option( $k ) { unset( $GLOBALS['undt_options'][ $k ] ); return true; } }
+
+require $base . 'includes/class-undt-holidays.php';
+require $base . 'includes/class-undt-professions.php';
+require $base . 'admin/class-undt-module-view.php';
+
 /**
  * Setzt die Daten eines Inhaltsmoduls.
  */
@@ -253,6 +349,15 @@ function undt_seed_module( $slug, array $data ) {
 	$GLOBALS['undt_options'][ $module['option'] ] = array();
 	UNDT_Content::flush();
 	$GLOBALS['undt_options'][ $module['option'] ] = UNDT_Content::sanitize( $slug, $data );
+	UNDT_Content::flush();
+}
+
+/**
+ * Setzt nur das Profil, etwa den umsatzsteuerlichen Status.
+ */
+function undt_seed_profile( array $profile ) {
+	$GLOBALS['undt_options']['undt_profile'] = UNDT_Sanitizer::profile( $profile );
+	UNDT_Store::flush();
 	UNDT_Content::flush();
 }
 

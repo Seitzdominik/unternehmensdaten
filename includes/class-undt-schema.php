@@ -35,6 +35,33 @@ final class UNDT_Schema {
 	private static $lists = array();
 
 	/**
+	 * Die Bundeslaender, Schluessel ist das Kuerzel.
+	 *
+	 * @return array
+	 */
+	public static function states() {
+		return array(
+			''   => __( '— auswählen —', 'unternehmensdaten' ),
+			'BW' => 'Baden-Württemberg',
+			'BY' => 'Bayern',
+			'BE' => 'Berlin',
+			'BB' => 'Brandenburg',
+			'HB' => 'Bremen',
+			'HH' => 'Hamburg',
+			'HE' => 'Hessen',
+			'MV' => 'Mecklenburg-Vorpommern',
+			'NI' => 'Niedersachsen',
+			'NW' => 'Nordrhein-Westfalen',
+			'RP' => 'Rheinland-Pfalz',
+			'SL' => 'Saarland',
+			'SN' => 'Sachsen',
+			'ST' => 'Sachsen-Anhalt',
+			'SH' => 'Schleswig-Holstein',
+			'TH' => 'Thüringen',
+		);
+	}
+
+	/**
 	 * Rechtsformen mit ihren strukturellen Eigenschaften.
 	 *
 	 * register  - Registerart, steuert die Register-Felder.
@@ -269,18 +296,19 @@ final class UNDT_Schema {
 	 */
 	public static function sections() {
 		return array(
-			'identity'       => __( 'Identität', 'unternehmensdaten' ),
-			'address'        => __( 'Ladungsfähige Anschrift', 'unternehmensdaten' ),
-			'contact'        => __( 'Kontaktwege', 'unternehmensdaten' ),
+			'identity'       => __( 'Wer du bist', 'unternehmensdaten' ),
+			'address'        => __( 'Anschrift', 'unternehmensdaten' ),
+			'contact'        => __( 'So erreicht man dich', 'unternehmensdaten' ),
 			'register'       => __( 'Registereintrag', 'unternehmensdaten' ),
 			'register2'      => __( 'Zweiter Registereintrag', 'unternehmensdaten' ),
 			'representation' => __( 'Vertretung', 'unternehmensdaten' ),
 			'capital'        => __( 'Kapital und Abwicklung', 'unternehmensdaten' ),
 			'tax'            => __( 'Steuerliche Angaben', 'unternehmensdaten' ),
-			'profession'     => __( 'Reglementierter Beruf', 'unternehmensdaten' ),
+			'profession'     => __( 'Dein Beruf', 'unternehmensdaten' ),
+			'chamber'        => __( 'Kammer und Berufsrecht', 'unternehmensdaten' ),
 			'authority'      => __( 'Aufsichtsbehörde', 'unternehmensdaten' ),
 			'insurance'      => __( 'Berufshaftpflichtversicherung', 'unternehmensdaten' ),
-			'editorial'      => __( 'Redaktionelle Verantwortung', 'unternehmensdaten' ),
+			'editorial'      => __( 'Verantwortlich für Inhalte', 'unternehmensdaten' ),
 			'vsbg'           => __( 'Verbraucherstreitbeilegung', 'unternehmensdaten' ),
 			'privacy'        => __( 'Datenschutz', 'unternehmensdaten' ),
 			'pages'          => __( 'Verknüpfte Seiten', 'unternehmensdaten' ),
@@ -397,6 +425,8 @@ final class UNDT_Schema {
 			'is_liquidating'     => array(
 				'label' => __( 'Befindet sich die Gesellschaft in Abwicklung oder Liquidation?', 'unternehmensdaten' ),
 				'type'  => 'checkbox',
+				// Einzelunternehmen, Freiberufler und e.K. werden nicht abgewickelt.
+				'when'  => array( 'legal_form' => array( 'gbr', 'egbr', 'partg', 'partgmbb', 'ohg', 'kg', 'gmbhcokg', 'gmbh', 'ggmbh', 'ug', 'ag', 'se', 'eg', 'ev', 'stiftung', 'mvz', 'koer' ) ),
 				'basis' => '§ 5 Abs. 1 Nr. 7 DDG',
 			),
 			'bfsg_exempt'        => array(
@@ -488,13 +518,28 @@ final class UNDT_Schema {
 				'basis'    => '§ 5 Abs. 1 Nr. 1 DDG',
 			),
 			'country'                   => array(
+				// Als Auswahl dargestellt; gespeichert bleibt Text, damit fruehere Eintraege erhalten bleiben.
+				'control' => 'country',
+				'quiet'   => true,
 				'label'   => __( 'Land', 'unternehmensdaten' ),
 				'type'    => 'text',
 				'tab'     => 'company',
 				'section' => 'address',
 				'help'    => __( 'Leer lassen, wenn die Anschrift im Inland liegt und das Land nicht ausgegeben werden soll.', 'unternehmensdaten' ),
 			),
+			'state'                     => array(
+				'label'     => __( 'Bundesland', 'unternehmensdaten' ),
+				'type'      => 'select',
+				'tab'       => 'company',
+				'section'   => 'address',
+				'choices'   => self::states(),
+				'quiet'     => true,
+				// Steuert Vorschlaege, etwa die Datenschutz-Aufsichtsbehoerde. Keine Ausgabe auf der Website.
+				'shortcode' => false,
+				'help'      => __( 'Davon hängen Vorschläge ab, etwa die zuständige Datenschutz-Aufsichtsbehörde.', 'unternehmensdaten' ),
+			),
 			'maps_google'               => array(
+				'more'     => 'maps',
 				'label'      => __( 'Google Maps', 'unternehmensdaten' ),
 				'type'       => 'url',
 				'pair'       => 'maps',
@@ -505,6 +550,7 @@ final class UNDT_Schema {
 				'help'       => __( 'Link zum Eintrag, etwa über „Teilen“ in Google Maps. Leer gelassen, entsteht eine Suche nach Firma und Anschrift, die grau im Feld steht.', 'unternehmensdaten' ),
 			),
 			'maps_apple'                => array(
+				'more'     => 'maps',
 				'label'   => __( 'Apple Maps', 'unternehmensdaten' ),
 				'type'    => 'url',
 				'pair'    => 'maps',
@@ -526,15 +572,18 @@ final class UNDT_Schema {
 				'help'     => __( 'Zwingend. Ein reines Kontaktformular ersetzt die E-Mail-Adresse nicht.', 'unternehmensdaten' ),
 			),
 			'phone'                     => array(
+				// Teil des zweiten Kontaktwegs, deshalb ohne „optional“.
+				'quiet'    => true,
 				'label'    => __( 'Telefon', 'unternehmensdaten' ),
 				'type'     => 'tel',
 				'tab'      => 'contact',
 				'section'  => 'contact',
-				'required' => true,
+				'required' => false,
 				'basis'    => '§ 5 Abs. 1 Nr. 2 DDG',
 				'help'     => __( 'Zweiter, schneller Kommunikationsweg. Alternativ genügt nach dem EuGH-Urteil C-649/17 ein Kontaktformular mit zugesagter Antwort binnen 60 Minuten.', 'unternehmensdaten' ),
 			),
 			'fax'                       => array(
+				'more'     => 'contact',
 				'label'   => __( 'Telefax', 'unternehmensdaten' ),
 				'type'    => 'tel',
 				'tab'     => 'contact',
@@ -548,6 +597,7 @@ final class UNDT_Schema {
 				'help'    => __( 'Kann den zweiten Kommunikationsweg abdecken, wenn keine Telefonnummer veröffentlicht wird.', 'unternehmensdaten' ),
 			),
 			'website'                   => array(
+				'more'     => 'contact',
 				'label'   => __( 'Website', 'unternehmensdaten' ),
 				'type'    => 'url',
 				'tab'     => 'contact',
@@ -668,6 +718,8 @@ final class UNDT_Schema {
 				'help'     => __( 'Format DE123456789. Nur angeben, wenn tatsächlich vorhanden.', 'unternehmensdaten' ),
 			),
 			'business_id'               => array(
+				'pattern'      => '^DE[0-9]{9}(-[0-9]{5})?$',
+				'pattern_hint' => __( 'Das Format stimmt nicht: DE, neun Ziffern und optional -00001.', 'unternehmensdaten' ),
 				'label'   => __( 'Wirtschafts-Identifikationsnummer', 'unternehmensdaten' ),
 				'type'    => 'text',
 				'pair'    => 'taxids',
@@ -677,6 +729,7 @@ final class UNDT_Schema {
 				'help'    => __( 'Format DE123456789-00001. Seit November 2024 im Rollout. Das DDG nennt sie ausdrücklich als Alternative zur USt-IdNr.', 'unternehmensdaten' ),
 			),
 			'small_business_note'       => array(
+				'quiet'    => true,
 				'label'   => __( 'Kleinunternehmer-Hinweis', 'unternehmensdaten' ),
 				'type'    => 'textarea',
 				'tab'     => 'register',
@@ -697,7 +750,9 @@ final class UNDT_Schema {
 				'required' => true,
 				'basis'    => '§ 5 Abs. 1 Nr. 5 DDG',
 				'when'     => array( 'is_regulated' => 1 ),
-				'help'     => __( 'Etwa Ärztin, Rechtsanwalt, Steuerberaterin.', 'unternehmensdaten' ),
+				// Auswahl der gesetzlichen Bezeichnungen aus UNDT_Professions, dazu „Andere Bezeichnung …“.
+				'control'  => 'profession',
+				'help'     => __( 'Die Bezeichnung, die dir per Gesetz verliehen wurde, nicht ein Titel, den du dir selbst gibst.', 'unternehmensdaten' ),
 			),
 			'job_title_country'         => array(
 				'label'    => __( 'Staat der Verleihung', 'unternehmensdaten' ),
@@ -723,30 +778,43 @@ final class UNDT_Schema {
 				'label'    => __( 'Zuständige Kammer', 'unternehmensdaten' ),
 				'type'     => 'text',
 				'tab'      => 'profession',
-				'section'  => 'profession',
+				'section'  => 'chamber',
 				'required' => true,
 				'basis'    => '§ 5 Abs. 1 Nr. 5 DDG',
 				'when'     => array( 'is_regulated' => 1 ),
 			),
 			'chamber_address'           => array(
+				'more'     => 'chamber',
 				'label'   => __( 'Anschrift der Kammer', 'unternehmensdaten' ),
 				'type'    => 'textarea',
 				'tab'     => 'profession',
-				'section' => 'profession',
+				'section' => 'chamber',
 				'when'    => array( 'is_regulated' => 1 ),
 			),
 			'chamber_url'               => array(
+				'more'     => 'chamber',
 				'label'   => __( 'Website der Kammer', 'unternehmensdaten' ),
 				'type'    => 'url',
 				'tab'     => 'profession',
-				'section' => 'profession',
+				'section' => 'chamber',
 				'when'    => array( 'is_regulated' => 1 ),
 			),
+			// Kennung der uebernommenen Kammer aus UNDT_Professions. Keine Ausgabe, kein Feld auf der Seite.
+			'chamber_ref'               => array(
+				'label'     => __( 'Übernommene Kammer', 'unternehmensdaten' ),
+				'type'      => 'text',
+				'tab'       => 'profession',
+				'section'   => 'chamber',
+				'when'      => array( 'is_regulated' => 1 ),
+				'control'   => 'hidden',
+				'shortcode' => false,
+			),
 			'kv_name'                   => array(
+				'more'     => 'chamber',
 				'label'   => __( 'Kassenärztliche Vereinigung', 'unternehmensdaten' ),
 				'type'    => 'text',
 				'tab'     => 'profession',
-				'section' => 'profession',
+				'section' => 'chamber',
 				'when'    => array( 'is_medical' => 1 ),
 				'help'    => __( 'Bei Vertragsärzten anzugeben.', 'unternehmensdaten' ),
 			),
@@ -761,7 +829,7 @@ final class UNDT_Schema {
 				'label'    => __( 'Berufsrechtliche Regelungen', 'unternehmensdaten' ),
 				'type'     => 'list',
 				'tab'      => 'profession',
-				'section'  => 'profession',
+				'section'  => 'chamber',
 				'required' => true,
 				'basis'    => '§ 5 Abs. 1 Nr. 5 DDG',
 				'when'     => array( 'is_regulated' => 1 ),
@@ -771,7 +839,7 @@ final class UNDT_Schema {
 				'label'    => __( 'Wo sind die Regelungen zugänglich?', 'unternehmensdaten' ),
 				'type'     => 'url',
 				'tab'      => 'profession',
-				'section'  => 'profession',
+				'section'  => 'chamber',
 				'required' => true,
 				'basis'    => '§ 5 Abs. 1 Nr. 5 DDG',
 				'when'     => array( 'is_regulated' => 1 ),
@@ -869,6 +937,7 @@ final class UNDT_Schema {
 				'help'    => __( 'Name, Anschrift und Website der Stelle. Nur erforderlich, wenn eine Teilnahme erfolgt, etwa Universalschlichtungsstelle des Bundes in Kehl.', 'unternehmensdaten' ),
 			),
 			'dpo_name'                  => array(
+				'more'     => 'dpo',
 				'label'   => __( 'Datenschutzbeauftragter: Name', 'unternehmensdaten' ),
 				'type'    => 'text',
 				'tab'     => 'consumer',
@@ -877,6 +946,7 @@ final class UNDT_Schema {
 				'help'    => __( 'Pflicht, wenn in der Regel mindestens 20 Personen ständig mit automatisierter Verarbeitung personenbezogener Daten beschäftigt sind (§ 38 BDSG).', 'unternehmensdaten' ),
 			),
 			'dpo_email'                 => array(
+				'more'     => 'dpo',
 				'label'   => __( 'Datenschutzbeauftragter: E-Mail', 'unternehmensdaten' ),
 				'type'    => 'email',
 				'tab'     => 'consumer',
@@ -884,6 +954,7 @@ final class UNDT_Schema {
 				'basis'   => 'Art. 13 Abs. 1 lit. b DSGVO',
 			),
 			'dpo_address'               => array(
+				'more'     => 'dpo',
 				'label'   => __( 'Datenschutzbeauftragter: Anschrift', 'unternehmensdaten' ),
 				'type'    => 'textarea',
 				'tab'     => 'consumer',
@@ -956,6 +1027,15 @@ final class UNDT_Schema {
 					// Felder mit gleichem pair teilen sich eine Formularzeile.
 					'pair'       => '',
 					'pair_label' => '',
+					// Seltene Felder stehen auf „Firma“ in einem aufklappbaren Abschnitt dieser Gruppe.
+					'more'       => '',
+					// Ohne den Hinweis „optional“, obwohl keine Pflicht.
+					'quiet'      => false,
+					// Eigene Darstellung auf „Firma“, etwa country.
+					'control'    => '',
+					// Erwartetes Format als regulaerer Ausdruck, mit Hinweis bei Abweichung.
+					'pattern'      => '',
+					'pattern_hint' => '',
 				),
 				$field
 			);

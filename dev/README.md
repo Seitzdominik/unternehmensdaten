@@ -44,8 +44,19 @@ openingHoursSpecification und der Knopf, der die Zeiten des ersten Tages
 uebertraegt. Seit 0.5.7 prueft der Lauf ausserdem, dass der Autoloader jede der
 neuen Klassen findet. Seit 0.5.8 rendert er den Block, den das Backend zum
 Einfuegen anbietet, mit do_blocks() und vergleicht das Ergebnis mit dem Wert im
-Feld: nur so zeigt sich, ob die Block-Bindung wirklich greift. Stand 0.5.8 sind
-es 220 Pruefungen.
+Feld: nur so zeigt sich, ob die Block-Bindung wirklich greift. Seit Etappe 1 des
+Redesigns (0.6.0) prueft er Navigation und Rechte mit echten Benutzern: einen
+Redakteur mit und eine Autorin ohne Freigabe, was sie sehen und speichern
+duerfen, und dass die Rolle in der Datenbank unveraendert bleibt. Seit Etappe 2
+legt er Seiten, einen Template-Part und Bricks-Seitendaten an und prueft daran
+„wo verwendet“, die Regel „falsche Impressum-Seite“ und die Uebersicht fuer Admin,
+Redakteur und Erststart. Seit Etappe 3 prueft er Bundesland und Aufsichtsbehoerde,
+„Seite anlegen“, die Vorschau der Bausteine und beide Seiten in der Huelle. Seit
+Etappe 4 prueft er Feiertage, den Schalter „geöffnet“, Banner mit Zeitraum, das
+Koordinaten-Feld, das Logo aus dem Theme, alle Bereichsseiten in der Huelle und
+Einspielen mit Auswahl, Sicherung und Rueckgaengig. Seit Etappe 6 prueft er
+den Kammervorschlag, „Übernehmen“ und das Impressum mit der Kammer. Stand jetzt
+sind es 312 Pruefungen.
 
 Weder Slim SEO noch Bricks noch Etch laufen im Playground. Ihre Haken werden
 dort direkt aufgerufen. Wie sich die Anbindung mit dem echten Werkzeug
@@ -195,6 +206,19 @@ Der Autoloader leitet den Dateinamen aus dem Klassennamen ab
 Offline-Pruefungen laden die Klassen dagegen einzeln, `harness.php` braucht
 deshalb bei einer neuen Klasse eine Zeile mehr.
 
+## Berufsdaten
+
+Quelle ist `dev/data/berufe.json`: Berufe, Kammern und Regelwerke mit Quelle
+und Pruefvermerk je Eintrag. Das Plugin liest daraus `includes/data/berufe.php`.
+
+    php dev/build-berufe.php           Datei neu erzeugen
+    php dev/build-berufe.php --check   pruefen, ob sie zur JSON passt
+    php dev/check-berufe-urls.php      alle Adressen abrufen (einmal im Jahr)
+
+Das Adressskript laeuft bewusst nicht in der CI, weil es von fremden Seiten
+abhaengt. Es braucht das Programm curl. Manche Kammerseiten weisen Abrufe ohne
+Browserkennung ab; das Skript schickt deshalb eine mit.
+
 ## Hinweise
 
 * Aus Git Bash heraus schlagen die VFS-Pfade fehl, weil MSYS `/wordpress/...`
@@ -209,7 +233,7 @@ deshalb bei einer neuen Klasse eine Zeile mehr.
 
 ## Offline-Tests
 
-Ueber 600 Pruefungen gegen WordPress-Attrappen, ohne Playground und in wenigen
+Ueber 1000 Pruefungen gegen WordPress-Attrappen, ohne Playground und in wenigen
 Sekunden:
 
     php dev/tests/test-stammdaten.php
@@ -220,6 +244,11 @@ Sekunden:
     php dev/tests/test-darstellung.php
     php dev/tests/test-oberflaeche.php
     php dev/tests/test-transfer.php
+    php dev/tests/test-backend.php
+    php dev/tests/test-uebersicht.php
+    php dev/tests/test-firma.php
+    php dev/tests/test-bereiche.php
+    php dev/tests/test-berufe.php
 
 `harness.php` stellt die benoetigten WordPress-Funktionen als Attrappen bereit
 und laedt die Plugin-Klassen direkt aus `unternehmensdaten/`. Filter lassen sich
@@ -254,6 +283,25 @@ und mit 1 bei einem Fehlschlag.
   abgewiesen wird, dass fremde Optionen nicht geschrieben werden und dass IDs
   verknuepfter Seiten und Bilder beim Einspielen wegfallen, eigene Adressen
   aber bleiben
+* `test-backend.php` — seit 0.6.0: das Recht zur Pflege der Angaben je Rolle,
+  welche Seiten wer in der Navigation sieht, Seitenleiste, Kopfleiste und
+  Vollbild-Menue, „Kopieren als“, der Speicher-Endpunkt (Nonce, Recht je Option,
+  Sanitizer, Zaehler in der Antwort) und die Bausteine der Oberflaeche
+* `test-uebersicht.php` — seit 0.6.0: „Zu erledigen“ (Buendelung je Abschnitt,
+  Rechte, Sprungziele), Statuszeile, „wo verwendet“ samt Zwischenspeicher, die
+  Regel „falsche Impressum-Seite“, Erststart, Kacheln und die Ziele
+  `quick:module` und `quick:onboarding`
+* `test-firma.php` — seit 0.6.0: Registerkarten aus dem Register, Zaehler,
+  „optional“, Kopiercodes je Format, Bundesland und Aufsichtsbehoerde,
+  Vorschlaege, Rechtsseiten samt „Seite anlegen“, Bausteine mit Optionen und
+  Vorschau, die Liste der einzelnen Angaben
+* `test-bereiche.php` — seit 0.6.0: Feiertage je Bundesland, Oeffnungszeiten,
+  Plattform-Erkennung, Banner-Arten und Zeitraum, Preise in Gruppen samt
+  USt-Hinweis, FAQ, Koordinaten und Logo, Einstellungen, Einspielen mit
+  Vorschau, Auswahl, Sicherung und Rueckgaengig
+* `test-berufe.php` — seit 0.6.0: Datendatei passt zur JSON, Berufe und
+  Kammern je Land, Regelungen, „Übernehmen“ nur fuer zulaessige Kammern,
+  Hinweis bei Abweichung, Auswahl der Berufsbezeichnung, Art der Firma
 
 Abgedeckt sind Logik, Sanitisierung, Ausgabe, die Abwehr im Updater und das
 Markup der Felder. Nicht abgedeckt sind die fertigen Ansichten, eine echte

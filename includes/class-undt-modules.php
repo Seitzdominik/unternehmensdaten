@@ -85,6 +85,75 @@ final class UNDT_Modules {
 	}
 
 	/**
+	 * Woran eine Plattform an ihrer Adresse zu erkennen ist.
+	 *
+	 * Rechner ohne Punkt davor: der Rechner selbst und jede Subdomain passen.
+	 * Dieselbe Liste nutzt admin.js fuer die Anzeige beim Einfuegen.
+	 *
+	 * @return array Plattform => Liste von Rechnernamen.
+	 */
+	public static function platform_hosts() {
+		return array(
+			'facebook'  => array( 'facebook.com', 'fb.com', 'fb.me' ),
+			'instagram' => array( 'instagram.com', 'instagr.am' ),
+			'linkedin'  => array( 'linkedin.com', 'lnkd.in' ),
+			'x'         => array( 'x.com', 'twitter.com' ),
+			'youtube'   => array( 'youtube.com', 'youtu.be' ),
+			'tiktok'    => array( 'tiktok.com' ),
+			'pinterest' => array( 'pinterest.com', 'pinterest.de', 'pin.it' ),
+			'xing'      => array( 'xing.com' ),
+			'whatsapp'  => array( 'whatsapp.com', 'wa.me' ),
+			'threads'   => array( 'threads.net', 'threads.com' ),
+			'bluesky'   => array( 'bsky.app' ),
+			'mastodon'  => array( 'mastodon.social', 'mastodon.online', 'mstdn.social' ),
+			'github'    => array( 'github.com' ),
+			'spotify'   => array( 'spotify.com' ),
+			'telegram'  => array( 't.me', 'telegram.me', 'telegram.org' ),
+			'vimeo'     => array( 'vimeo.com' ),
+			'kununu'    => array( 'kununu.com' ),
+		);
+	}
+
+	/**
+	 * Erkennt die Plattform an einer Adresse.
+	 *
+	 * Mastodon laeuft auf vielen Servern; eine Adresse der Form /@name auf
+	 * einem sonst unbekannten Rechner gilt deshalb als Mastodon.
+	 *
+	 * @param string $url Adresse des Profils.
+	 * @return string Plattform-Schluessel, other wenn unbekannt, leer ohne Adresse.
+	 */
+	public static function detect_platform( $url ) {
+		$url = trim( (string) $url );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if ( ! preg_match( '#^[a-z][a-z0-9+.-]*://#i', $url ) ) {
+			$url = 'https://' . $url;
+		}
+
+		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		$host = preg_replace( '/^(www|m|mobile)\./', '', $host );
+
+		foreach ( self::platform_hosts() as $platform => $hosts ) {
+			foreach ( $hosts as $known ) {
+				if ( $host === $known || substr( $host, -strlen( '.' . $known ) ) === '.' . $known ) {
+					return $platform;
+				}
+			}
+		}
+
+		if ( '' !== $host && preg_match( '#^/@[A-Za-z0-9_.]+/?$#', $path ) ) {
+			return 'mastodon';
+		}
+
+		return 'other';
+	}
+
+	/**
 	 * Auswaehlbare Schema.org-Typen.
 	 *
 	 * @return array
@@ -103,24 +172,30 @@ final class UNDT_Modules {
 	 * @return array
 	 */
 	private static function build_schema_types() {
+		/*
+		 * Die ersten sieben stehen im Entwurf und decken die meisten Kunden ab, die
+		 * uebrigen folgen unter „Weitere“. Kanzlei ist Attorney; LegalService bleibt
+		 * fuer bestehende Angaben gueltig.
+		 */
 		return array(
-			'Organization'        => __( 'Organization (allgemein)', 'unternehmensdaten' ),
-			'LocalBusiness'       => __( 'LocalBusiness (Betrieb mit Ladenlokal)', 'unternehmensdaten' ),
-			'ProfessionalService' => __( 'ProfessionalService (Dienstleistung)', 'unternehmensdaten' ),
-			'MedicalClinic'       => __( 'MedicalClinic (Praxis, MVZ)', 'unternehmensdaten' ),
-			'Physician'           => __( 'Physician (einzelne Ärztin, einzelner Arzt)', 'unternehmensdaten' ),
-			'Dentist'             => __( 'Dentist (Zahnarztpraxis)', 'unternehmensdaten' ),
-			'Pharmacy'            => __( 'Pharmacy (Apotheke)', 'unternehmensdaten' ),
-			'VeterinaryCare'      => __( 'VeterinaryCare (Tierarztpraxis)', 'unternehmensdaten' ),
-			'LegalService'        => __( 'LegalService (Kanzlei)', 'unternehmensdaten' ),
-			'AccountingService'   => __( 'AccountingService (Steuerberatung)', 'unternehmensdaten' ),
-			'Restaurant'          => __( 'Restaurant', 'unternehmensdaten' ),
-			'Store'               => __( 'Store (Einzelhandel)', 'unternehmensdaten' ),
-			'HomeAndConstructionBusiness' => __( 'HomeAndConstructionBusiness (Handwerk)', 'unternehmensdaten' ),
-			'HealthAndBeautyBusiness'     => __( 'HealthAndBeautyBusiness (Salon, Kosmetik)', 'unternehmensdaten' ),
-			'SportsActivityLocation'      => __( 'SportsActivityLocation (Studio, Verein)', 'unternehmensdaten' ),
-			'EducationalOrganization'     => __( 'EducationalOrganization (Bildung)', 'unternehmensdaten' ),
-			'NGO'                 => __( 'NGO (Verein, gemeinnützig)', 'unternehmensdaten' ),
+			'Organization'        => __( 'Organisation (allgemein)', 'unternehmensdaten' ),
+			'LocalBusiness'       => __( 'Geschäft oder Büro vor Ort', 'unternehmensdaten' ),
+			'Physician'           => __( 'Arztpraxis', 'unternehmensdaten' ),
+			'Dentist'             => __( 'Zahnarztpraxis', 'unternehmensdaten' ),
+			'VeterinaryCare'      => __( 'Tierarztpraxis', 'unternehmensdaten' ),
+			'Attorney'            => __( 'Kanzlei', 'unternehmensdaten' ),
+			'NGO'                 => __( 'Verein oder gemeinnützige Organisation', 'unternehmensdaten' ),
+			'ProfessionalService' => __( 'Dienstleistung', 'unternehmensdaten' ),
+			'MedicalClinic'       => __( 'Praxis mit mehreren Ärzten, MVZ', 'unternehmensdaten' ),
+			'Pharmacy'            => __( 'Apotheke', 'unternehmensdaten' ),
+			'LegalService'        => __( 'Rechtsdienstleistung', 'unternehmensdaten' ),
+			'AccountingService'   => __( 'Steuerberatung', 'unternehmensdaten' ),
+			'Restaurant'          => __( 'Restaurant oder Café', 'unternehmensdaten' ),
+			'Store'               => __( 'Einzelhandel', 'unternehmensdaten' ),
+			'HomeAndConstructionBusiness' => __( 'Handwerk', 'unternehmensdaten' ),
+			'HealthAndBeautyBusiness'     => __( 'Salon oder Kosmetik', 'unternehmensdaten' ),
+			'SportsActivityLocation'      => __( 'Studio oder Sportstätte', 'unternehmensdaten' ),
+			'EducationalOrganization'     => __( 'Bildung', 'unternehmensdaten' ),
 		);
 	}
 
@@ -272,12 +347,17 @@ final class UNDT_Modules {
 							),
 						),
 					),
-					'footnote' => array(
-						'label'   => __( 'Fußnote', 'unternehmensdaten' ),
-						'type'    => 'textarea',
-						'help'    => __( 'Etwa der Hinweis auf die Umsatzsteuer. Bei Angeboten an Verbraucher sind Gesamtpreise einschließlich Umsatzsteuer anzugeben.', 'unternehmensdaten' ),
+					// Der Hinweis unter der Liste. Ohne eigenen Text kommt er aus „Firma“, siehe UNDT_Blocks::prices_note().
+					'vat_note' => array(
+						'label'   => __( 'Hinweis zur Umsatzsteuer darunter zeigen', 'unternehmensdaten' ),
+						'type'    => 'checkbox',
+						'default' => 1,
 						'basis'   => '§ 3 PAngV',
-						'default' => 'Alle Preise verstehen sich als Gesamtpreise inklusive der gesetzlichen Umsatzsteuer.',
+					),
+					'footnote' => array(
+						'label' => __( 'Eigener Text für den Hinweis', 'unternehmensdaten' ),
+						'type'  => 'textarea',
+						'help'  => __( 'Leer bleibt der Hinweis aus Firma › Steuer.', 'unternehmensdaten' ),
 					),
 				),
 			),
@@ -418,13 +498,13 @@ final class UNDT_Modules {
 					'type'        => array(
 						'label'   => __( 'Art', 'unternehmensdaten' ),
 						'type'    => 'select',
-						'default' => 'info',
+						'default' => 'neutral',
 						'dynamic' => 'banner_type',
+						// Fruehere Arten: success wird info, urgent wird warning, siehe UNDT_Blocks::banner_type().
 						'choices' => array(
-							'info'    => __( 'Information (neutral)', 'unternehmensdaten' ),
-							'success' => __( 'Positiv', 'unternehmensdaten' ),
-							'warning' => __( 'Achtung', 'unternehmensdaten' ),
-							'urgent'  => __( 'Dringend', 'unternehmensdaten' ),
+							'neutral' => __( 'Neutral', 'unternehmensdaten' ),
+							'info'    => __( 'Info', 'unternehmensdaten' ),
+							'warning' => __( 'Warnung', 'unternehmensdaten' ),
 						),
 					),
 					'text'        => array(
@@ -441,6 +521,15 @@ final class UNDT_Modules {
 						'label'   => __( 'Link-Ziel', 'unternehmensdaten' ),
 						'type'    => 'url',
 						'dynamic' => 'banner_link_url',
+					),
+					// Zeitraum, beide Grenzen einschliesslich, in der Zeitzone der Website.
+					'date_from'   => array(
+						'label' => __( 'Ab', 'unternehmensdaten' ),
+						'type'  => 'date',
+					),
+					'date_to'     => array(
+						'label' => __( 'Bis einschließlich', 'unternehmensdaten' ),
+						'type'  => 'date',
 					),
 					'dismissible' => array(
 						'label'   => __( 'Schließbar', 'unternehmensdaten' ),
@@ -461,7 +550,7 @@ final class UNDT_Modules {
 			/* ---------------------------------------------------- SEO/Schema */
 
 			'seo'    => array(
-				'label'    => __( 'SEO & Schema', 'unternehmensdaten' ),
+				'label'    => __( 'Suchmaschinen', 'unternehmensdaten' ),
 				'option'   => 'undt_seo',
 				'autoload' => true,
 				'fields'   => array(
@@ -483,15 +572,10 @@ final class UNDT_Modules {
 						'choices' => self::schema_types(),
 						'help'    => __( 'LocalBusiness und die davon abgeleiteten Typen setzen eine Anschrift voraus, an der Kundschaft empfangen wird.', 'unternehmensdaten' ),
 					),
-					'logo'        => array(
-						'label' => __( 'Logo', 'unternehmensdaten' ),
-						'type'  => 'media',
-						'help'  => __( 'Wird als logo und image ausgegeben. Empfohlen sind mindestens 112 × 112 Pixel.', 'unternehmensdaten' ),
-					),
 					'price_range' => array(
 						'label' => __( 'Preisniveau', 'unternehmensdaten' ),
 						'type'  => 'text',
-						'help'  => __( 'Etwa €€ oder „10 – 50 €“. Nur bei LocalBusiness sinnvoll.', 'unternehmensdaten' ),
+						'help'  => __( 'Etwa €€. Nur bei Geschäften vor Ort sinnvoll.', 'unternehmensdaten' ),
 					),
 					'geo_lat'     => array(
 						'label'      => __( 'Breitengrad', 'unternehmensdaten' ),
@@ -635,6 +719,7 @@ final class UNDT_Modules {
 			'modules'   => self::defaults(),
 			'keep_data' => 0,
 			'updates'   => 1,
+			'roles'     => array(),
 		);
 	}
 
@@ -675,6 +760,9 @@ final class UNDT_Modules {
 
 		$clean['keep_data'] = empty( $input['keep_data'] ) ? 0 : 1;
 		$clean['updates']   = empty( $input['updates'] ) ? 0 : 1;
+
+		// Wer neben den Admins pflegen darf. Siehe UNDT_Access.
+		$clean['roles'] = UNDT_Access::sanitize_roles( isset( $input['roles'] ) ? $input['roles'] : array() );
 
 		self::flush();
 

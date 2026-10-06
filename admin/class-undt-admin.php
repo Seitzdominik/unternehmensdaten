@@ -2,8 +2,10 @@
 /**
  * Das Backend.
  *
- * Eigenes Menue auf oberster Ebene, ein Untermenue je Aufgabe. Assets werden
- * ausschliesslich auf den eigenen Seiten geladen, nicht im gesamten Backend.
+ * Ein Menuepunkt „Firmendaten“ auf oberster Ebene, alle weiteren Seiten ohne
+ * eigenen Eintrag im WordPress-Menue: gefuehrt wird ueber die Seitenleiste des
+ * Plugins, siehe UNDT_Nav. Assets werden ausschliesslich auf den eigenen Seiten
+ * geladen, nicht im gesamten Backend.
  *
  * @package Unternehmensdaten
  */
@@ -15,11 +17,20 @@ defined( 'ABSPATH' ) || exit;
  */
 final class UNDT_Admin {
 
-	const SLUG_COMPANY    = 'undt';
-	const SLUG_PROFILE    = 'undt-profile';
-	const SLUG_SHORTCODES = 'undt-shortcodes';
-	const SLUG_AUDIT      = 'undt-audit';
-	const SLUG_SETTINGS   = 'undt-settings';
+	const SLUG_OVERVIEW = 'undt';
+	const SLUG_COMPANY  = 'undt-company';
+	const SLUG_EMBED    = 'undt-embed';
+	const SLUG_TRANSFER = 'undt-transfer';
+	const SLUG_SETTINGS = 'undt-settings';
+
+	/**
+	 * Adressen frueherer Fassungen und wohin sie heute fuehren.
+	 */
+	const OLD_SLUGS = array(
+		'undt-shortcodes' => self::SLUG_EMBED,
+		'undt-audit'      => self::SLUG_OVERVIEW,
+		'undt-profile'    => self::SLUG_COMPANY,
+	);
 
 	const GROUP_PROFILE  = 'undt_profile_group';
 	const GROUP_COMPANY  = 'undt_company_group';
@@ -33,7 +44,7 @@ final class UNDT_Admin {
 	private static $instance = null;
 
 	/**
-	 * Hook-Suffixe der eigenen Seiten.
+	 * Hook-Suffixe der eigenen Seiten, Schluessel ist der Name der Seite.
 	 *
 	 * @var array
 	 */
@@ -89,112 +100,139 @@ final class UNDT_Admin {
 		add_action( 'admin_init', array( $this, 'settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'admin_notices', array( $this, 'setup_notice' ) );
+		add_action( 'admin_page_access_denied', array( $this, 'redirect_old_slugs' ) );
+		add_action( 'admin_head', array( $this, 'hide_submenu' ) );
+		add_filter( 'admin_body_class', array( $this, 'body_class' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( UNDT_FILE ), array( $this, 'action_links' ) );
+
+		UNDT_Autosave::register();
 	}
 
 	/**
-	 * Legt Menue und Untermenues an.
+	 * Legt den Menuepunkt und die Seiten an.
+	 *
+	 * Die Uebersicht ist der Menuepunkt selbst, alle anderen Seiten haengen als
+	 * gewoehnliche Unterseiten darunter. So bestimmt WordPress Titel, Rechte und
+	 * Hervorhebung wie immer. Im Menue erscheinen sie trotzdem nicht, siehe
+	 * hide_submenu().
 	 *
 	 * @return void
 	 */
 	public function menu() {
-		$cap = UNDT_Store::capability();
-
-		$this->hooks['company'] = add_menu_page(
-			__( 'Unternehmensdaten', 'unternehmensdaten' ),
-			__( 'Unternehmensdaten', 'unternehmensdaten' ),
-			$cap,
-			self::SLUG_COMPANY,
-			array( $this, 'render_company' ),
-			'dashicons-building',
-			25
-		);
-
-		add_submenu_page(
-			self::SLUG_COMPANY,
-			__( 'Stammdaten', 'unternehmensdaten' ),
-			__( 'Stammdaten', 'unternehmensdaten' ),
-			$cap,
-			self::SLUG_COMPANY,
-			array( $this, 'render_company' )
-		);
-
-		$this->hooks['profile'] = add_submenu_page(
-			self::SLUG_COMPANY,
-			__( 'Rechtsform & Umfang', 'unternehmensdaten' ),
-			__( 'Rechtsform & Umfang', 'unternehmensdaten' ),
-			$cap,
-			self::SLUG_PROFILE,
-			array( $this, 'render_profile' )
-		);
-
-		// Ein Untermenue je aktivem Inhaltsmodul.
-		foreach ( UNDT_Modules::all() as $slug => $module ) {
-			if ( ! UNDT_Modules::is_active( $slug ) ) {
+		foreach ( UNDT_Nav::pages() as $key => $page ) {
+			if ( '' !== $page['url'] ) {
 				continue;
 			}
 
-			$hook = add_submenu_page(
-				self::SLUG_COMPANY,
-				$module['label'],
-				$module['label'],
-				$cap,
-				self::module_slug( $slug ),
-				function () use ( $slug ) {
-					$this->render_module( $slug );
-				}
-			);
+			$cap      = UNDT_Access::cap_for( $page['access'] );
+			$callback = function () use ( $key ) {
+				$this->render( $key );
+			};
 
-			$this->hooks[ 'm_' . $slug ] = $hook;
+			if ( 'overview' === $key ) {
+				$hook = add_menu_page(
+					$page['title'],
+					__( 'Firmendaten', 'unternehmensdaten' ),
+					$cap,
+					$page['slug'],
+					$callback,
+					UNDT_Ui_Icons::data_uri( 'buildings' ),
+					25
+				);
+			} else {
+				$hook = add_submenu_page( self::SLUG_OVERVIEW, $page['title'], $page['title'], $cap, $page['slug'], $callback );
+			}
 
-			if ( $this->has_media_field( $module ) ) {
+			if ( ! $hook ) {
+				continue;
+			}
+
+			$this->hooks[ $key ] = $hook;
+
+			if ( '' !== $page['module'] && $this->has_media_field( UNDT_Modules::get( $page['module'] ) ) ) {
 				$this->media_hooks[] = $hook;
 			}
 		}
+	}
 
-		$this->hooks['shortcodes'] = add_submenu_page(
-			self::SLUG_COMPANY,
-			__( 'Shortcodes', 'unternehmensdaten' ),
-			__( 'Shortcodes', 'unternehmensdaten' ),
-			$cap,
-			self::SLUG_SHORTCODES,
-			array( $this, 'render_shortcodes' )
-		);
+	/**
+	 * Nimmt die Unterseiten aus dem WordPress-Menue, kurz bevor es ausgegeben wird.
+	 *
+	 * Zu diesem Zeitpunkt hat WordPress Recht, Titel und Elternseite bereits
+	 * bestimmt. „Firmendaten“ steht danach ohne aufklappende Liste im Menue und
+	 * ist auf jeder eigenen Seite hervorgehoben. Ein Elternteil leer zu lassen
+	 * genuegt dafuer nicht: dann setzt WordPress die Elternseite nach dem Filter
+	 * parent_file wieder zurueck, und Titel und Hervorhebung fehlen.
+	 *
+	 * @return void
+	 */
+	public function hide_submenu() {
+		global $submenu;
 
-		// Nur die abfragefreie Zaehlung, damit das Menue keine Datenbanklast erzeugt.
-		$open  = UNDT_Store::is_set_up() ? UNDT_Audit::quick_count() : 0;
-		$title = __( 'Prüfung', 'unternehmensdaten' );
+		unset( $submenu[ self::SLUG_OVERVIEW ] );
+	}
 
-		if ( $open > 0 ) {
-			$title .= ' <span class="awaiting-mod"><span class="pending-count">' . (int) $open . '</span></span>';
+	/**
+	 * Markiert die eigenen Seiten fuer das Stylesheet.
+	 *
+	 * @param string $classes Klassen des body-Elements.
+	 * @return string
+	 */
+	public function body_class( $classes ) {
+		return $this->current_key() ? $classes . ' undt-screen' : $classes;
+	}
+
+	/**
+	 * Der Name der aktuellen Seite, leer ausserhalb des Plugins.
+	 *
+	 * @return string
+	 */
+	private function current_key() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen instanceof WP_Screen ) {
+			return '';
 		}
 
-		$this->hooks['audit'] = add_submenu_page(
-			self::SLUG_COMPANY,
-			__( 'Prüfung', 'unternehmensdaten' ),
-			$title,
-			$cap,
-			self::SLUG_AUDIT,
-			array( $this, 'render_audit' )
-		);
+		$key = array_search( $screen->id, $this->hooks, true );
 
-		$this->hooks['settings'] = add_submenu_page(
-			self::SLUG_COMPANY,
-			__( 'Einstellungen', 'unternehmensdaten' ),
-			__( 'Einstellungen', 'unternehmensdaten' ),
-			$cap,
-			self::SLUG_SETTINGS,
-			array( $this, 'render_settings' )
-		);
+		return false === $key ? '' : (string) $key;
+	}
+
+	/**
+	 * Leitet Adressen frueherer Fassungen um, etwa aus Lesezeichen.
+	 *
+	 * WordPress lehnt eine unbekannte Seite ab, bevor ein spaeterer Hook greift.
+	 * Erst in diesem Moment ist klar, dass es die Seite nicht mehr gibt.
+	 *
+	 * @return void
+	 */
+	public function redirect_old_slugs() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur gelesen, um weiterzuleiten.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+
+		if ( ! isset( self::OLD_SLUGS[ $page ] ) ) {
+			return;
+		}
+
+		// Die Rechtsform steht seit 0.6.0 als Karte oben auf „Firma“.
+		$anchor = 'undt-profile' === $page ? '#rechtsform' : '';
+
+		wp_safe_redirect( admin_url( 'admin.php?page=' . self::OLD_SLUGS[ $page ] ) . $anchor );
+		exit;
 	}
 
 	/**
 	 * Ob ein Modul ein Medienfeld enthaelt.
 	 *
-	 * @param array $module Moduldefinition.
+	 * @param array|null $module Moduldefinition.
 	 * @return bool
 	 */
-	private function has_media_field( array $module ) {
+	private function has_media_field( $module ) {
+		if ( ! is_array( $module ) ) {
+			return false;
+		}
+
 		foreach ( $module['fields'] as $field ) {
 			if ( 'media' === $field['type'] ) {
 				return true;
@@ -207,13 +245,19 @@ final class UNDT_Admin {
 	/**
 	 * Registriert alle Optionen ueber die Settings API.
 	 *
-	 * Dadurch laufen Nonce-Pruefung und Berechtigungspruefung ueber options.php,
-	 * es gibt keinen eigenen Speicher-Handler und damit auch keine eigene
-	 * Angriffsflaeche.
+	 * Die Sanitizer greifen damit bei jedem update_option(), ob ueber das
+	 * automatische Speichern (UNDT_Autosave) oder ueber options.php, das ohne
+	 * JavaScript einspringt. Dort laufen Nonce- und Rechtepruefung ueber die
+	 * Filter option_page_capability_*.
 	 *
 	 * @return void
 	 */
 	public function settings() {
+		$admin = array( 'UNDT_Store', 'capability' );
+		$edit  = static function () {
+			return UNDT_Access::CAP;
+		};
+
 		register_setting(
 			self::GROUP_PROFILE,
 			UNDT_Store::OPTION_PROFILE,
@@ -247,9 +291,9 @@ final class UNDT_Admin {
 			)
 		);
 
-		add_filter( 'option_page_capability_' . self::GROUP_PROFILE, array( 'UNDT_Store', 'capability' ) );
-		add_filter( 'option_page_capability_' . self::GROUP_COMPANY, array( 'UNDT_Store', 'capability' ) );
-		add_filter( 'option_page_capability_' . self::GROUP_SETTINGS, array( 'UNDT_Store', 'capability' ) );
+		add_filter( 'option_page_capability_' . self::GROUP_PROFILE, $admin );
+		add_filter( 'option_page_capability_' . self::GROUP_COMPANY, $edit );
+		add_filter( 'option_page_capability_' . self::GROUP_SETTINGS, $admin );
 
 		// Je Modul eine eigene Option in einer eigenen Gruppe.
 		foreach ( UNDT_Modules::all() as $slug => $module ) {
@@ -268,7 +312,7 @@ final class UNDT_Admin {
 				)
 			);
 
-			add_filter( 'option_page_capability_' . $group, array( 'UNDT_Store', 'capability' ) );
+			add_filter( 'option_page_capability_' . $group, 'edit' === UNDT_Nav::module_access( $slug ) ? $edit : $admin );
 		}
 	}
 
@@ -277,7 +321,7 @@ final class UNDT_Admin {
 	 *
 	 * Als abgeschlossen gilt die Einrichtung erst mit dem Speichern, nicht schon
 	 * mit dem Aufruf der Seite: eine GET-Anfrage soll nichts veraendern, und hier
-	 * ist die Nonce von options.php bereits geprueft.
+	 * ist die Nonce bereits geprueft.
 	 *
 	 * @param mixed $input Rohe Eingabe.
 	 * @return array
@@ -285,6 +329,7 @@ final class UNDT_Admin {
 	public static function sanitize_profile( $input ) {
 		if ( ! UNDT_Store::is_set_up() ) {
 			UNDT_Store::mark_set_up();
+			UNDT_Overview::start_onboarding();
 		}
 
 		return UNDT_Sanitizer::profile( $input );
@@ -332,6 +377,25 @@ final class UNDT_Admin {
 				'rowRemoved'  => __( 'Eintrag entfernt', 'unternehmensdaten' ),
 				'rowMoved'    => __( 'Reihenfolge geändert', 'unternehmensdaten' ),
 				'hoursCopied' => __( 'Zeiten auf alle Tage übernommen', 'unternehmensdaten' ),
+				'saved'       => __( 'Alle Änderungen gespeichert', 'unternehmensdaten' ),
+				'saveFailed'  => __( 'Nicht gespeichert. Neuer Versuch in 10 Sekunden.', 'unternehmensdaten' ),
+				'openItems'   => __( 'offene Punkte', 'unternehmensdaten' ),
+				'copiedPrefix' => __( 'Kopiert:', 'unternehmensdaten' ),
+				/* translators: %d: Anzahl der Feiertage. */
+				'holidaysAdded' => __( '%d Feiertage eingetragen', 'unternehmensdaten' ),
+				/* translators: %s: Name der Plattform. */
+				'labelFor'    => __( 'Beschriftung für %s', 'unternehmensdaten' ),
+				'confirmGroup' => __( 'Diese Gruppe mit allen Leistungen entfernen?', 'unternehmensdaten' ),
+				/* translators: %s: Adresse der Website, von der die Sicherung stammt. */
+				'importFrom'  => __( 'von %s', 'unternehmensdaten' ),
+				'importReady' => __( 'Datei gelesen. Wähle jetzt, was übernommen wird.', 'unternehmensdaten' ),
+				'chamberApplied' => __( 'Kammer und Regelungen übernommen', 'unternehmensdaten' ),
+				'format'      => UNDT_Access::is_admin() ? UNDT_Copy::format() : 'shortcode',
+				'save'        => array(
+					'url'    => admin_url( 'admin-ajax.php' ),
+					'action' => UNDT_Autosave::ACTION,
+					'nonce'  => wp_create_nonce( UNDT_Autosave::ACTION ),
+				),
 			)
 		);
 	}
@@ -358,26 +422,20 @@ final class UNDT_Admin {
 	}
 
 	/**
-	 * Weist einmalig auf den Einrichtungsassistenten hin.
+	 * Weist einmalig auf die Einrichtung hin, ausserhalb der eigenen Seiten.
 	 *
 	 * @return void
 	 */
 	public function setup_notice() {
-		if ( UNDT_Store::is_set_up() || ! current_user_can( UNDT_Store::capability() ) ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-
-		if ( $screen instanceof WP_Screen && false !== strpos( $screen->id, self::SLUG_PROFILE ) ) {
+		if ( UNDT_Store::is_set_up() || ! UNDT_Access::is_admin() || $this->current_key() ) {
 			return;
 		}
 
 		printf(
 			'<div class="notice notice-info"><p><strong>%s</strong> %s <a href="%s" class="button button-primary button-small">%s</a></p></div>',
-			esc_html__( 'Unternehmensdaten:', 'unternehmensdaten' ),
-			esc_html__( 'Bitte zuerst Rechtsform und Umfang festlegen. Davon hängt ab, welche Angaben rechtlich erforderlich sind.', 'unternehmensdaten' ),
-			esc_url( admin_url( 'admin.php?page=' . self::SLUG_PROFILE ) ),
+			esc_html__( 'Firmendaten:', 'unternehmensdaten' ),
+			esc_html__( 'Lege zuerst die Rechtsform fest. Davon hängt ab, welche Angaben rechtlich erforderlich sind.', 'unternehmensdaten' ),
+			esc_url( admin_url( 'admin.php?page=' . self::SLUG_COMPANY ) . '#rechtsform' ),
 			esc_html__( 'Jetzt einrichten', 'unternehmensdaten' )
 		);
 	}
@@ -393,7 +451,7 @@ final class UNDT_Admin {
 			$links,
 			sprintf(
 				'<a href="%s">%s</a>',
-				esc_url( admin_url( 'admin.php?page=' . self::SLUG_COMPANY ) ),
+				esc_url( admin_url( 'admin.php?page=' . self::SLUG_SETTINGS ) ),
 				esc_html__( 'Einstellungen', 'unternehmensdaten' )
 			)
 		);
@@ -402,80 +460,27 @@ final class UNDT_Admin {
 	}
 
 	/**
-	 * Prueft die Berechtigung und bricht sonst ab.
+	 * Gibt eine Seite in der Huelle aus.
 	 *
+	 * WordPress hat das Recht bereits beim Aufruf geprueft. Die Pruefung hier
+	 * steht trotzdem, falls eine Ansicht einmal auf anderem Weg erreicht wird.
+	 *
+	 * @param string $key Name der Seite.
 	 * @return void
 	 */
-	private function guard() {
-		if ( ! current_user_can( UNDT_Store::capability() ) ) {
+	public function render( $key ) {
+		$pages = UNDT_Nav::pages();
+		$page  = isset( $pages[ $key ] ) ? $pages[ $key ] : null;
+
+		if ( null === $page || ! current_user_can( UNDT_Access::cap_for( $page['access'] ) ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung für diese Seite.', 'unternehmensdaten' ), 403 );
 		}
-	}
 
-	/**
-	 * Seite: Stammdaten.
-	 *
-	 * @return void
-	 */
-	public function render_company() {
-		$this->guard();
+		// Die Ansicht eines Moduls erwartet dessen Schluessel.
+		$undt_slug = $page['module'];
 
-		require UNDT_DIR . 'admin/views/company.php';
-	}
-
-	/**
-	 * Seite: Rechtsform und Umfang.
-	 *
-	 * @return void
-	 */
-	public function render_profile() {
-		$this->guard();
-
-		require UNDT_DIR . 'admin/views/profile.php';
-	}
-
-	/**
-	 * Seite: ein Inhaltsmodul.
-	 *
-	 * @param string $undt_slug Modul-Schluessel.
-	 * @return void
-	 */
-	public function render_module( $undt_slug ) {
-		$this->guard();
-
-		require UNDT_DIR . 'admin/views/module.php';
-	}
-
-	/**
-	 * Seite: Shortcodes.
-	 *
-	 * @return void
-	 */
-	public function render_shortcodes() {
-		$this->guard();
-
-		require UNDT_DIR . 'admin/views/shortcodes.php';
-	}
-
-	/**
-	 * Seite: Prüfung.
-	 *
-	 * @return void
-	 */
-	public function render_audit() {
-		$this->guard();
-
-		require UNDT_DIR . 'admin/views/audit.php';
-	}
-
-	/**
-	 * Seite: Einstellungen.
-	 *
-	 * @return void
-	 */
-	public function render_settings() {
-		$this->guard();
-
-		require UNDT_DIR . 'admin/views/settings.php';
+		UNDT_Nav::open( $key );
+		require UNDT_DIR . 'admin/views/' . $page['view'] . '.php';
+		UNDT_Nav::close( $key );
 	}
 }

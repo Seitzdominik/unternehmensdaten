@@ -298,7 +298,7 @@ final class UNDT_SchemaOrg {
 	 * @return array
 	 */
 	public static function logo() {
-		$id = (int) UNDT_Content::value( 'seo', 'logo' );
+		$id = self::logo_id();
 
 		if ( $id <= 0 ) {
 			return array();
@@ -316,6 +316,37 @@ final class UNDT_SchemaOrg {
 			'width'  => (int) $src[1],
 			'height' => (int) $src[2],
 		);
+	}
+
+	/**
+	 * Woher das Logo kommt: das Logo des Themes, ersatzweise das Website-Icon.
+	 *
+	 * Ein eigenes Logo-Feld gibt es seit 0.6.0 nicht mehr; das Logo pflegt man
+	 * dort, wo das Theme es ohnehin zeigt.
+	 *
+	 * @return int Anhang-ID, 0 ohne Logo.
+	 */
+	public static function logo_id() {
+		$id = (int) get_theme_mod( 'custom_logo' );
+
+		if ( $id <= 0 ) {
+			$id = (int) get_option( 'site_icon' );
+		}
+
+		return $id > 0 ? $id : 0;
+	}
+
+	/**
+	 * Woher das Logo kommt, als Wort fuer die Oberflaeche.
+	 *
+	 * @return string theme, icon oder leer.
+	 */
+	public static function logo_source() {
+		if ( (int) get_theme_mod( 'custom_logo' ) > 0 ) {
+			return 'theme';
+		}
+
+		return (int) get_option( 'site_icon' ) > 0 ? 'icon' : '';
 	}
 
 	/**

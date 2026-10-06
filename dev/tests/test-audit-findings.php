@@ -32,13 +32,22 @@ function get_post_status_object( $status ) {
 
 undt_head( 'F-05: Geleerte Felder bleiben leer' );
 
-undt_seed_module( 'prices', array( 'items' => array( array( 'group' => '', 'label' => 'Beratung', 'price' => '100 €', 'note' => '' ) ), 'intro' => '', 'footnote' => '' ) );
+// Seit 0.6.0 ein Schalter: der Hinweis kommt aus Firma, ein eigener Text ersetzt ihn.
+undt_seed_profile( array( 'vat_status' => 'standard' ) );
+undt_seed_module( 'prices', array( 'items' => array( array( 'group' => '', 'label' => 'Beratung', 'price' => '100 €', 'note' => '' ) ), 'intro' => '', 'footnote' => '', 'vat_note' => 0 ) );
 undt_ok( '' === UNDT_Content::value( 'prices', 'footnote' ), 'Geleerte Fussnote bleibt leer' );
 $html = UNDT_Blocks::prices( array( 'heading_level' => 3, 'group' => '', 'intro' => '1', 'footnote' => '1' ) );
-undt_ok( false === strpos( $html, 'Umsatzsteuer' ), 'Preisliste zeigt keine Umsatzsteuer-Fussnote, wenn sie geleert wurde' );
+undt_ok( false === strpos( $html, 'Umsatzsteuer' ), 'Preisliste zeigt keine Umsatzsteuer-Fussnote, wenn sie ausgeschaltet ist' );
 
 undt_seed_module( 'prices', array( 'items' => array( array( 'group' => '', 'label' => 'Beratung', 'price' => '100 €', 'note' => '' ) ) ) );
-undt_ok( false !== strpos( (string) UNDT_Content::value( 'prices', 'footnote' ), 'Umsatzsteuer' ), 'Nie gespeicherte Fussnote erhaelt weiter die Voreinstellung' );
+undt_ok( 1 === (int) UNDT_Content::value( 'prices', 'vat_note' ) && false !== strpos( UNDT_Blocks::prices_note(), 'Umsatzsteuer' ), 'Nie gespeichert: der Hinweis ist an und kommt aus Firma' );
+undt_seed_profile( array( 'vat_status' => 'small_business' ) );
+undt_ok( false !== strpos( UNDT_Blocks::prices_note(), '§ 19 UStG' ), 'Kleinunternehmer bekommen ihren Satz nach § 19 UStG' );
+undt_seed_module( 'prices', array( 'footnote' => 'Eigener Satz.' ) );
+undt_ok( 'Eigener Satz.' === UNDT_Blocks::prices_note(), 'Ein eigener Text ersetzt den Satz aus Firma' );
+undt_seed_profile( array( 'vat_status' => 'none' ) );
+undt_seed_module( 'prices', array() );
+undt_ok( '' === UNDT_Blocks::prices_note(), 'Ohne Angabe zur Umsatzsteuer gibt es keinen Satz' );
 
 undt_seed_module( 'hours', array( 'days' => array( 'mon' => array( 'closed' => 0, 'slots' => array( array( 'from' => '09:00', 'to' => '17:00' ) ) ) ), 'suffix' => '', 'closed_label' => '' ) );
 undt_ok( '' === trim( (string) UNDT_Content::value( 'hours', 'suffix' ) ), 'Geleerter Zusatz hinter der Uhrzeit bleibt leer' );

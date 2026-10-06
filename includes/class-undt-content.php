@@ -193,6 +193,14 @@ final class UNDT_Content {
 		$input = is_array( $input ) ? $input : array();
 		$clean = self::all( $slug );
 
+		// Die Koordinaten kommen als ein Feld, gespeichert werden sie getrennt.
+		if ( 'seo' === $slug && array_key_exists( 'geo', $input ) ) {
+			$geo = self::parse_geo( $input['geo'] );
+
+			$input['geo_lat'] = null === $geo ? '' : $geo[0];
+			$input['geo_lng'] = null === $geo ? '' : $geo[1];
+		}
+
 		foreach ( $module['fields'] as $key => $field ) {
 			// Schalter senden dank ihres versteckten Partnerfeldes immer mit.
 			if ( ! array_key_exists( $key, $input ) ) {
@@ -215,9 +223,45 @@ final class UNDT_Content {
 			$clean['special'] = UNDT_Hours::normalize_special( $clean['special'] );
 		}
 
+		// Ohne gewaehlte Plattform zaehlt, was die Adresse verraet.
+		if ( 'social' === $slug && ! empty( $clean['items'] ) && is_array( $clean['items'] ) ) {
+			foreach ( $clean['items'] as $index => $item ) {
+				if ( '' === (string) $item['platform'] && '' !== (string) $item['url'] ) {
+					$clean['items'][ $index ]['platform'] = UNDT_Modules::detect_platform( $item['url'] );
+				}
+			}
+		}
+
 		self::flush();
 
 		return $clean;
+	}
+
+	/**
+	 * Liest Koordinaten aus einem Feld, so wie Google Maps sie kopiert.
+	 *
+	 * Erwartet zwei Zahlen, Breite zuerst, getrennt durch Komma, Semikolon oder
+	 * Leerzeichen, etwa „47.9312, 12.6458“. Ein Dezimalkomma geht, wenn die
+	 * Zahlen mit Semikolon oder Leerzeichen getrennt sind.
+	 *
+	 * @param mixed $value Eingabe.
+	 * @return array|null Breite und Laenge als Text, null wenn leer oder ungueltig.
+	 */
+	public static function parse_geo( $value ) {
+		$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+
+		if ( ! preg_match( '/^(-?\d{1,2}(?:[.,]\d+)?)\s*[,;]?\s+(-?\d{1,3}(?:[.,]\d+)?)$|^(-?\d{1,2}(?:\.\d+)?)\s*[,;]\s*(-?\d{1,3}(?:\.\d+)?)$/', $value, $m ) ) {
+			return null;
+		}
+
+		$lat = str_replace( ',', '.', '' !== $m[1] ? $m[1] : $m[3] );
+		$lng = str_replace( ',', '.', '' !== $m[1] ? $m[2] : $m[4] );
+
+		if ( abs( (float) $lat ) > 90 || abs( (float) $lng ) > 180 ) {
+			return null;
+		}
+
+		return array( $lat, $lng );
 	}
 
 	/**

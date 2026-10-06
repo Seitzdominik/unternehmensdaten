@@ -2,8 +2,9 @@
 /**
  * Seite: Einstellungen.
  *
- * Steuert, welche Bereiche im Menue erscheinen, und was beim Deinstallieren mit
- * den Daten geschieht.
+ * Bereiche, wer pflegen darf, Aktualisierungen und was beim Loeschen des
+ * Plugins mit den Angaben geschieht. Optionsnamen und Autoload stehen seit
+ * 0.6.0 nicht mehr auf der Seite, sie gehoeren in die Entwickler-Doku.
  *
  * @package Unternehmensdaten
  */
@@ -12,268 +13,173 @@ defined( 'ABSPATH' ) || exit;
 
 $undt_settings = UNDT_Modules::settings();
 $undt_option   = UNDT_Modules::OPTION_SETTINGS;
-
-// Ergebnis eines Imports, einmalig nach der Weiterleitung.
-$undt_report = UNDT_Transfer::take_report();
+$undt_roles    = UNDT_Access::choosable_roles();
+$undt_status   = UNDT_Updater::status();
+$undt_areas    = array(
+	'hours'  => array( 'clock', __( 'Reguläre Zeiten, Feiertage und „Heute geöffnet“', 'unternehmensdaten' ) ),
+	'prices' => array( 'tag', __( 'Preislisten mit Gruppen', 'unternehmensdaten' ) ),
+	'social' => array( 'share', __( 'Profile für Footer und Suchmaschinen', 'unternehmensdaten' ) ),
+	'faq'    => array( 'chat', __( 'Häufige Fragen als aufklappbare Liste', 'unternehmensdaten' ) ),
+	'banner' => array( 'megaphone', __( 'Ein Hinweis oben auf jeder Seite', 'unternehmensdaten' ) ),
+	'seo'    => array( 'search', __( 'Strukturierte Daten für Google & Co.', 'unternehmensdaten' ) ),
+);
 ?>
-<div class="wrap undt-wrap">
-	<h1><?php esc_html_e( 'Einstellungen', 'unternehmensdaten' ); ?></h1>
+<div class="wrap undt-wrap undt-settings-page">
+	<?php UNDT_Ui::page_head( __( 'Einstellungen', 'unternehmensdaten' ), true ); ?>
 
 	<?php settings_errors(); ?>
 
 	<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reine Anzeige nach dem Redirect. ?>
 	<?php if ( isset( $_GET['undt-checked'] ) ) : ?>
-		<div class="notice notice-success is-dismissible inline">
-			<p><?php esc_html_e( 'Die Suche nach Aktualisierungen wurde durchgeführt.', 'unternehmensdaten' ); ?></p>
-		</div>
+		<?php UNDT_Ui::info( esc_html__( 'Die Suche nach Aktualisierungen wurde durchgeführt.', 'unternehmensdaten' ), 'check' ); ?>
 	<?php endif; ?>
 
-	<?php if ( ! empty( $undt_report ) ) : ?>
-		<div class="notice notice-<?php echo isset( $undt_report['error'] ) ? 'error' : 'success'; ?> is-dismissible inline">
-			<p><?php echo esc_html( UNDT_Transfer::summary( $undt_report ) ); ?></p>
-		</div>
-	<?php endif; ?>
-
-	<form method="post" action="options.php" class="undt-form">
+	<form method="post" action="options.php" class="undt-form undt-mpage" data-undt-autosave="settings">
 		<?php settings_fields( UNDT_Admin::GROUP_SETTINGS ); ?>
 
-		<div class="undt-box">
-		<div class="undt-box__body">
+		<section class="undt-box">
+			<?php UNDT_Ui::card_head( __( 'Bereiche', 'unternehmensdaten' ), __( 'Schalte nur ein, was du brauchst.', 'unternehmensdaten' ) ); ?>
 
-		<h2 class="undt-section-title"><?php esc_html_e( 'Sichtbare Bereiche', 'unternehmensdaten' ); ?></h2>
-		<p class="description undt-section-hint">
-			<?php esc_html_e( 'Abgeschaltete Bereiche verschwinden aus dem Menü, ihre Shortcodes geben nichts mehr aus und ihr CSS entfällt. Die eingetragenen Daten bleiben erhalten und sind nach dem Wiedereinschalten unverändert da.', 'unternehmensdaten' ); ?>
-		</p>
-
-		<table class="form-table" role="presentation">
-			<tbody>
+			<div class="undt-arealist">
 				<?php foreach ( UNDT_Modules::all() as $undt_slug => $undt_module ) : ?>
-					<tr class="undt-row">
-						<th scope="row">
-							<label for="undt-module-<?php echo esc_attr( $undt_slug ); ?>">
-								<?php echo esc_html( $undt_module['label'] ); ?>
-							</label>
-						</th>
-						<td>
-							<?php
-							UNDT_Controls::toggle(
-								$undt_option . '[modules][' . $undt_slug . ']',
-								'undt-module-' . $undt_slug,
-								! empty( $undt_settings['modules'][ $undt_slug ] )
-							);
-							?>
-							<p class="description">
-								<?php
-								printf(
-									/* translators: %s: Name der Option in der Datenbank. */
-									esc_html__( 'Daten liegen in der Option %s.', 'unternehmensdaten' ),
-									'<code>' . esc_html( $undt_module['option'] ) . '</code>'
-								);
-
-								echo ' ';
-
-								echo $undt_module['autoload']
-									? esc_html__( 'Wird mit den Autoload-Optionen geladen, weil der Inhalt üblicherweise auf jeder Seite gebraucht wird.', 'unternehmensdaten' )
-									: esc_html__( 'Wird nur auf Seiten geladen, die den Inhalt tatsächlich ausgeben.', 'unternehmensdaten' );
-								?>
-							</p>
-						</td>
-					</tr>
+					<?php
+					$undt_on   = ! empty( $undt_settings['modules'][ $undt_slug ] );
+					$undt_area = isset( $undt_areas[ $undt_slug ] ) ? $undt_areas[ $undt_slug ] : array( 'grid', '' );
+					$undt_id   = 'undt-module-' . $undt_slug;
+					?>
+					<div class="undt-arealist__row">
+						<?php UNDT_Ui::tile( $undt_area[0], 0, $undt_on ? 'brand' : 'muted' ); ?>
+						<label class="undt-arealist__text" for="<?php echo esc_attr( $undt_id ); ?>">
+							<span class="undt-arealist__label"><?php echo esc_html( $undt_module['label'] ); ?></span>
+							<?php if ( '' !== $undt_area[1] ) : ?>
+								<span class="undt-arealist__desc"><?php echo esc_html( $undt_area[1] ); ?></span>
+							<?php endif; ?>
+						</label>
+						<?php UNDT_Controls::toggle( $undt_option . '[modules][' . $undt_slug . ']', $undt_id, $undt_on ); ?>
+					</div>
 				<?php endforeach; ?>
-			</tbody>
-		</table>
+			</div>
 
-		<h2 class="undt-section-title"><?php esc_html_e( 'Aktualisierungen', 'unternehmensdaten' ); ?></h2>
+			<?php UNDT_Ui::card_foot( __( 'Abgeschaltete Bereiche verschwinden aus dem Menü und laden nichts auf deiner Website. Was du eingetragen hast, bleibt erhalten.', 'unternehmensdaten' ) ); ?>
+		</section>
 
-		<?php $undt_status = UNDT_Updater::status(); ?>
+		<section class="undt-box">
+			<?php UNDT_Ui::card_head( __( 'Wer darf die Angaben pflegen?', 'unternehmensdaten' ), __( 'Etwa deine Kundin oder ein Mitarbeiter, ohne Zugriff auf die Technik.', 'unternehmensdaten' ), null, 'undt-roles-title' ); ?>
 
-		<table class="form-table" role="presentation">
-			<tbody>
-				<tr class="undt-row">
-					<th scope="row">
-						<label for="undt-updates"><?php esc_html_e( 'Auf GitHub nach Aktualisierungen suchen', 'unternehmensdaten' ); ?></label>
-					</th>
-					<td>
-						<?php
-						UNDT_Controls::toggle(
-							$undt_option . '[updates]',
-							'undt-updates',
-							! empty( $undt_settings['updates'] )
+			<div class="undt-box__section">
+				<fieldset class="undt-roles" aria-labelledby="undt-roles-title">
+					<label class="undt-roles__item">
+						<input type="checkbox" checked disabled />
+						<span class="undt-roles__name"><?php echo esc_html( translate_user_role( 'Administrator' ) ); ?></span>
+						<span class="undt-roles__note"><?php esc_html_e( 'Immer, mit allen Rechten', 'unternehmensdaten' ); ?></span>
+					</label>
+					<?php foreach ( $undt_roles as $undt_role => $undt_role_name ) : ?>
+						<label class="undt-roles__item">
+							<input type="hidden" name="<?php echo esc_attr( $undt_option . '[roles][' . $undt_role . ']' ); ?>" value="0" />
+							<input type="checkbox" name="<?php echo esc_attr( $undt_option . '[roles][' . $undt_role . ']' ); ?>" value="1"<?php checked( in_array( $undt_role, (array) $undt_settings['roles'], true ) ); ?> />
+							<span class="undt-roles__name"><?php echo esc_html( $undt_role_name ); ?></span>
+							<?php if ( 'shop_manager' === $undt_role ) : ?>
+								<span class="undt-roles__note"><?php esc_html_e( 'von WooCommerce', 'unternehmensdaten' ); ?></span>
+							<?php endif; ?>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+
+				<?php
+				UNDT_Ui::info(
+					esc_html__( 'Diese Rollen sehen nur Übersicht, Firma, Öffnungszeiten, Social Media und Infobanner, dazu Preise und FAQ, wenn sie eingeschaltet sind. Kopierknöpfe, Rechtsform, Einbinden, Suchmaschinen und Einstellungen bleiben Admins vorbehalten.', 'unternehmensdaten' ),
+					'lock'
+				);
+				?>
+			</div>
+		</section>
+
+		<section class="undt-box">
+			<?php UNDT_Ui::card_head( __( 'Aktualisierungen', 'unternehmensdaten' ) ); ?>
+
+			<div class="undt-box__section undt-update">
+				<p class="undt-update__state">
+					<?php
+					switch ( $undt_status['state'] ) {
+						case 'update':
+							printf(
+								/* translators: 1: verfügbare Version, 2: installierte Version. */
+								esc_html__( '%1$s Installiert ist %2$s, du aktualisierst wie gewohnt unter Plugins.', 'unternehmensdaten' ),
+								'<strong>' . esc_html( sprintf( /* translators: %s: Version. */ __( 'Version %s steht bereit.', 'unternehmensdaten' ), $undt_status['version'] ) ) . '</strong>',
+								esc_html( UNDT_VERSION )
+							);
+							break;
+
+						case 'current':
+							printf(
+								'<strong>%s</strong>',
+								esc_html( sprintf( /* translators: %s: installierte Version. */ __( 'Version %s ist die neueste.', 'unternehmensdaten' ), UNDT_VERSION ) )
+							);
+							break;
+
+						default:
+							echo esc_html( $undt_status['message'] );
+					}
+
+					if ( ! empty( $undt_status['checked'] ) ) {
+						echo ' <span class="undt-update__checked">';
+						printf(
+							/* translators: %s: Zeitspanne, etwa „5 Minuten“. */
+							esc_html__( 'Zuletzt geprüft vor %s.', 'unternehmensdaten' ),
+							esc_html( human_time_diff( (int) $undt_status['checked'] ) )
 						);
-						?>
-						<p class="description">
-							<?php esc_html_e( 'Meldet neue Fassungen im gewohnten Plugin-Bildschirm. Abgerufen wird ausschließlich eine kleine Textdatei am neuesten Release, keine Daten werden übertragen.', 'unternehmensdaten' ); ?>
-						</p>
-					</td>
-				</tr>
+						echo '</span>';
+					}
+					?>
+				</p>
 
-				<tr class="undt-row">
-					<th scope="row"><?php esc_html_e( 'Stand', 'unternehmensdaten' ); ?></th>
-					<td>
-						<p class="undt-update-state undt-update-state--<?php echo esc_attr( $undt_status['state'] ); ?>">
-							<span class="undt-dot undt-dot--<?php echo esc_attr( 'update' === $undt_status['state'] ? 'warning' : ( 'current' === $undt_status['state'] ? 'ok' : 'notice' ) ); ?>" aria-hidden="true"></span>
-							<?php
-							switch ( $undt_status['state'] ) {
-								case 'update':
-									printf(
-										/* translators: 1: verfügbare Version, 2: installierte Version. */
-										esc_html__( 'Version %1$s steht bereit, installiert ist %2$s.', 'unternehmensdaten' ),
-										'<strong>' . esc_html( $undt_status['version'] ) . '</strong>',
-										esc_html( UNDT_VERSION )
-									);
-									break;
+				<?php if ( UNDT_Updater::enabled() && '' !== UNDT_Updater::repo() ) : ?>
+					<?php // Gehoert zum Formular darunter, Formulare lassen sich nicht verschachteln. ?>
+					<button type="submit" form="undt-recheck" class="undt-btn undt-btn--secondary undt-btn--small"><?php esc_html_e( 'Jetzt prüfen', 'unternehmensdaten' ); ?></button>
+				<?php endif; ?>
+			</div>
 
-								case 'current':
-									printf(
-										/* translators: %s: installierte Version. */
-										esc_html__( 'Version %s ist die neueste.', 'unternehmensdaten' ),
-										'<strong>' . esc_html( UNDT_VERSION ) . '</strong>'
-									);
-									break;
+			<div class="undt-box__section">
+				<div class="undt-srow-set">
+					<label class="undt-srow-set__label" for="undt-updates"><?php esc_html_e( 'Automatisch nach neuen Versionen suchen', 'unternehmensdaten' ); ?></label>
+					<?php UNDT_Controls::toggle( $undt_option . '[updates]', 'undt-updates', ! empty( $undt_settings['updates'] ) ); ?>
+				</div>
+			</div>
 
-								default:
-									echo esc_html( $undt_status['message'] );
-							}
-							?>
-						</p>
+			<?php UNDT_Ui::card_foot( __( 'Neue Versionen erscheinen wie gewohnt unter Plugins. Abgefragt wird nur eine kleine Textdatei bei GitHub, Angaben von dir werden nicht übertragen.', 'unternehmensdaten' ) ); ?>
+		</section>
 
-						<?php if ( ! empty( $undt_status['repo'] ) ) : ?>
-							<p class="description">
-								<?php
-								printf(
-									/* translators: %s: Repository als inhaber/name. */
-									esc_html__( 'Repository: %s', 'unternehmensdaten' ),
-									'<a href="' . esc_url( 'https://github.com/' . $undt_status['repo'] ) . '"><code>' . esc_html( $undt_status['repo'] ) . '</code></a>'
-								);
+		<section class="undt-box">
+			<?php UNDT_Ui::card_head( __( 'Wenn du das Plugin löschst', 'unternehmensdaten' ) ); ?>
 
-								if ( ! empty( $undt_status['checked'] ) ) {
-									echo ' &middot; ';
-									printf(
-										/* translators: %s: Zeitspanne, etwa „5 Minuten“. */
-										esc_html__( 'zuletzt geprüft vor %s', 'unternehmensdaten' ),
-										esc_html( human_time_diff( (int) $undt_status['checked'] ) )
-									);
-								}
-								?>
-							</p>
-						<?php endif; ?>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+			<div class="undt-box__section">
+				<div class="undt-choices" role="radiogroup" aria-label="<?php esc_attr_e( 'Beim Löschen', 'unternehmensdaten' ); ?>">
+					<?php foreach ( array( '0' => array( __( 'Alle Angaben entfernen', 'unternehmensdaten' ), __( 'Standard. Nach dem Löschen bleibt nichts in der Datenbank zurück.', 'unternehmensdaten' ) ), '1' => array( __( 'Angaben behalten', 'unternehmensdaten' ), __( 'Sinnvoll, wenn du das Plugin nur kurz entfernst oder neu installierst.', 'unternehmensdaten' ) ) ) as $undt_value => $undt_choice ) : ?>
+						<label class="undt-choice" for="undt-keep-<?php echo esc_attr( (string) $undt_value ); ?>">
+							<input type="radio" id="undt-keep-<?php echo esc_attr( (string) $undt_value ); ?>" name="<?php echo esc_attr( $undt_option . '[keep_data]' ); ?>" value="<?php echo esc_attr( (string) $undt_value ); ?>"<?php checked( (int) $undt_value, empty( $undt_settings['keep_data'] ) ? 0 : 1 ); ?> />
+							<span class="undt-choice__text">
+								<span class="undt-choice__label"><?php echo esc_html( $undt_choice[0] ); ?></span>
+								<span class="undt-choice__desc"><?php echo esc_html( $undt_choice[1] ); ?></span>
+							</span>
+						</label>
+					<?php endforeach; ?>
+				</div>
 
-		<h2 class="undt-section-title"><?php esc_html_e( 'Deinstallation', 'unternehmensdaten' ); ?></h2>
+				<div class="undt-update undt-update--info">
+					<?php UNDT_Ui::info( esc_html__( 'Deaktivieren löscht nie etwas. Es geht nur um das endgültige Löschen unter Plugins.', 'unternehmensdaten' ), 'info' ); ?>
+					<a class="undt-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . UNDT_Admin::SLUG_TRANSFER ) ); ?>"><?php esc_html_e( 'Vorher eine Sicherung laden', 'unternehmensdaten' ); ?><?php UNDT_Ui::icon( 'caret', 12 ); ?></a>
+				</div>
+			</div>
+		</section>
 
-		<table class="form-table" role="presentation">
-			<tbody>
-				<tr class="undt-row">
-					<th scope="row">
-						<label for="undt-keep-data"><?php esc_html_e( 'Daten beim Löschen behalten', 'unternehmensdaten' ); ?></label>
-					</th>
-					<td>
-						<?php
-						UNDT_Controls::toggle(
-							$undt_option . '[keep_data]',
-							'undt-keep-data',
-							! empty( $undt_settings['keep_data'] )
-						);
-						?>
-						<p class="description">
-							<?php esc_html_e( 'Standardmäßig entfernt das Plugin beim Löschen alle eigenen Optionen restlos. Wer das Plugin nur vorübergehend löscht oder auf eine andere Version wechselt, setzt hier den Haken. Ein bloßes Deaktivieren löscht ohnehin nichts.', 'unternehmensdaten' ); ?>
-						</p>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-
-		</div><!-- .undt-box__body -->
-
-		<div class="undt-box__footer">
-			<?php submit_button( __( 'Änderungen speichern', 'unternehmensdaten' ), 'primary', 'submit', false ); ?>
-		</div>
-
-		</div><!-- .undt-box -->
+		<?php UNDT_Ui::noscript_submit(); ?>
 	</form>
 
 	<?php if ( UNDT_Updater::enabled() && '' !== UNDT_Updater::repo() ) : ?>
-		<?php
-		/*
-		 * Eigenes Formular, weil Formulare sich nicht verschachteln lassen. Der
-		 * Knopf verwirft den Zwischenspeicher und fragt sofort neu an.
-		 */
-		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="undt-recheck">
+		<?php // Der Knopf „Jetzt prüfen“ oben schickt dieses Formular ab. ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="undt-recheck" class="undt-recheck" hidden>
 			<input type="hidden" name="action" value="undt_check_update" />
 			<?php wp_nonce_field( 'undt_check_update' ); ?>
-			<?php submit_button( __( 'Jetzt nach Aktualisierungen suchen', 'unternehmensdaten' ), 'secondary', 'submit', false ); ?>
 		</form>
 	<?php endif; ?>
-
-	<h2 class="undt-section-title"><?php esc_html_e( 'Sichern und übertragen', 'unternehmensdaten' ); ?></h2>
-	<p class="description undt-section-hint">
-		<?php esc_html_e( 'Die Sicherung enthält alle Angaben dieses Plugins als JSON-Datei: Stammdaten, Rechtsform, Inhaltsbereiche und Einstellungen. Eingespielt auf einer anderen Website ist die Einrichtung dort schon zur Hälfte erledigt. Verknüpfte Seiten und Bilder werden dabei nicht übernommen, denn sie gehören zur Ursprungsseite.', 'unternehmensdaten' ); ?>
-	</p>
-
-	<div class="undt-box"><div class="undt-box__body">
-		<table class="form-table" role="presentation">
-			<tbody>
-				<tr class="undt-row">
-					<th scope="row"><?php esc_html_e( 'Sicherung', 'unternehmensdaten' ); ?></th>
-					<td>
-						<?php // Eigene Formulare, weil sich Formulare nicht verschachteln lassen. ?>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-							<input type="hidden" name="action" value="undt_export" />
-							<?php wp_nonce_field( 'undt_export' ); ?>
-							<?php submit_button( __( 'Datei herunterladen', 'unternehmensdaten' ), 'secondary', 'submit', false ); ?>
-						</form>
-						<p class="description">
-							<?php esc_html_e( 'Enthält keine Passwörter und keine Angaben über Besucher.', 'unternehmensdaten' ); ?>
-						</p>
-					</td>
-				</tr>
-				<tr class="undt-row">
-					<th scope="row"><label for="undt-import-file"><?php esc_html_e( 'Einspielen', 'unternehmensdaten' ); ?></label></th>
-					<td>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" class="undt-import">
-							<input type="hidden" name="action" value="undt_import" />
-							<?php wp_nonce_field( 'undt_import' ); ?>
-							<input type="file" id="undt-import-file" name="undt_file" accept="application/json,.json" required />
-							<p class="undt-import__confirm">
-								<label>
-									<input type="checkbox" name="undt_confirm" value="1" required />
-									<?php esc_html_e( 'Die vorhandenen Angaben dürfen überschrieben werden.', 'unternehmensdaten' ); ?>
-								</label>
-							</p>
-							<?php submit_button( __( 'Datei einspielen', 'unternehmensdaten' ), 'secondary', 'submit', false ); ?>
-						</form>
-						<p class="description">
-							<?php esc_html_e( 'Alle Angaben durchlaufen dieselbe Prüfung wie das Formular. Vor dem Einspielen lohnt sich eine eigene Sicherung.', 'unternehmensdaten' ); ?>
-						</p>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div></div>
-
-	<h2 class="undt-section-title"><?php esc_html_e( 'Für Entwicklerinnen und Entwickler', 'unternehmensdaten' ); ?></h2>
-	<p class="description undt-section-hint">
-		<?php esc_html_e( 'Diese Filter stehen bereit:', 'unternehmensdaten' ); ?>
-	</p>
-	<div class="undt-box"><div class="undt-box__body">
-	<table class="widefat striped undt-table">
-		<tbody>
-			<tr><td><code>undt_fields</code></td><td><?php esc_html_e( 'Eigene Stammdaten-Felder ergänzen. Sie durchlaufen automatisch Sanitisierung, Escaping und Shortcode-Auflösung.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_modules</code></td><td><?php esc_html_e( 'Eigene Inhaltsmodule ergänzen.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_capability</code></td><td><?php esc_html_e( 'Erforderliche Berechtigung ändern. Standard ist manage_options.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_css</code></td><td><?php esc_html_e( 'Das strukturelle CSS anpassen.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_inline_css</code></td><td><?php esc_html_e( 'Das mitgelieferte CSS vollständig abschalten.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_imprint_html</code>, <code>undt_footer_html</code></td><td><?php esc_html_e( 'Die fertige Ausgabe nachbearbeiten.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_schema_organization</code></td><td><?php esc_html_e( 'Die JSON-LD-Auszeichnung anpassen.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_audit_issues</code></td><td><?php esc_html_e( 'Eigene Prüfungen ergänzen.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_auto_banner</code></td><td><?php esc_html_e( 'Festlegen, wo das Banner automatisch am Seitenanfang erscheint. Standard ist überall außer in der Oberfläche von Etch und Bricks.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_social_icon</code></td><td><?php esc_html_e( 'Das Symbol einer Plattform ersetzen, etwa für Xing oder kununu, die WordPress nicht mitbringt.', 'unternehmensdaten' ); ?></td></tr>
-			<tr><td><code>undt_link_post_types</code></td><td><?php esc_html_e( 'Festlegen, aus welchen Inhaltstypen die Seitenfelder wählen. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen.', 'unternehmensdaten' ); ?></td></tr>
-		</tbody>
-	</table>
-	</div></div>
 </div>

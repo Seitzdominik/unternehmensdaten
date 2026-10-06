@@ -269,48 +269,6 @@ final class UNDT_Fields {
 		echo '</td></tr>';
 	}
 
-	/**
-	 * Eine Frage des Einrichtungsassistenten als Zelle eines zweispaltigen Rasters.
-	 *
-	 * Die Fragen sind kurz und fast alle mit einem Schalter beantwortet. In einer
-	 * einzigen Spalte stuende neben jeder Frage eine halbe Bildschirmbreite
-	 * Nichts, und die Seite waere doppelt so lang. Eine Auswahl braucht dagegen
-	 * die ganze Zelle, ihre Beschriftung steht deshalb darueber.
-	 *
-	 * @param string $key         Feldschluessel.
-	 * @param array  $question    Fragedefinition.
-	 * @param mixed  $value       Aktueller Wert.
-	 * @param string $option_name Name der Option, wird zum Formularnamen.
-	 * @return void
-	 */
-	public static function question_card( $key, array $question, $value, $option_name ) {
-		$question = array_merge(
-			array(
-				'label'     => $key,
-				'type'      => 'checkbox',
-				'choices'   => array(),
-				'help'      => '',
-				'basis'     => '',
-				'when'      => array(),
-				'required'  => false,
-				'shortcode' => false,
-				'default'   => '',
-				'full'      => false,
-			),
-			$question
-		);
-
-		self::card(
-			$key,
-			$question,
-			$value,
-			$option_name,
-			array(
-				'with_copy'   => false,
-				'extra_class' => 'undt-question',
-			)
-		);
-	}
 
 	/**
 	 * Eine Zelle des zweispaltigen Rasters.

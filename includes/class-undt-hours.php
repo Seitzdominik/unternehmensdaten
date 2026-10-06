@@ -188,7 +188,15 @@ final class UNDT_Hours {
 			$row  = isset( $raw[ $day ] ) && is_array( $raw[ $day ] ) ? $raw[ $day ] : array();
 			$data = self::empty_day();
 
-			$data['closed'] = empty( $row['closed'] ) ? 0 : 1;
+			/*
+			 * Die Seite fragt „geöffnet“ statt „geschlossen“: ein verstecktes Feld
+			 * open=0 vor dem Schalter open=1. Ohne open gilt das gespeicherte closed.
+			 */
+			if ( array_key_exists( 'open', $row ) ) {
+				$data['closed'] = empty( $row['open'] ) ? 1 : 0;
+			} else {
+				$data['closed'] = empty( $row['closed'] ) ? 0 : 1;
+			}
 
 			for ( $i = 0; $i < self::SLOTS; $i++ ) {
 				if ( ! isset( $row['slots'][ $i ] ) || ! is_array( $row['slots'][ $i ] ) ) {

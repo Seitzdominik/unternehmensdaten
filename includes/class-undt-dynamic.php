@@ -352,9 +352,7 @@ final class UNDT_Dynamic {
 				return self::flag( UNDT_Blocks::banner_active() );
 
 			case 'type':
-				$type = (string) UNDT_Content::value( 'banner', 'type' );
-
-				return in_array( $type, array( 'info', 'success', 'warning', 'urgent' ), true ) ? $type : 'info';
+				return UNDT_Blocks::banner_type();
 
 			case 'text':
 				return trim( (string) UNDT_Content::value( 'banner', 'text' ) );

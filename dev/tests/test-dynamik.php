@@ -12,8 +12,7 @@ require UNDT_TEST_BASE . 'admin/class-undt-fields.php';
 require UNDT_TEST_BASE . 'admin/class-undt-controls.php';
 require UNDT_TEST_BASE . 'admin/class-undt-copy.php';
 
-// Nur fuer die Versionskennung der Skripte, siehe UNDT_Dynamic_Gutenberg::editor().
-require UNDT_TEST_BASE . 'admin/class-undt-admin.php';
+// UNDT_Admin fuer die Versionskennung der Skripte (UNDT_Dynamic_Gutenberg::editor()) laedt harness.php.
 
 /*
  * Attrappen fuer die Auswahl der Seitenfelder. Sie stehen hier und nicht im
@@ -394,7 +393,8 @@ undt_seed_module(
 		),
 	)
 );
-undt_seed_module( 'seo', array( 'logo' => 7 ) );
+// Seit 0.6.0 kommt das Logo aus dem Theme.
+$GLOBALS['undt_theme_mods']['custom_logo'] = 7;
 
 $undt_schema = UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SCHEMA );
 undt_ok( isset( $undt_schema['company_name'] ) && isset( $undt_schema['street'] ), 'Die Stammdaten stehen auch im Schema zur Verfuegung' );

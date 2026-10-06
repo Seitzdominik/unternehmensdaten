@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.5.8
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,20 +16,20 @@ Alle Angaben, die eine Unternehmenswebsite braucht, werden an einer Stelle gepfl
 
 = Rechtliche Angaben =
 
-**Rechtsformabhängige Felder.** Ein Einrichtungsassistent fragt Rechtsform, reglementierten Beruf, Erlaubnispflicht, Verbrauchergeschäft, redaktionelle Inhalte und Umsatzsteuerstatus ab. Angezeigt werden danach nur die Angaben, die tatsächlich gelten. Unterstützt werden 20 Rechtsformen vom Einzelunternehmen über die eGbR bis zur GmbH & Co. KG mit ihren beiden Registereinträgen.
+**Rechtsformabhängige Angaben.** Die Karte Rechtsform auf der Seite Firma fragt Rechtsform, reglementierten Beruf, Erlaubnispflicht, Verbrauchergeschäft, redaktionelle Inhalte und Umsatzsteuerstatus ab. Angezeigt werden danach nur die Angaben, die tatsächlich gelten. Unterstützt werden 20 Rechtsformen vom Einzelunternehmen über die eGbR bis zur GmbH & Co. KG mit ihren beiden Registereinträgen.
 
-**Rechtsseiten.** Impressum, Datenschutz, AGB und Barrierefreiheit werden aus Seiten und eigenen Inhaltstypen gewählt oder als eigene Adresse eingetragen. Der Footer verlinkt sie automatisch.
+**Rechtsseiten.** Impressum, Datenschutz, AGB und Barrierefreiheit werden unter Einbinden aus Seiten und eigenen Inhaltstypen gewählt, als eigene Adresse eingetragen oder als Entwurf mit dem passenden Baustein angelegt. Der Footer verlinkt sie automatisch.
 
-**Prüfung.** Eine Checkliste zeigt fehlende Pflichtangaben mit ihrer Rechtsgrundlage und durchsucht die verknüpften Rechtsseiten nach veralteten Inhalten, etwa dem Link zur abgeschalteten EU-Streitbeilegungsplattform oder der Rechtsgrundlage "§ 5 TMG".
+**Übersicht.** Die Startseite zeigt, was noch zu erledigen ist, mit der Rechtsgrundlage, und durchsucht die verknüpften Rechtsseiten nach veralteten Inhalten, etwa dem Link zur abgeschalteten EU-Streitbeilegungsplattform oder der Rechtsgrundlage "§ 5 TMG".
 
 = Inhaltsbereiche =
 
-* **Öffnungszeiten** mit zwei Zeitfenstern pro Tag für Mittagspausen, Sonderöffnungszeiten für Feiertage und Betriebsferien, sowie einer Anzeige, ob gerade geöffnet ist
-* **Preise & Leistungen** als Tabelle mit optionalen Gruppen
-* **Social Media** als benannte Navigation mit rel="me"
+* **Öffnungszeiten** mit zwei Zeitfenstern pro Tag für Mittagspausen, Sonderöffnungszeiten für Feiertage und Betriebsferien, den gesetzlichen Feiertagen je Bundesland zum Übernehmen, sowie einer Anzeige, ob gerade geöffnet ist
+* **Preise & Leistungen** als Tabelle mit Gruppen und dem Hinweis zur Umsatzsteuer aus den Angaben zur Firma
+* **Social Media** als benannte Navigation mit rel="me", die Plattform wird an der Adresse erkannt
 * **FAQ** als aufklappbare Liste ganz ohne JavaScript
-* **Infobanner** mit vier Stufen, optional schließbar
-* **SEO & Schema** mit JSON-LD, das seine Daten aus allen übrigen Bereichen zieht
+* **Infobanner** in drei Arten (Neutral, Info, Warnung), optional schließbar und mit Zeitraum
+* **Suchmaschinen** mit JSON-LD, das seine Daten aus allen übrigen Bereichen zieht
 
 Jeder Bereich lässt sich unter Einstellungen abschalten. Dann verschwindet er aus dem Menü, seine Shortcodes geben nichts mehr aus und sein CSS entfällt. Die Daten bleiben erhalten.
 
@@ -75,7 +75,7 @@ Die Kartenlinks `maps_google` und `maps_apple` liegen bei der Anschrift. Bleiben
 
 == Dynamische Daten ==
 
-Slim SEO, Bricks, Etch und der Block-Editor bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Referenz im Backend listet alle Werte mit ihrer Schreibweise. In den Stammdaten steht unter jedem Feld neben dem Shortcode ein Knopf je Werkzeug: ein Klick kopiert die Schreibweise, der Tooltip nennt sie.
+Slim SEO, Bricks, Etch und der Block-Editor bekommen die Stammdaten als dynamische Werte. In Slim SEO und Bricks stehen sie in der jeweiligen Auswahl unter „Unternehmensdaten“, in Etch werden sie über ihren Namen eingesetzt. Die Seite Einbinden listet alle Werte in der Schreibweise, die unter „Kopieren als“ gewählt ist. Auf der Seite Firma steht neben jeder Angabe ein Knopf, der sie in diesem Format kopiert.
 
 * **Slim SEO** `{{ undt.phone }}`, etwa in Meta-Titel und Meta-Beschreibung hinter den drei Punkten, und mit Slim SEO Pro ebenso in den Schema-Einstellungen
 * **Bricks** `{undt_phone}` in jedem Feld für dynamische Daten, ohne dass Code-Ausführung eingeschaltet sein muss. Die Bricks-Filter für die Wortzahl und den Ersatzwert funktionieren wie gewohnt, etwa `{undt_fax @fallback:'kein Fax'}`
@@ -84,7 +84,7 @@ Slim SEO, Bricks, Etch und der Block-Editor bekommen die Stammdaten als dynamisc
 
 Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
 
-In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu einige, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus SEO & Schema. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
+In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu einige, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus dem Theme, ersatzweise des Website-Icons. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
 
 Für `openingHoursSpecification` gibt es drei Listen, die zusammengehören: `{{ undt.hours_days }}`, `{{ undt.hours_opens }}` und `{{ undt.hours_closes }}`. In die drei Felder der Gruppe eingesetzt, entsteht je Tag und Zeitfenster ein Eintrag — eine Mittagspause also zwei, ein geschlossener Tag keinen. Die Gruppe muss dafür vervielfältigbar sein, angelegt wird sie nur einmal.
 
@@ -94,9 +94,9 @@ Ein Hinweis zu Telefon und Postleitzahl: Slim SEO macht aus einem Wert, der nur 
 
 Gutenberg kennt keine Kurzschreibweise mitten im Satz. Stattdessen merkt sich seit WordPress 6.5 ein Block, woher sein Text kommt, und holt ihn bei jeder Ausgabe neu — eine Block-Bindung. Das Plugin meldet dafür die Quelle „Unternehmensdaten“ an.
 
-Der Knopf mit dem W neben Bricks und Etch kopiert deshalb keinen Tag, sondern einen fertigen Absatz. Im Editor genügt einfügen: aus dem kopierten Text wird ein richtiger Block, der den Wert anzeigt. Ändern lässt er sich dort nicht, die Angaben stehen unter Unternehmensdaten. Wer den Wert mitten im laufenden Text braucht, nimmt weiterhin den Shortcode `[undt key="phone"]`, denn eine Bindung gilt immer für den ganzen Block.
+Im Format „Block-Editor“ kopiert der Knopf deshalb keinen Tag, sondern einen fertigen Absatz. Im Editor genügt einfügen: aus dem kopierten Text wird ein richtiger Block, der den Wert anzeigt. Ändern lässt er sich dort nicht, die Angaben stehen unter Firmendaten. Wer den Wert mitten im laufenden Text braucht, nimmt weiterhin den Shortcode `[undt key="phone"]`, denn eine Bindung gilt immer für den ganzen Block.
 
-Ab WordPress 6.7 zeigt der Editor den Wert selbst an, davor den Namen des Feldes als Platzhalter; ausgegeben wird in beiden Fällen der aktuelle Wert. Unter WordPress 6.4 fehlt der Knopf, dort gibt es noch keine Block-Bindungen.
+Ab WordPress 6.7 zeigt der Editor den Wert selbst an, davor den Namen des Feldes als Platzhalter; ausgegeben wird in beiden Fällen der aktuelle Wert. Unter WordPress 6.4 fehlt das Format, dort gibt es noch keine Block-Bindungen.
 
 Wer die Auszeichnung selbst schreibt, kann dieselbe Quelle auch an Überschriften, Bilder und Buttons hängen — WordPress lässt Bindungen dort für `content`, `url`, `alt`, `title`, `text` und `rel` zu.
 
@@ -148,7 +148,11 @@ Ein REST-Endpunkt fehlt bewusst: Page Builder laufen auf dem Server und brauchen
 
 **Kein Verweis auf die OS-Plattform der EU.** Die ODR-Verordnung wurde durch die Verordnung (EU) 2024/3228 aufgehoben, die Plattform ist seit dem 20.07.2025 abgeschaltet.
 
-Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturiert aus. Rechtsstand der hinterlegten Hinweise: September 2026.
+**Feiertage nur landesweit.** Übernommen werden nur Feiertage, die im ganzen Bundesland gelten. Mariä Himmelfahrt in Bayern oder Fronleichnam in Sachsen und Thüringen gelten nur in einzelnen Gemeinden und werden bei Bedarf selbst eingetragen.
+
+**Speichern ohne Knopf, ohne REST.** Das Backend speichert über admin-ajax, nur für angemeldete Benutzer, mit Nonce und mit dem Recht je Angabe. Bereinigt wird mit denselben Funktionen wie über das Formular.
+
+Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturiert aus. Rechtsstand der hinterlegten Hinweise: Oktober 2026.
 
 == Berücksichtigte Rechtsgrundlagen ==
 
@@ -168,14 +172,14 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * Preise und FAQ sind bewusst nicht autoloaded und kosten nur auf den Seiten etwas, die sie ausgeben
 * Keine Asset-Datei im Frontend. Das CSS wird inline ausgegeben, nur auf Seiten mit einem Block, und enthält ausschließlich die aktiven Bereiche
 * Das einzige Frontend-JavaScript ist das Schließen des Infobanners, unter einem Kilobyte, nur wenn das Banner aktiv und schließbar ist
-* Backend-Assets ausschließlich auf den eigenen Seiten, die Medienauswahl nur auf der Seite, die sie braucht
-* Keine AJAX-Endpunkte und keine REST-Routen
+* Backend-Assets ausschließlich auf den eigenen Seiten
+* Keine REST-Routen und keine AJAX-Endpunkte für Besucher. Das Backend speichert über admin-ajax, nur angemeldet
 
 == Filter ==
 
 * `undt_fields` ergänzt eigene Stammdaten-Felder, die automatisch Sanitisierung, Escaping und Shortcode-Auflösung durchlaufen
 * `undt_modules` ergänzt eigene Inhaltsbereiche
-* `undt_capability` ändert die erforderliche Berechtigung, Standard `manage_options`
+* `undt_capability` ändert die Berechtigung für Admin-Aufgaben, Standard `manage_options`. Wer zusätzlich die Angaben pflegen darf, legt Einstellungen über Rollen fest (Recht `undt_edit_data`)
 * `undt_css` passt das strukturelle CSS an
 * `undt_inline_css` schaltet das mitgelieferte CSS ab
 * `undt_imprint_html` und `undt_footer_html` bearbeiten die fertige Ausgabe nach
@@ -189,16 +193,39 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 
 == Sichern und übertragen ==
 
-Unter Einstellungen liegt eine Sicherung aller Angaben als JSON-Datei: Stammdaten, Rechtsform, Inhaltsbereiche und die Einstellungen selbst. Dieselbe Datei auf einer anderen Website eingespielt, ist die Einrichtung dort zur Hälfte erledigt — gerade wenn mehrere Websites ähnlich aufgebaut sind.
+Unter Sichern & Übertragen liegt eine Sicherung aller Angaben als JSON-Datei: Stammdaten, Rechtsform, Inhaltsbereiche und die Einstellungen selbst. Dieselbe Datei auf einer anderen Website eingespielt, ist die Einrichtung dort zur Hälfte erledigt — gerade wenn mehrere Websites ähnlich aufgebaut sind.
 
-Was nur zur Ursprungsseite gehört, bleibt beim Einspielen weg: die Verknüpfungen zu Seiten und das Logo, denn deren IDs zeigen auf der neuen Website auf etwas anderes. Eine eigene Adresse wie `/impressum/` bleibt dagegen erhalten. Welche Felder neu zu wählen sind, nennt die Meldung nach dem Einspielen. Alle Werte durchlaufen dieselbe Prüfung wie das Formular.
+Beim Einspielen zeigt die Seite je Bereich, was sich ändert, mit altem und neuem Wert, und spielt nur die gewählten Bereiche ein. Vorher sichert sie den bisherigen Stand; „Rückgängig machen“ holt ihn zurück.
+
+Was nur zur Ursprungsseite gehört, bleibt beim Einspielen weg: die Verknüpfungen zu Seiten und Bildern, denn deren IDs zeigen auf der neuen Website auf etwas anderes. Eine eigene Adresse wie `/impressum/` bleibt dagegen erhalten. Welche Angaben neu zu wählen sind, nennt die Meldung nach dem Einspielen. Alle Werte durchlaufen dieselbe Prüfung wie beim Eintippen.
 
 Mit WP-CLI geht dasselbe ohne Backend:
 
 * `wp undt export > firma.json` schreibt die Sicherung
-* `wp undt import firma.json` spielt sie ein, mit `--yes` ohne Rückfrage
+* `wp undt import firma.json` spielt sie ein, mit `--yes` ohne Rückfrage, und sichert vorher wie die Seite
 
 == Changelog ==
+
+= 0.6.0 =
+Die Oberfläche ist neu, die Ausgabe auf der Website bleibt, wie sie war. Shortcodes, dynamische Daten und Schleifen-Quellen funktionieren unverändert.
+
+* Neu: Das Menü heißt „Firmendaten“ und führt über eine eigene Seitenleiste mit den Gruppen Einrichten, Verwenden und Mehr. Unten stehen die Schnelleinstellungen: Infobanner zeigen und „Kopieren als“. Unter 783 Pixeln ersetzt eine Kopfleiste mit „Menü“ die Seitenleiste
+* Neu: Alle Seiten speichern von selbst, kurz nach der letzten Eingabe. Schlägt das fehl, steht oben eine Meldung, und nach zehn Sekunden folgt ein neuer Versuch
+* Neu: Die Übersicht zeigt, was noch zu erledigen ist, mit Rechtsgrundlage und Sprung ins richtige Feld, dazu Kacheln je Bereich und wo die wichtigsten Bausteine auf der Website stehen. Beim ersten Start führt sie in vier Schritten durch die Einrichtung
+* Neu: Firma fasst Rechtsform und alle Angaben auf einer Seite zusammen. Die Rechtsform steht als Karte oben, die Angaben in Registerkarten mit Zähler. Die Datenschutz-Aufsicht wird aus dem Bundesland vorgeschlagen
+* Neu: Einbinden ersetzt die Shortcode-Referenz: Rechtsseiten mit Stand und „Seite anlegen“, Bausteine mit Optionen und Vorschau, alle einzelnen Angaben mit Suche. „Kopieren als“ wählt das Format für Shortcode, Bricks, Etch oder Block-Editor und gilt je Benutzer
+* Neu: Unter Einstellungen lässt sich festlegen, welche Rollen die Angaben pflegen dürfen, etwa Redakteure. Sie sehen Firma, Öffnungszeiten, Social Media, Infobanner, Preise und FAQ, aber weder Rechtsform noch Einbinden, Suchmaschinen oder Einstellungen
+* Neu: Öffnungszeiten mit einem Schalter je Tag, „+ Pause“ für ein zweites Zeitfenster und einer Vorschau. „Feiertage eintragen“ übernimmt die gesetzlichen Feiertage der nächsten zwölf Monate für das Bundesland aus Firma, nur solche, die im ganzen Land gelten
+* Neu: Social Media erkennt die Plattform an der eingefügten Adresse
+* Neu: Das Infobanner bekommt einen Zeitraum und blendet sich selbst ein und aus. Es gibt drei Arten: Neutral, Info und Warnung, ohne Rot und Grün. Bisherige Banner der Art „Positiv“ erscheinen als Info, „Dringend“ als Warnung
+* Neu: Preise in Gruppen; der Hinweis zur Umsatzsteuer darunter ist ein Schalter und kommt aus Firma, ein eigener Text ersetzt ihn
+* Neu: Für reglementierte Berufe wählt man die gesetzliche Berufsbezeichnung aus einer Liste. Aus Beruf und Bundesland schlägt Firma die zuständige Kammer mit Website und den berufsrechtlichen Regelungen vor, für Ärzte, Zahnärzte, Tierärzte, Apotheker, Psychotherapeuten, Rechtsanwälte, Notare, Patentanwälte, Steuerberater, Wirtschaftsprüfer, Architekten und Beratende Ingenieure, dazu Regelungen für Hebammen und Gesundheitshandwerke. Übernommen wird eine Kopie, die sich anpassen lässt. Erlaubnispflichtige Tätigkeiten wie Makler oder Heilpraktiker bekommen einen Vorschlag für „Erlaubnis nach“
+* Neu: Suchmaschinen schlägt die Art der Firma aus dem Beruf vor, etwa Zahnarztpraxis oder Kanzlei
+* Neu: Suchmaschinen nimmt die Koordinaten in einem Feld an, so wie Google Maps sie kopiert, und zeigt den erzeugten Code. Mit Slim SEO stehen dort die Platzhalter zum Kopieren. Die Art „Kanzlei“ wird als Attorney ausgezeichnet
+* Neu: Beim Einspielen einer Sicherung zeigt die Seite je Bereich, was sich ändert, und spielt nur die gewählten Bereiche ein. Vorher sichert sie den bisherigen Stand, „Rückgängig machen“ holt ihn zurück. Auch `wp undt import` sichert vorher
+* Geändert: Das Logo-Feld unter Suchmaschinen entfällt. Das Logo kommt aus dem Theme, ersatzweise aus dem Website-Icon
+* Geändert: Der Dateiname einer Sicherung nennt die Firma, etwa `firmendaten-praxis-muster-2026-10-06.json`
+* Behoben: `[undt_address inline="1"]` verlor die Leerzeichen um das Trennzeichen
 
 = 0.5.8 =
 * Neu: Der Block-Editor bekommt die Stammdaten über Block-Bindungen. Unter jedem Feld steht neben Bricks und Etch ein Knopf, der einen fertigen Absatz kopiert; im Editor genügt einfügen. Der Absatz holt den Wert bei jeder Ausgabe neu, geändert wird er weiterhin nur hier. Ab WordPress 6.5, sichtbar im Editor ab 6.7

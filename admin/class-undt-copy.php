@@ -1,10 +1,10 @@
 <?php
 /**
- * Kopierknoepfe und Referenztabellen.
+ * Kopierknoepfe und das Format „Kopieren als“.
  *
  * Shortcodes und die Schreibweisen fuer Bricks und Etch stehen im Backend
- * ueberall dort, wo sie gebraucht werden: unter den Feldern und in der
- * Referenz. Gemeinsam ist ihnen, dass ein Klick den Text in die Zwischenablage
+ * ueberall dort, wo sie gebraucht werden: neben den Angaben in Firma und
+ * auf Einbinden. Gemeinsam ist ihnen, dass ein Klick den Text in die Zwischenablage
  * legt, siehe initCopy() in admin.js.
  *
  * @package Unternehmensdaten
@@ -18,41 +18,221 @@ defined( 'ABSPATH' ) || exit;
 final class UNDT_Copy {
 
 	/**
-	 * Eine Referenztabelle aus Ausgabe, Shortcode und Attributen.
+	 * Nutzer-Meta mit dem gewaehlten Format fuer „Kopieren als“.
 	 *
-	 * @param array $items Eintraege aus einem Katalog.
+	 * Je Benutzer, nicht je Website: in einer Agentur arbeitet nicht jeder im
+	 * selben Werkzeug.
+	 */
+	const META_FORMAT = 'undt_copy_format';
+
+	/**
+	 * Die Formate, in denen ein Feld kopiert werden kann.
+	 *
+	 * Angeboten wird, was installiert ist. „active“ markiert das Werkzeug, mit dem
+	 * die Website gerade gebaut wird; es ist vorausgewaehlt und gilt als erkannt.
+	 * Der Shortcode geht immer.
+	 *
+	 * @return array Schluessel ist das Format, Wert label, installed, active.
+	 */
+	public static function formats() {
+		$etch_file   = 'etch/etch.php';
+		$etch_active = in_array( $etch_file, (array) get_option( 'active_plugins', array() ), true );
+		$bricks      = function_exists( 'wp_get_theme' ) ? wp_get_theme( 'bricks' ) : null;
+		$gutenberg   = UNDT_Dynamic_Gutenberg::available();
+
+		$formats = array(
+			'etch'      => array(
+				'label'     => 'Etch',
+				'installed' => $etch_active || ( defined( 'WP_PLUGIN_DIR' ) && file_exists( WP_PLUGIN_DIR . '/' . $etch_file ) ),
+				'active'    => $etch_active,
+			),
+			'bricks'    => array(
+				'label'     => 'Bricks',
+				'installed' => $bricks && $bricks->exists(),
+				'active'    => function_exists( 'get_template' ) && 'bricks' === get_template(),
+			),
+			'shortcode' => array(
+				'label'     => __( 'Shortcode', 'unternehmensdaten' ),
+				'installed' => true,
+				'active'    => false,
+			),
+			'gutenberg' => array(
+				'label'     => __( 'Block-Editor', 'unternehmensdaten' ),
+				'installed' => $gutenberg,
+				'active'    => false,
+			),
+		);
+
+		// Ohne Builder wird im Block-Editor gebaut.
+		if ( ! $formats['etch']['active'] && ! $formats['bricks']['active'] && $gutenberg ) {
+			$formats['gutenberg']['active'] = true;
+		}
+
+		return array_filter(
+			$formats,
+			static function ( $format ) {
+				return $format['installed'];
+			}
+		);
+	}
+
+	/**
+	 * Das Format, in dem der aktuelle Benutzer kopiert.
+	 *
+	 * @return string
+	 */
+	public static function format() {
+		$formats = self::formats();
+		$chosen  = (string) get_user_meta( get_current_user_id(), self::META_FORMAT, true );
+
+		if ( isset( $formats[ $chosen ] ) ) {
+			return $chosen;
+		}
+
+		foreach ( $formats as $key => $format ) {
+			if ( $format['active'] ) {
+				return $key;
+			}
+		}
+
+		return 'shortcode';
+	}
+
+	/**
+	 * Speichert das Format des aktuellen Benutzers.
+	 *
+	 * @param string $format Format.
+	 * @return bool Ob es ein bekanntes Format war.
+	 */
+	public static function set_format( $format ) {
+		$format = sanitize_key( $format );
+
+		if ( ! isset( self::formats()[ $format ] ) ) {
+			return false;
+		}
+
+		update_user_meta( get_current_user_id(), self::META_FORMAT, $format );
+
+		return true;
+	}
+
+	/**
+	 * Der Code einer Angabe in jedem Format.
+	 *
+	 * Der Block-Editor bekommt einen fertigen Absatz mit Bindung, sofern
+	 * WordPress Bindungen kennt und die Angabe als Text taugt, sonst den
+	 * Shortcode.
+	 *
+	 * @param string $key Schluessel aus UNDT_Dynamic::fields().
+	 * @return array Format => Code.
+	 */
+	public static function codes( $key ) {
+		$syntax    = UNDT_Dynamic::syntax( $key );
+		$shortcode = self::shortcode_for( $key );
+		$codes     = array(
+			'etch'      => $syntax['etch'],
+			'bricks'    => $syntax['bricks'],
+			'shortcode' => $shortcode,
+			'gutenberg' => $shortcode,
+		);
+
+		if ( UNDT_Dynamic_Gutenberg::available() && UNDT_Dynamic_Gutenberg::offers( $key ) ) {
+			$codes['gutenberg'] = UNDT_Dynamic_Gutenberg::markup( $key );
+		}
+
+		return $codes;
+	}
+
+	/**
+	 * Der Shortcode einer Angabe, leer wenn es keinen gibt.
+	 *
+	 * Abgeleitete Angaben aus UNDT_Dynamic haben teils eigene Shortcodes, teils
+	 * nur ein Attribut, und manche gibt es nur fuer die Builder, etwa ob gerade
+	 * geoeffnet ist.
+	 *
+	 * @param string $key Schluessel aus UNDT_Dynamic::fields().
+	 * @return string
+	 */
+	public static function shortcode_for( $key ) {
+		$special = array(
+			'address'     => '[undt_address inline="1"]',
+			'hours_today' => '[undt_hours_today]',
+			'open_now'    => '[undt_open_now]',
+		);
+
+		if ( isset( $special[ $key ] ) ) {
+			return $special[ $key ];
+		}
+
+		$field = UNDT_Schema::field( $key );
+
+		if ( null !== $field && ! empty( $field['shortcode'] ) ) {
+			return 'page' === $field['type'] ? '[undt key="' . $key . '" link="1"]' : '[undt key="' . $key . '"]';
+		}
+
+		// Telefon oder E-Mail als Link.
+		if ( '_link' === substr( $key, -5 ) ) {
+			$base = UNDT_Schema::field( substr( $key, 0, -5 ) );
+
+			if ( null !== $base && in_array( $base['type'], array( 'tel', 'email' ), true ) ) {
+				return '[undt key="' . substr( $key, 0, -5 ) . '" link="1"]';
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Wie ein kopierter Code angezeigt wird: der Absatz fuer den Block-Editor
+	 * ist zu lang fuer eine Zeile und erscheint als „Absatz: Telefon“.
+	 *
+	 * @param string $format Format.
+	 * @param string $code   Code.
+	 * @param string $label  Bezeichnung der Angabe.
+	 * @return string
+	 */
+	public static function display( $format, $code, $label ) {
+		if ( 'gutenberg' === $format && 0 === strpos( $code, '<!--' ) ) {
+			/* translators: %s: Bezeichnung der Angabe, etwa „Telefon“. */
+			return sprintf( __( 'Absatz: %s', 'unternehmensdaten' ), $label );
+		}
+
+		return $code;
+	}
+
+	/**
+	 * Das graue Kopier-Symbol neben einem Feld.
+	 *
+	 * Kopiert im Format aus „Kopieren als“. Alle Formate stehen im Attribut
+	 * data-undt-codes, damit ein Wechsel des Formats ohne Neuladen greift.
+	 *
+	 * @param string $key   Feld.
+	 * @param string $label Bezeichnung.
 	 * @return void
 	 */
-	public static function table( array $items ) {
-		if ( empty( $items ) ) {
-			return;
+	public static function field_button( $key, $label ) {
+		$format = self::format();
+		$codes  = self::codes( $key );
+		$shown  = array();
+
+		foreach ( $codes as $name => $code ) {
+			$shown[ $name ] = self::display( $name, $code, $label );
 		}
 
-		echo '<table class="widefat striped undt-table"><thead><tr>';
-		echo '<th scope="col">' . esc_html__( 'Ausgabe', 'unternehmensdaten' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Shortcode', 'unternehmensdaten' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Attribute', 'unternehmensdaten' ) . '</th>';
-		echo '</tr></thead><tbody>';
+		/* translators: %s: Bezeichnung der Angabe. */
+		$aria = sprintf( __( 'Angabe kopieren: %s', 'unternehmensdaten' ), $label );
 
-		foreach ( $items as $item ) {
-			printf(
-				'<tr class="undt-searchable" data-undt-text="%s">',
-				esc_attr( strtolower( $item['title'] . ' ' . $item['code'] . ' ' . $item['desc'] ) )
-			);
-
-			echo '<td><strong>' . esc_html( $item['title'] ) . '</strong>';
-			echo '<p class="description">' . esc_html( $item['desc'] ) . '</p></td>';
-
-			echo '<td>';
-			self::button( $item['code'] );
-			echo '</td>';
-
-			echo '<td class="undt-atts">' . esc_html( $item['atts'] ) . '</td>';
-			echo '</tr>';
-		}
-
-		echo '</tbody></table>';
+		printf(
+			'<button type="button" class="undt-copy undt-fcopy" data-undt-copy="%1$s" data-undt-codes="%2$s" data-undt-shown="%3$s" aria-label="%4$s" title="%4$s">%5$s%6$s</button>',
+			esc_attr( $codes[ $format ] ),
+			esc_attr( (string) wp_json_encode( $codes ) ),
+			esc_attr( (string) wp_json_encode( $shown ) ),
+			esc_attr( $aria ),
+			UNDT_Ui_Icons::svg( 'copy', 16, 'undt-fcopy__idle' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- festes Markup.
+			UNDT_Ui_Icons::svg( 'check', 16, 'undt-fcopy__done' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- festes Markup.
+		);
 	}
+
 
 	/**
 	 * Die Kopierknoepfe unter einem Feld.

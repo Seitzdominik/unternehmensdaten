@@ -20,6 +20,9 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * @return void
  */
 function undt_uninstall_site() {
+	// Wo die Bausteine stehen, liegt nur zwischengespeichert vor und geht immer.
+	delete_transient( 'undt_usage' );
+
 	$settings = get_option( 'undt_settings', array() );
 
 	// Wer die Daten behalten will, hat das ausdruecklich eingestellt.
@@ -38,6 +41,9 @@ function undt_uninstall_site() {
 		'undt_faq',
 		'undt_banner',
 		'undt_seo',
+		'undt_onboarding',
+		// Stand vor dem letzten Einspielen, siehe UNDT_Transfer::backup().
+		'undt_backup',
 	);
 
 	foreach ( $options as $option ) {
@@ -76,3 +82,10 @@ if ( is_multisite() ) {
  */
 remove_filter( 'pre_set_site_transient_update_plugins', array( 'UNDT_Updater', 'inject' ) );
 delete_site_transient( 'undt_update_info' );
+
+/*
+ * „Kopieren als“ merkt sich jeder Benutzer selbst. Die Benutzer gelten fuer das
+ * ganze Netzwerk, und die Wahl ist eine Vorliebe, keine Angabe des
+ * Unternehmens: sie geht deshalb wie der Zwischenspeicher immer mit.
+ */
+delete_metadata( 'user', 0, 'undt_copy_format', '', true );

@@ -75,9 +75,12 @@ final class UNDT_Shortcodes {
 	 * registriert. Sonst fehlte das CSS genau dort, wo Shortcodes in Vorlagen
 	 * stehen, und etwa der Hinweis fuer Screenreader wurde sichtbar.
 	 *
+	 * Oeffentlich, weil die Vorschau des Infobanners im Backend ohne Shortcode
+	 * auskommt, siehe UNDT_Module_View::banner().
+	 *
 	 * @return void
 	 */
-	private static function need_style() {
+	public static function need_style() {
 		self::register_style();
 		wp_enqueue_style( 'undt' );
 	}
@@ -236,7 +239,18 @@ final class UNDT_Shortcodes {
 		self::need_style();
 
 		if ( ! empty( $atts['inline'] ) && '0' !== $atts['inline'] ) {
-			$out = UNDT_Render::address_inline( sanitize_text_field( $atts['separator'] ) );
+			/*
+			 * sanitize_text_field schneidet Leerzeichen am Rand ab. Die gehoeren
+			 * hier aber zum Trennzeichen, sonst wird aus „ · “ ein „·“ ohne Abstand.
+			 */
+			$raw       = (string) $atts['separator'];
+			$separator = sanitize_text_field( $raw );
+
+			if ( '' !== $separator ) {
+				$separator = ( ' ' === substr( $raw, 0, 1 ) ? ' ' : '' ) . $separator . ( ' ' === substr( $raw, -1 ) ? ' ' : '' );
+			}
+
+			$out = UNDT_Render::address_inline( $separator );
 
 			return '' === $out ? '' : '<span class="undt-address-inline">' . $out . '</span>';
 		}
@@ -481,131 +495,5 @@ final class UNDT_Shortcodes {
 		self::need_style();
 
 		echo UNDT_Blocks::banner(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- im Renderer escaped.
-	}
-
-	/**
-	 * Katalog der Block-Shortcodes fuer die Referenzseite.
-	 *
-	 * @return array
-	 */
-	public static function catalog() {
-		return array(
-			array(
-				'code'  => '[undt_impressum]',
-				'title' => __( 'Vollständiges Impressum', 'unternehmensdaten' ),
-				'desc'  => __( 'Alle Pflichtangaben in der üblichen Reihenfolge, als semantisches HTML mit address-, dl- und Überschriften-Elementen.', 'unternehmensdaten' ),
-				'atts'  => __( 'heading_level: Überschriftenebene, 2 bis 6. Standard 2.', 'unternehmensdaten' ),
-			),
-			array(
-				'code'  => '[undt_footer]',
-				'title' => __( 'Footer-Block', 'unternehmensdaten' ),
-				'desc'  => __( 'Anschrift einzeilig, Navigation zu den Rechtsseiten und Copyright-Zeile mit laufendem Jahr.', 'unternehmensdaten' ),
-				'atts'  => __( 'show: Kommaliste aus address, legal, copyright. Standard alle drei.', 'unternehmensdaten' ),
-			),
-			array(
-				'code'  => '[undt_legal_nav]',
-				'title' => __( 'Nur die Rechtslinks', 'unternehmensdaten' ),
-				'desc'  => __( 'Liste mit Links zu Impressum, Datenschutz, AGB und Barrierefreiheit. Nur veröffentlichte Seiten werden verlinkt.', 'unternehmensdaten' ),
-				'atts'  => '',
-			),
-			array(
-				'code'  => '[undt_address]',
-				'title' => __( 'Anschrift', 'unternehmensdaten' ),
-				'desc'  => __( 'Die ladungsfähige Anschrift als address-Element.', 'unternehmensdaten' ),
-				'atts'  => __( 'inline: 1 für einzeilig. separator: Trennzeichen. name: 0 blendet den Firmennamen aus.', 'unternehmensdaten' ),
-			),
-			array(
-				'code'  => '[undt_privacy_block name="controller"]',
-				'title' => __( 'Datenschutz: Verantwortlicher', 'unternehmensdaten' ),
-				'desc'  => __( 'Der Verantwortliche nach Art. 4 Nr. 7 DSGVO mit Anschrift und Kontaktwegen. Zum Einsetzen in die Datenschutzerklärung.', 'unternehmensdaten' ),
-				'atts'  => __( 'name: controller, dpo oder authority. bare: 1 unterdrückt die Überschrift.', 'unternehmensdaten' ),
-			),
-			array(
-				'code'  => '[undt_privacy_block name="dpo"]',
-				'title' => __( 'Datenschutz: Datenschutzbeauftragter', 'unternehmensdaten' ),
-				'desc'  => __( 'Name, Anschrift und E-Mail des Datenschutzbeauftragten. Gibt nichts aus, solange die Felder leer sind.', 'unternehmensdaten' ),
-				'atts'  => __( 'bare: 1 unterdrückt die Überschrift.', 'unternehmensdaten' ),
-			),
-			array(
-				'code'  => '[undt_privacy_block name="authority"]',
-				'title' => __( 'Datenschutz: Aufsichtsbehörde', 'unternehmensdaten' ),
-				'desc'  => __( 'Die zuständige Datenschutz-Aufsichtsbehörde für den Hinweis auf das Beschwerderecht nach Art. 77 DSGVO.', 'unternehmensdaten' ),
-				'atts'  => __( 'bare: 1 unterdrückt die Überschrift.', 'unternehmensdaten' ),
-			),
-		);
-	}
-
-	/**
-	 * Katalog der Shortcodes aus den Inhaltsmodulen.
-	 *
-	 * Aufgefuehrt wird nur, was auch aktiv ist: ein Shortcode fuer ein
-	 * abgeschaltetes Modul gibt nichts aus und gehoert deshalb nicht in die
-	 * Referenz.
-	 *
-	 * @return array
-	 */
-	public static function module_catalog() {
-		$catalog = array();
-
-		if ( UNDT_Modules::is_active( 'hours' ) ) {
-			$catalog[] = array(
-				'code'  => '[undt_hours]',
-				'title' => __( 'Öffnungszeiten', 'unternehmensdaten' ),
-				'desc'  => __( 'Tabelle der regulären Zeiten. Aufeinanderfolgende Tage mit gleichen Zeiten werden zusammengefasst. Künftige Sonderzeiten hängen darunter, vergangene entfallen automatisch.', 'unternehmensdaten' ),
-				'atts'  => __( 'group: 0 zeigt jeden Tag einzeln. short: 0 schreibt die Wochentage aus. special: 0 blendet Sonderzeiten aus. note: 0 blendet den Hinweis aus. heading_level.', 'unternehmensdaten' ),
-			);
-
-			$catalog[] = array(
-				'code'  => '[undt_hours_today]',
-				'title' => __( 'Heutige Öffnungszeit', 'unternehmensdaten' ),
-				'desc'  => __( 'Die heute geltende Zeit als kurzer Text. Eine Sonderöffnungszeit für den heutigen Tag hat Vorrang.', 'unternehmensdaten' ),
-				'atts'  => __( 'prefix: Text davor, etwa „Heute“. closed_text: eigener Text für geschlossen.', 'unternehmensdaten' ),
-			);
-
-			$catalog[] = array(
-				'code'  => '[undt_open_now]',
-				'title' => __( 'Geöffnet-Status', 'unternehmensdaten' ),
-				'desc'  => __( 'Gibt aus, ob gerade geöffnet ist. Wird auf dem Server in der Zeitzone der Website berechnet. Achtung: auf Seiten aus einem Seiten-Cache kann der Status veralten.', 'unternehmensdaten' ),
-				'atts'  => __( 'open_text und closed_text für eigene Formulierungen.', 'unternehmensdaten' ),
-			);
-		}
-
-		if ( UNDT_Modules::is_active( 'prices' ) ) {
-			$catalog[] = array(
-				'code'  => '[undt_prices]',
-				'title' => __( 'Preisliste', 'unternehmensdaten' ),
-				'desc'  => __( 'Tabelle aus Bezeichnung und Preis. Positionen mit derselben Gruppe stehen unter einer gemeinsamen Überschrift.', 'unternehmensdaten' ),
-				'atts'  => __( 'group: nur diese eine Gruppe ausgeben. intro und footnote: 0 blendet sie aus. heading_level.', 'unternehmensdaten' ),
-			);
-		}
-
-		if ( UNDT_Modules::is_active( 'social' ) ) {
-			$catalog[] = array(
-				'code'  => '[undt_social]',
-				'title' => __( 'Social-Profile', 'unternehmensdaten' ),
-				'desc'  => __( 'Liste der Profile als Navigation, ein Profil je Zeile, auf Wunsch mit den Symbolen der Plattformen. Jeder Link trägt zusätzlich eine eigene Klasse und ein data-platform-Attribut.', 'unternehmensdaten' ),
-				'atts'  => __( 'label: eigene Beschriftung für das aria-label der Navigation. layout: row stellt die Profile in eine Reihe, list untereinander.', 'unternehmensdaten' ),
-			);
-		}
-
-		if ( UNDT_Modules::is_active( 'faq' ) ) {
-			$catalog[] = array(
-				'code'  => '[undt_faq]',
-				'title' => __( 'Fragen und Antworten', 'unternehmensdaten' ),
-				'desc'  => __( 'Aufklappbare Fragen über details und summary, ganz ohne JavaScript, oder wahlweise als ausgeschriebene Definitionsliste.', 'unternehmensdaten' ),
-				'atts'  => __( 'group: nur diese eine Gruppe. style: details oder dl. heading_level.', 'unternehmensdaten' ),
-			);
-		}
-
-		if ( UNDT_Modules::is_active( 'banner' ) ) {
-			$catalog[] = array(
-				'code'  => '[undt_banner]',
-				'title' => __( 'Infobanner', 'unternehmensdaten' ),
-				'desc'  => __( 'Setzt das Banner an genau dieser Stelle. Nur nötig, wenn die automatische Ausgabe am Seitenanfang abgeschaltet ist oder das Theme wp_body_open nicht unterstützt.', 'unternehmensdaten' ),
-				'atts'  => '',
-			);
-		}
-
-		return $catalog;
 	}
 }

@@ -297,7 +297,7 @@ undt_a( ! wp_style_is( 'undt-admin', 'enqueued' ) && ! wp_script_is( 'undt-admin
 do_action( 'admin_enqueue_scripts', 'toplevel_page_undt' );
 undt_a( wp_style_is( 'undt-admin', 'enqueued' ) && wp_script_is( 'undt-admin', 'enqueued' ), 'Auf der eigenen Seite Plugin-Assets geladen' );
 
-$views = array( 'company.php', 'profile.php', 'shortcodes.php', 'audit.php', 'settings.php' );
+$views = array( 'company.php', 'embed.php', 'overview.php', 'transfer.php', 'settings.php' );
 foreach ( $views as $view ) {
 	ob_start();
 	$error = '';
@@ -308,7 +308,8 @@ foreach ( $views as $view ) {
 	}
 	$html = ob_get_clean();
 	undt_a( '' === $error && false !== strpos( $html, 'undt-wrap' ), 'Ansicht ' . $view . ' rendert' . ( $error ? ': ' . $error : '' ) );
-	if ( 'company.php' === $view ) {
+	// Seit 0.6.0 stehen die Seitenfelder unter „Einbinden“.
+	if ( 'embed.php' === $view ) {
 		// Seit 0.5.0 sendet die Auswahl unter [choice], daneben steht das Feld fuer eine eigene Adresse.
 		$has_select = preg_match( '/<select[^>]*name=["\']undt_company\[page_privacy\]\[choice\]["\'][^>]*>(.*?)<\/select>/s', $html, $m );
 		undt_a( $has_select && preg_match( '/value=["\']' . $privacy_id . '["\'][^>]*selected/', $m[1] ), 'Seitenauswahl page_privacy enthaelt die gespeicherte Entwurfsseite ' . $privacy_id . ' und waehlt sie (sonst geht die Verknuepfung beim Speichern verloren)' );
@@ -316,14 +317,16 @@ foreach ( $views as $view ) {
 		undt_a( $has_select2 && preg_match( '/value=["\']' . $imprint_id . '["\'][^>]*selected/', $m2[1] ), 'Seitenauswahl page_imprint enthaelt die veroeffentlichte Seite und waehlt sie' );
 		undt_a( false !== strpos( $html, 'name="undt_company[page_imprint][url]"' ), 'Neben der Auswahl steht das Feld fuer eine eigene Adresse' );
 		undt_i( 'Auswahl page_privacy: ' . ( $has_select ? preg_replace( '/\s+/', ' ', substr( $m[1], 0, 400 ) ) : 'select nicht gefunden' ) );
+	}
 
+	if ( 'company.php' === $view ) {
 		/*
-		 * Seit 0.5.8 steht neben Bricks und Etch ein Knopf, der einen fertigen
-		 * Block fuer Gutenberg kopiert. Block-Bindungen gibt es erst ab
-		 * WordPress 6.5; darunter fehlt der Knopf, statt ins Leere zu greifen.
+		 * Seit 0.6.0 kopiert der Knopf am Feld fuer den Block-Editor einen
+		 * fertigen Absatz. Block-Bindungen gibt es erst ab WordPress 6.5;
+		 * darunter faellt das Format auf den Shortcode zurueck.
 		 */
 		undt_a(
-			( false !== strpos( $html, 'undt-copy--gutenberg' ) ) === function_exists( 'register_block_bindings_source' ),
+			( false !== strpos( $html, '&lt;!-- wp:paragraph' ) ) === function_exists( 'register_block_bindings_source' ),
 			'Knopf fuer den Block-Editor erscheint genau dann, wenn WordPress Block-Bindungen kennt (WP ' . $wp_version . ')'
 		);
 	}
@@ -351,7 +354,7 @@ undt_s( 'Sanitisierung gegen Skript (unfiltered_html-unabhaengig)' );
 $c = UNDT_Sanitizer::company( array( 'company_name' => '<img src=x onerror=alert(1)>Firma', 'website' => 'javascript:alert(1)', 'email' => '"><script>x</script>@a.de' ) );
 undt_a( 'Firma' === $c['company_name'] && '' === $c['website'] && false === strpos( $c['email'], '<' ), 'Stammdaten: Tags und javascript: entfernt' );
 $bn = UNDT_Content::sanitize( 'banner', array( 'text' => "<script>alert(1)</script>Hallo\n<b>fett</b>", 'link_url' => 'javascript:alert(1)', 'type' => '<x>' ) );
-undt_a( false === strpos( $bn['text'], '<' ) && '' === $bn['link_url'] && 'info' === $bn['type'], 'Banner: Tags entfernt, URL verworfen, Typ auf Voreinstellung' );
+undt_a( false === strpos( $bn['text'], '<' ) && '' === $bn['link_url'] && 'neutral' === $bn['type'], 'Banner: Tags entfernt, URL verworfen, Typ auf Voreinstellung' );
 $fq = UNDT_Content::sanitize( 'faq', array( 'items' => array( array( 'question' => '<svg onload=alert(1)>F', 'answer' => '<a href="x" onclick="y">A</a>', 'group' => array( 'x' ) ) ) ) );
 undt_a( false === strpos( $fq['items'][0]['question'], '<' ) && false === strpos( $fq['items'][0]['answer'], '<' ), 'FAQ: Tags aus Wiederholungsfeld entfernt' );
 undt_i( 'Array statt String im Unterfeld group ergibt: ' . var_export( $fq['items'][0]['group'], true ) );

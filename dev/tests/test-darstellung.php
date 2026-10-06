@@ -200,7 +200,7 @@ undt_ok( 'warning' === $etch['undt']['banner_type'] && is_string( $etch['undt'][
 
 undt_seed_module( 'banner', array( 'enabled' => 1, 'text' => '' ) );
 undt_ok( '' === UNDT_Dynamic::value( 'banner_show' ), 'Ohne Text gilt das Banner als aus' );
-undt_ok( 'info' === UNDT_Dynamic::value( 'banner_type' ) && '' === UNDT_Dynamic::value( 'banner_link_text' ), 'Voreinstellungen ohne Link' );
+undt_ok( 'neutral' === UNDT_Dynamic::value( 'banner_type' ) && '' === UNDT_Dynamic::value( 'banner_link_text' ), 'Voreinstellungen ohne Link' );
 undt_ok( false === UNDT_Dynamic_Etch::options( array() )['undt']['banner_show'], 'Etch bekommt false' );
 
 undt_set_modules( array( 'hours' => 1, 'social' => 1, 'banner' => 0 ) );

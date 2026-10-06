@@ -1,9 +1,9 @@
 /**
  * Backend-Stylesheet.
  *
- * Ergaenzt die vorhandenen WordPress-Klassen, statt sie zu ersetzen. Es werden
- * nur Farben aus der Standardpalette des Backends verwendet, damit die Seiten
- * sich in jedes Farbschema einfuegen.
+ * Oben die Tokens und Bausteine der Oberflaeche (Etappe 1 des Redesigns),
+ * darunter die Gestaltung der Formularfelder, die die Ansichten weiterhin
+ * verwenden. Farben und Masse kommen aus den Tokens unter .undt-app.
  */
 
 /* WordPress setzt im Backend eine Autoren-Regel `h1, h2, h3 … { display: block }`.
@@ -11,24 +11,2391 @@
    hidden-Attribut auf Ueberschriften wirkungslos bleibt. Betroffen waeren alle
    Stellen, an denen das Skript etwas ein- und ausblendet: leere Gruppen in der
    Suche, Tabs, Hinweise. Diese Zeile stellt das erwartete Verhalten wieder her. */
+.undt-app [hidden],
 .undt-wrap [hidden] {
 	display: none !important;
+}
+
+/* ================================================================ Tokens
+
+   Die Bedeutung der Farben ist fest. Blau nur fuer Bedienbares, Petrol nur
+   fuer in Ordnung und die Marke, Bernstein fuer fehlende Pflicht (Text dunkel,
+   Punkt und Rand hell, nie als Flaeche), Grau fuer fehlt und ist erwartbar.
+   Kein Rot, kein Gruen. Geschrieben wird in der Systemschrift von WordPress. */
+.undt-app {
+	--undt-blue: #2271b1;
+	--undt-blue-hover: #135e96;
+	--undt-blue-soft: #f6f9fc;
+	--undt-petrol: #0f6e68;
+	--undt-petrol-soft: #e3f0ee;
+	--undt-current: #e8f1f0;
+	--undt-amber-text: #8a4a12;
+	--undt-amber: #e0923a;
+	--undt-grey: #8e8e98;
+	--undt-text: #1d2327;
+	--undt-text-2: #50575e;
+	--undt-muted: #6b6f74;
+	--undt-surface: #f2f2f1;
+	--undt-surface-2: #e9e9e7;
+	--undt-card: #fff;
+	--undt-border: #e4e4e1;
+	--undt-line: #ededea;
+	--undt-foot: #fafaf9;
+	--undt-tile: #f7f7f6;
+	--undt-tile-border: #e2e2df;
+	--undt-input-border: #8c8f94;
+	--undt-dark: #1d2327;
+
+	--undt-radius-card: 16px;
+	--undt-radius-tile: 14px;
+	--undt-radius-info: 10px;
+	--undt-radius-control: 8px;
+
+	--undt-space-1: 4px;
+	--undt-space-2: 8px;
+	--undt-space-3: 12px;
+	--undt-space-4: 16px;
+	--undt-space-5: 24px;
+	--undt-space-6: 32px;
+
+	--undt-bar: var(--wp-admin--admin-bar--height, 32px);
+}
+
+/* ================================================================= Huelle
+
+   Die eigenen Seiten fuellen den Inhaltsbereich von WordPress ganz aus: links
+   die Seitenleiste, rechts der Inhalt. Der Fuss von WordPress entfaellt, er
+   stuende sonst ueber der Seitenleiste. */
+.undt-screen #wpwrap,
+.undt-screen #wpcontent,
+.undt-screen #wpbody-content {
+	background: #f2f2f1;
+}
+
+.undt-screen #wpcontent {
+	padding-left: 0;
+}
+
+.undt-screen #wpbody-content {
+	padding-bottom: 0;
+}
+
+.undt-screen #wpfooter {
+	display: none;
+}
+
+.undt-app {
+	display: flex;
+	min-height: calc(100vh - var(--undt-bar));
+	color: var(--undt-text);
+	font-size: 14px;
+}
+
+.undt-app__main {
+	display: flex;
+	flex: 1 1 560px;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.undt-main {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 1080px;
+	padding: 36px 40px 56px;
+}
+
+.undt-main > .wrap {
+	margin: 0;
+}
+
+.undt-app a:focus,
+.undt-app button:focus {
+	box-shadow: none;
+}
+
+.undt-app a:focus-visible,
+.undt-app button:focus-visible,
+.undt-app summary:focus-visible {
+	outline: 2px solid var(--undt-blue);
+	outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------- Seitenkopf */
+
+.undt-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin: 0 0 24px;
+}
+
+.undt-wrap .undt-head__title {
+	margin: 0;
+	padding: 0;
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+}
+
+/* Speicherstatus: genau einer der drei Zustaende ist sichtbar. */
+.undt-save {
+	display: inline-flex;
+	align-items: center;
+	min-height: 32px;
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-save__state {
+	display: none;
+	align-items: center;
+	gap: 6px;
+}
+
+.undt-save[data-state="saved"] .undt-save__state--saved,
+.undt-save[data-state="saving"] .undt-save__state--saving,
+.undt-save[data-state="error"] .undt-save__state--error {
+	display: inline-flex;
+}
+
+.undt-save__state--saved .undt-icon {
+	color: var(--undt-petrol);
+}
+
+.undt-save .undt-amber {
+	margin: 0;
+}
+
+.undt-link-button {
+	min-height: 32px;
+	padding: 0 0 0 8px;
+	border: 0;
+	background: none;
+	color: var(--undt-blue);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.undt-link-button:hover {
+	color: var(--undt-blue-hover);
+	text-decoration: underline;
+}
+
+.undt-noscript {
+	margin: 0;
+	padding: 12px 24px;
+}
+
+/* ======================================================== Seitenleiste */
+
+.undt-side {
+	position: sticky;
+	top: var(--undt-bar);
+	display: flex;
+	flex: 0 0 280px;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: 280px;
+	height: calc(100vh - var(--undt-bar));
+	/* Kopf und Schnelleinstellungen bleiben stehen, nur die Menuepunkte scrollen. */
+	overflow: hidden;
+	border-right: 1px solid var(--undt-border);
+	background: #fff;
+}
+
+.undt-side > .undt-side__head,
+.undt-side > .undt-quick {
+	flex: 0 0 auto;
+}
+
+.undt-side > .undt-nav {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+.undt-side__head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 18px 20px;
+	background: var(--undt-dark);
+	color: #fff;
+}
+
+.undt-side__head .undt-tile {
+	flex-basis: 36px;
+	width: 36px;
+	height: 36px;
+	border-radius: 9px;
+}
+
+.undt-side__head .undt-tile .undt-icon {
+	width: 20px;
+	height: 20px;
+}
+
+.undt-side__brand {
+	min-width: 0;
+}
+
+.undt-side__name {
+	font-size: 16px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.undt-side__version {
+	margin-top: 2px;
+	color: #c3c4c7;
+	font-size: 12px;
+}
+
+.undt-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 14px 12px 8px;
+}
+
+.undt-nav__group {
+	padding: 16px 10px 6px;
+	color: var(--undt-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.undt-nav__item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	box-sizing: border-box;
+	min-height: 44px;
+	padding: 7px 10px;
+	border-radius: 10px;
+	color: var(--undt-text);
+	font-size: 14px;
+	font-weight: 500;
+	text-decoration: none;
+	transition: background-color 0.14s;
+}
+
+.undt-nav__item:hover {
+	background: var(--undt-surface);
+	color: var(--undt-text);
+}
+
+.undt-nav__item.is-current {
+	background: var(--undt-current);
+	font-weight: 600;
+}
+
+.undt-nav__label {
+	white-space: nowrap;
+}
+
+.undt-nav__arrow {
+	flex: 0 0 auto;
+	margin-left: auto;
+	color: var(--undt-grey);
+}
+
+/* Schnelleinstellungen am Fuss der Seitenleiste. */
+.undt-quick {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	margin-top: auto;
+	padding: 16px 20px 20px;
+	border-top: 1px solid var(--undt-border);
+}
+
+.undt-quick__title {
+	color: var(--undt-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.undt-quick__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 32px;
+}
+
+.undt-quick__label {
+	font-size: 14px;
+}
+
+.undt-app .undt-quick__select {
+	min-height: 32px;
+	padding: 4px 28px 4px 10px;
+	border: 1px solid var(--undt-input-border);
+	border-radius: var(--undt-radius-control);
+	color: var(--undt-text);
+	font-size: 13px;
+}
+
+/* Fachbegriff mit Erklaerung im Tooltip. */
+.undt-term {
+	text-decoration: underline dotted var(--undt-grey);
+	text-underline-offset: 3px;
+	cursor: help;
+}
+
+/* ========================================================= Unter 783 px */
+
+.undt-mbar {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	display: none;
+	align-items: center;
+	gap: 12px;
+	height: 56px;
+	padding: 0 16px;
+	border-bottom: 1px solid var(--undt-border);
+	background: #fff;
+}
+
+.undt-mbar .undt-tile {
+	flex-basis: 30px;
+}
+
+.undt-mbar__title {
+	overflow: hidden;
+	font-size: 15px;
+	font-weight: 600;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.undt-mbar__menu {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 44px;
+	min-height: 44px;
+	margin-left: auto;
+	padding: 0 4px;
+	border: 0;
+	background: none;
+	color: var(--undt-blue);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.undt-mbar__menu .undt-badge {
+	position: static;
+	border: 0;
+}
+
+/* Das Vollbild-Menue liegt auch ueber der Adminleiste von WordPress. */
+.undt-mmenu {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+}
+
+.undt-mmenu__head {
+	display: flex;
+	flex: 0 0 64px;
+	align-items: center;
+	gap: 12px;
+	padding: 0 8px 0 16px;
+	background: var(--undt-dark);
+	color: #fff;
+}
+
+.undt-mmenu__head .undt-tile {
+	flex-basis: 32px;
+	width: 32px;
+	height: 32px;
+}
+
+.undt-mmenu__name {
+	flex: 1;
+	font-size: 16px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.undt-mmenu__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #fff;
+	cursor: pointer;
+}
+
+.undt-mmenu .undt-nav {
+	flex: 1;
+	gap: 0;
+	overflow-y: auto;
+	padding: 8px 0;
+}
+
+.undt-mmenu .undt-nav__group {
+	padding: 16px 16px 6px;
+}
+
+.undt-mmenu .undt-nav__item {
+	min-height: 52px;
+	padding: 0 16px;
+	border-radius: 0;
+	font-size: 15px;
+}
+
+.undt-mmenu .undt-nav__item:focus-visible {
+	outline-offset: -2px;
+}
+
+.undt-mmenu .undt-quick {
+	flex: 0 0 auto;
+	gap: 0;
+	margin-top: 0;
+	padding: 12px 16px 20px;
+	background: var(--undt-foot);
+}
+
+.undt-mmenu .undt-quick__title {
+	padding-bottom: 6px;
+}
+
+.undt-mmenu .undt-quick__row {
+	min-height: 44px;
+}
+
+.undt-mmenu .undt-quick__label {
+	font-size: 15px;
+}
+
+.undt-mmenu .undt-switch-button {
+	width: 48px;
+	height: 28px;
+	border-radius: 14px;
+}
+
+.undt-mmenu .undt-switch-button__knob {
+	width: 22px;
+	height: 22px;
+	border-radius: 11px;
+}
+
+.undt-mmenu .undt-switch-button[aria-checked="true"] .undt-switch-button__knob {
+	left: 23px;
+}
+
+body.undt-menu-open {
+	overflow: hidden;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-side {
+		display: none;
+	}
+
+	.undt-mbar {
+		display: flex;
+	}
+
+	.undt-main {
+		padding: 16px;
+	}
+}
+
+/* Zwischen 600 und 782 px steht die Adminleiste fest, darunter scrollt sie mit. */
+@media screen and (min-width: 601px) and (max-width: 782px) {
+	.undt-mbar {
+		top: 46px;
+	}
+}
+
+/* ============================================================ Bausteine */
+
+/* Icon-Kachel, wahlweise mit Zaehler. */
+.undt-tile {
+	position: relative;
+	display: flex;
+	flex: 0 0 30px;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 30px;
+	height: 30px;
+	border: 1px solid var(--undt-tile-border);
+	border-radius: 8px;
+	background: var(--undt-tile);
+	color: var(--undt-text-2);
+}
+
+.undt-tile--active {
+	border-color: var(--undt-petrol);
+	background: var(--undt-petrol);
+	color: #fff;
+}
+
+.undt-tile--brand {
+	flex-basis: 32px;
+	width: 32px;
+	height: 32px;
+	color: var(--undt-petrol);
+}
+
+.undt-badge {
+	position: absolute;
+	top: -8px;
+	right: -9px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	border: 2px solid #fff;
+	border-radius: 10px;
+	background: var(--undt-amber-text);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+}
+
+/* Karte: weiss, Rand, Kopf und Fuss. */
+.undt-box__head {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 18px 24px 6px;
+}
+
+.undt-box__heading {
+	flex: 1;
+	min-width: 0;
+}
+
+.undt-wrap .undt-box__title {
+	margin: 0;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-box__desc {
+	margin: 3px 0 0;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-box__aside {
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+.undt-box__footer--note {
+	display: block;
+	padding: 12px 24px;
+	color: var(--undt-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+/* Statuszeile: Symbol, fetter Satz, grauer Nachsatz. */
+.undt-status {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.undt-status__icon {
+	display: flex;
+	flex: 0 0 auto;
+	margin-top: 1px;
+}
+
+.undt-status--ok .undt-status__icon {
+	color: var(--undt-petrol);
+}
+
+.undt-status--open .undt-status__icon {
+	color: var(--undt-amber-text);
+}
+
+.undt-status--missing .undt-status__icon {
+	color: var(--undt-grey);
+}
+
+.undt-status__more {
+	color: var(--undt-muted);
+}
+
+.undt-status--large {
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 20px;
+}
+
+.undt-status--large .undt-status__icon {
+	align-items: center;
+	justify-content: center;
+	width: 52px;
+	height: 52px;
+	margin: 0;
+	border-radius: 26px;
+	background: var(--undt-tile);
+}
+
+.undt-status--large.undt-status--ok .undt-status__icon {
+	background: var(--undt-petrol-soft);
+}
+
+.undt-status--large .undt-status__text {
+	flex: 1 1 380px;
+	min-width: 0;
+}
+
+.undt-wrap .undt-status--large .undt-status__title {
+	margin: 0;
+	padding: 0;
+	font-size: 22px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.undt-status--large .undt-status__more {
+	margin: 5px 0 0;
+	color: var(--undt-text-2);
+}
+
+/* Info-Card: Einordnung ohne Handlungsbedarf. Keine gelben Kaesten. */
+.undt-info {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	margin: 12px 0;
+	padding: 10px 12px;
+	border-radius: var(--undt-radius-info);
+	background: var(--undt-surface);
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-info--surface {
+	background: var(--undt-surface-2);
+}
+
+.undt-info__icon {
+	flex: 0 0 16px;
+	margin-top: 2px;
+	color: var(--undt-grey);
+}
+
+/* Bernstein-Zeile: direkt an der Entscheidung, fuer fehlende Pflicht. */
+.undt-amber {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 6px 0 0;
+	color: var(--undt-amber-text);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-save .undt-amber {
+	display: inline-flex;
+}
+
+.undt-amber__dot,
+.undt-dot-s {
+	flex: 0 0 6px;
+	width: 6px;
+	height: 6px;
+	border-radius: 3px;
+	background: var(--undt-amber);
+}
+
+/* Link-Card: die ganze Karte fuehrt auf eine andere Seite. */
+.undt-linkcard {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	box-sizing: border-box;
+	min-height: 128px;
+	padding: 18px 18px 16px;
+	border: 1px solid var(--undt-border);
+	border-radius: var(--undt-radius-tile);
+	background: #fff;
+	color: var(--undt-text);
+	text-decoration: none;
+	transition: border-color 0.14s, background-color 0.14s;
+}
+
+.undt-linkcard:hover {
+	border-color: var(--undt-blue);
+	background: var(--undt-blue-soft);
+	color: var(--undt-text);
+}
+
+.undt-linkcard__top {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.undt-linkcard__title {
+	flex: 1;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-linkcard__caret {
+	color: var(--undt-grey);
+}
+
+.undt-linkcard:hover .undt-linkcard__caret {
+	color: var(--undt-blue);
+}
+
+.undt-linkcard__text {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 13px;
+}
+
+.undt-linkcard__sub {
+	color: var(--undt-text-2);
+}
+
+.undt-linkcard__line {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	color: var(--undt-muted);
+}
+
+.undt-linkcard__line--open {
+	color: var(--undt-amber-text);
+}
+
+.undt-linkcard__line--missing .undt-dot-s {
+	background: var(--undt-grey);
+}
+
+/* Segment-Schalter: Radioknoepfe als Reihe. */
+.undt-segment {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	padding: 3px;
+	border-radius: 10px;
+	background: var(--undt-surface-2);
+}
+
+.undt-segment__option {
+	position: relative;
+	display: inline-flex;
+}
+
+.undt-app .undt-segment__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	opacity: 0;
+}
+
+.undt-segment__face {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 36px;
+	padding: 0 14px;
+	border-radius: var(--undt-radius-control);
+	color: var(--undt-text-2);
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.undt-segment__input:checked + .undt-segment__face {
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+	color: var(--undt-text);
+}
+
+.undt-segment__input:focus-visible + .undt-segment__face {
+	outline: 2px solid var(--undt-blue);
+	outline-offset: 2px;
+}
+
+.undt-segment__mark {
+	color: var(--undt-petrol);
+	font-size: 11px;
+	font-weight: 500;
+}
+
+/* Schalter ausserhalb eines Formulars, gezeichnet wie .undt-switch. */
+.undt-switch-button {
+	position: relative;
+	flex: 0 0 auto;
+	width: 40px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 12px;
+	background: var(--undt-input-border);
+	cursor: pointer;
+	transition: background-color 0.14s;
+}
+
+.undt-switch-button[aria-checked="true"] {
+	background: var(--undt-blue);
+}
+
+.undt-switch-button__knob {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 18px;
+	height: 18px;
+	border-radius: 9px;
+	background: #fff;
+	transition: left 0.14s;
+}
+
+.undt-switch-button[aria-checked="true"] .undt-switch-button__knob {
+	left: 19px;
+}
+
+.undt-switch-button[aria-busy="true"] {
+	opacity: 0.6;
+}
+
+/* Schrittliste. */
+.undt-steps {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.undt-steps__item {
+	display: flex;
+	gap: 16px;
+	margin: 0;
+	padding: 16px 0;
+}
+
+.undt-steps__item + .undt-steps__item {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-steps__circle {
+	display: flex;
+	flex: 0 0 28px;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 28px;
+	height: 28px;
+	border: 1.5px solid #c9c9c4;
+	border-radius: 14px;
+	background: #fff;
+	color: var(--undt-muted);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.undt-steps__item--done .undt-steps__circle {
+	border: 0;
+	background: var(--undt-petrol);
+	color: #fff;
+}
+
+.undt-steps__item--current .undt-steps__circle {
+	border: 0;
+	background: var(--undt-dark);
+	color: #fff;
+}
+
+.undt-steps__body {
+	flex: 1;
+	min-width: 0;
+	padding-top: 3px;
+}
+
+.undt-steps__title {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-steps__item--open .undt-steps__title {
+	color: var(--undt-text-2);
+}
+
+.undt-steps__desc {
+	margin-top: 3px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-steps__action {
+	margin-top: 14px;
+}
+
+/* Aufklappbarer Abschnitt fuer Seltenes, mit „· optional“. */
+.undt-details {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-details__summary {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 52px;
+	color: var(--undt-text);
+	font-size: 14px;
+	font-weight: 600;
+	list-style: none;
+	cursor: pointer;
+}
+
+.undt-details__summary::-webkit-details-marker {
+	display: none;
+}
+
+.undt-details__chevron {
+	flex: 0 0 auto;
+	color: var(--undt-grey);
+	transition: transform 0.14s;
+}
+
+.undt-details[open] > .undt-details__summary .undt-details__chevron {
+	transform: rotate(90deg);
+}
+
+.undt-optional {
+	color: var(--undt-muted);
+	font-weight: 400;
+}
+
+.undt-details__note {
+	margin-left: auto;
+	color: var(--undt-muted);
+	font-size: 13px;
+	font-weight: 400;
+}
+
+.undt-details__body {
+	padding-bottom: 18px;
+}
+
+/* ========================================================== Uebersicht */
+
+/* Ein Titel nur fuer Screenreader nimmt im Spaltenlayout keinen Platz ein. */
+.undt-head--hidden,
+.undt-overview > .wp-header-end {
+	position: absolute;
+	margin: 0;
+}
+
+.undt-overview {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+
+.undt-overview > .undt-box,
+.undt-overview > .undt-info,
+.undt-overview .undt-section > .undt-box {
+	margin: 0;
+}
+
+.undt-section {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.undt-section__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.undt-wrap .undt-section__title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.undt-section__count {
+	color: var(--undt-muted);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+/* Knoepfe: gefuellt fuer den naechsten Schritt, umrandet fuer den Rest. */
+.undt-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	box-sizing: border-box;
+	min-height: 40px;
+	padding: 0 16px;
+	border: 1px solid var(--undt-blue);
+	border-radius: var(--undt-radius-control);
+	background: var(--undt-blue);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.undt-btn:hover,
+.undt-btn:focus {
+	border-color: var(--undt-blue-hover);
+	background: var(--undt-blue-hover);
+	color: #fff;
+}
+
+.undt-btn--secondary {
+	background: #fff;
+	color: var(--undt-blue);
+}
+
+.undt-btn--secondary:hover,
+.undt-btn--secondary:focus {
+	border-color: var(--undt-blue);
+	background: var(--undt-blue-soft);
+	color: var(--undt-blue);
+}
+
+.undt-btn--small {
+	gap: 6px;
+	min-height: 36px;
+	padding: 0 10px;
+	font-size: 13px;
+}
+
+.undt-btn[aria-busy="true"] {
+	opacity: 0.6;
+}
+
+/* Gesperrt sieht nicht aus wie bereit, etwa „Übernehmen“ vor der Auswahl einer Kammer. */
+.undt-btn:disabled,
+.undt-btn:disabled:hover {
+	border-color: var(--undt-surface-2);
+	background: var(--undt-surface-2);
+	color: var(--undt-muted);
+	cursor: default;
+}
+
+/* Aktion als Textlink, mit Pfeil, wenn sie auf eine andere Seite fuehrt. */
+.undt-action {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 44px;
+	color: var(--undt-blue);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.undt-action:hover {
+	color: var(--undt-blue-hover);
+	text-decoration: underline;
+}
+
+/* Statuszeile als Karte. */
+.undt-statuscard {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 20px;
+	padding: 26px 28px;
+}
+
+.undt-statuscard .undt-status {
+	flex: 1 1 420px;
+	min-width: 0;
+}
+
+.undt-statuscard__aside {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.undt-statuscard__meta {
+	color: var(--undt-muted);
+	font-size: 12px;
+}
+
+/* Zu erledigen. */
+.undt-todo__row {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px 24px;
+}
+
+.undt-todo__row + .undt-todo__row {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-todo__dot {
+	flex: 0 0 8px;
+	align-self: flex-start;
+	width: 8px;
+	height: 8px;
+	margin-top: 7px;
+	border-radius: 4px;
+	background: var(--undt-grey);
+}
+
+.undt-todo__dot--open {
+	background: var(--undt-amber);
+}
+
+.undt-todo__text {
+	flex: 1 1 300px;
+	min-width: 0;
+}
+
+.undt-todo__title {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-todo__law {
+	margin-left: 6px;
+	color: var(--undt-muted);
+	font-size: 12px;
+	font-weight: 400;
+	white-space: nowrap;
+}
+
+.undt-todo__desc {
+	margin-top: 3px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-todo__more {
+	padding: 4px 24px 12px;
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-todo__more .undt-link-button {
+	min-height: 44px;
+	padding: 0;
+	font-size: 14px;
+}
+
+.undt-section .undt-box > .undt-details {
+	padding: 0 24px;
+}
+
+.undt-section .undt-details .undt-list {
+	margin: 0 0 0 1.2em;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.5;
+	list-style: disc;
+}
+
+.undt-box__footer--note {
+	border-radius: 0 0 15px 15px;
+}
+
+/* Kacheln je Bereich. */
+.undt-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+	gap: 16px;
+}
+
+.undt-tile--muted {
+	flex-basis: 32px;
+	width: 32px;
+	height: 32px;
+	color: var(--undt-grey);
+}
+
+.undt-morecard {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	box-sizing: border-box;
+	min-height: 128px;
+	padding: 18px;
+	border: 1px solid var(--undt-border);
+	border-radius: var(--undt-radius-tile);
+	background: #fff;
+}
+
+.undt-morecard__title {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-morecard__desc {
+	margin: 0;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-morecard__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: auto;
+}
+
+/* Einbinden: Baustein, wo verwendet, Kopier-Chip. */
+.undt-embed {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 14px 24px;
+}
+
+.undt-embed + .undt-embed {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-embed__text {
+	flex: 1 1 220px;
+	min-width: 0;
+}
+
+.undt-embed__title {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-embed__desc {
+	margin-top: 2px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+}
+
+.undt-embed__usage {
+	display: flex;
+	flex: 0 0 150px;
+	align-items: center;
+	gap: 7px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+}
+
+.undt-embed__usage--unused {
+	color: var(--undt-muted);
+}
+
+.undt-embed__usage .undt-dot-s {
+	background: var(--undt-grey);
+}
+
+.undt-embed__code {
+	display: flex;
+	flex: 0 1 280px;
+	justify-content: flex-end;
+	min-width: 0;
+}
+
+.undt-copy.undt-chip {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 10px;
+	max-width: 100%;
+	min-height: 36px;
+	padding: 0 10px 0 12px !important;
+	border: 1px solid var(--undt-tile-border);
+	border-radius: var(--undt-radius-control);
+	background: var(--undt-tile);
+	color: var(--undt-text);
+	cursor: pointer;
+}
+
+.undt-copy.undt-chip:hover {
+	border-color: var(--undt-blue);
+}
+
+/* Die Schrift fuer Code kommt von WordPress (code-Element), nur der Kasten entfaellt. */
+.undt-chip__code {
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	background: none;
+	font-size: 12.5px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.undt-chip__label {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	color: var(--undt-blue);
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.undt-chip__label--done,
+.undt-chip.undt-copy--ok .undt-chip__label--idle {
+	display: none;
+}
+
+.undt-chip.undt-copy--ok {
+	border-color: var(--undt-petrol);
+}
+
+.undt-chip.undt-copy--ok .undt-chip__label--done {
+	display: inline-flex;
+	color: var(--undt-petrol);
+}
+
+/* Erststart. */
+.undt-onboarding__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 28px 32px 8px;
+}
+
+.undt-onboarding__intro {
+	flex: 1 1 360px;
+}
+
+.undt-wrap .undt-onboarding__title {
+	margin: 0;
+	padding: 0;
+	font-size: 22px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.undt-onboarding__desc {
+	margin: 6px 0 0;
+	color: var(--undt-text-2);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+/* Fortschritt oben, Zahl darunter, „Einrichtung ueberspringen“ direkt darunter. */
+.undt-onboarding__aside {
+	display: flex;
+	flex: 0 0 200px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	font-size: 13px;
+}
+
+.undt-progress {
+	overflow: hidden;
+	width: 100%;
+	height: 6px;
+	margin-bottom: 2px;
+	border-radius: 3px;
+	background: var(--undt-line);
+}
+
+.undt-progress__bar {
+	display: block;
+	height: 100%;
+	border-radius: 3px;
+	background: var(--undt-petrol);
+}
+
+.undt-onboarding__count {
+	color: var(--undt-text-2);
+}
+
+.undt-onboarding__count strong {
+	color: var(--undt-text);
+}
+
+.undt-onboarding__aside .undt-link-button {
+	min-height: 28px;
+	padding: 0;
+}
+
+.undt-onboarding__steps {
+	padding: 12px 32px 28px;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-overview {
+		gap: 20px;
+	}
+
+	.undt-statuscard {
+		padding: 18px;
+	}
+
+	.undt-wrap .undt-status--large .undt-status__title {
+		font-size: 18px;
+	}
+
+	.undt-status--large {
+		flex-wrap: nowrap;
+		align-items: flex-start;
+		gap: 14px;
+	}
+
+	.undt-status--large .undt-status__icon {
+		width: 40px;
+		height: 40px;
+	}
+
+	.undt-status--large .undt-status__text {
+		flex: 1 1 auto;
+	}
+
+	/* Tippziele mindestens 44 px. */
+	.undt-copy.undt-chip,
+	.undt-btn,
+	.undt-btn--small,
+	.undt-onboarding__aside .undt-link-button {
+		min-height: 44px;
+	}
+
+	.undt-onboarding__aside {
+		flex-basis: 100%;
+	}
+
+	.undt-statuscard__aside {
+		width: 100%;
+	}
+
+	.undt-todo__row,
+	.undt-embed {
+		flex-wrap: wrap;
+		padding: 14px 16px;
+	}
+
+	.undt-todo__row .undt-action {
+		margin-left: 24px;
+	}
+
+	.undt-embed__usage,
+	.undt-embed__code {
+		flex: 1 1 100%;
+		justify-content: flex-start;
+	}
+
+	.undt-onboarding__head,
+	.undt-onboarding__steps {
+		padding-right: 18px;
+		padding-left: 18px;
+	}
+
+	.undt-section .undt-box > .undt-details {
+		padding: 0 16px;
+	}
+
+	.undt-box__footer--note {
+		padding: 12px 16px;
+	}
+}
+
+/* =============================================================== Firma */
+
+.undt-company-page {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.undt-company-page > .undt-box,
+.undt-company-page > .undt-form {
+	margin: 0;
+}
+
+/* Rechtsform als Karte oben. */
+.undt-legalform {
+	overflow: hidden;
+}
+
+.undt-legalform__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 14px;
+	padding: 18px 24px;
+}
+
+.undt-legalform__icon {
+	display: flex;
+	flex: 0 0 36px;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 18px;
+	background: var(--undt-petrol-soft);
+	color: var(--undt-petrol);
+}
+
+.undt-legalform__text {
+	flex: 1 1 300px;
+	min-width: 0;
+}
+
+.undt-wrap .undt-legalform__title {
+	margin: 0;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-legalform__summary {
+	margin-top: 2px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+}
+
+.undt-legalform__body {
+	padding: 8px 24px 20px;
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-question-row {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 12px 0;
+}
+
+.undt-question-row + .undt-question-row {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-question-row--nested {
+	padding-left: 28px;
+}
+
+.undt-question-row__text {
+	flex: 1;
+	min-width: 0;
+}
+
+.undt-question-row__label {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-question-row--nested .undt-question-row__label {
+	font-weight: 500;
+}
+
+.undt-question-row__basis {
+	margin-top: 2px;
+	color: var(--undt-muted);
+	font-size: 12px;
+}
+
+.undt-question-row--select .undt-question-row__control select {
+	min-width: 240px;
+	max-width: 340px;
+}
+
+/* Registerkarten mit Zaehler. */
+.undt-company .undt-tabs {
+	gap: 4px;
+	padding: 0 16px;
+	border-bottom-color: var(--undt-border);
+}
+
+.undt-company .undt-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 52px;
+	padding: 0 10px;
+	font-weight: 500;
+}
+
+.undt-company .undt-tab.is-active {
+	font-weight: 600;
+}
+
+.undt-tab__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	border-radius: 10px;
+	background: var(--undt-amber-text);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.undt-company .undt-panel {
+	padding: 4px 24px 12px;
+}
+
+.undt-fsection {
+	padding-top: 20px;
+}
+
+.undt-wrap .undt-fsection__title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 10px;
+	margin: 0 0 4px;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-fsection__basis {
+	color: var(--undt-muted);
+	font-size: 12px;
+	font-weight: 400;
+}
+
+/* Eine Zeile: Beschriftung links, Feld rechts. */
+.undt-frow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	padding: 16px 0;
+}
+
+.undt-frow + .undt-frow,
+.undt-fsection__title + .undt-frow {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-fsection__title + .undt-frow {
+	border-top: 0;
+}
+
+.undt-frow__label {
+	flex: 0 0 210px;
+	padding-top: 10px;
+}
+
+.undt-frow__title {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-frow__optional {
+	margin-top: 2px;
+	color: var(--undt-muted);
+	font-size: 12px;
+}
+
+.undt-frow__main {
+	display: flex;
+	flex: 1 1 340px;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+}
+
+.undt-frow__fields {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.undt-frow__field {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 140px;
+}
+
+.undt-frow__sub {
+	color: var(--undt-text-2);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.undt-frow__control {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.undt-frow__control > input:not([type="checkbox"]):not([type="hidden"]),
+.undt-frow__control > select,
+.undt-frow__control > textarea,
+.undt-frow__control > .undt-link {
+	flex: 1;
+	min-width: 0;
+}
+
+.undt-app .undt-frow__control input[type="text"],
+.undt-app .undt-frow__control input[type="email"],
+.undt-app .undt-frow__control input[type="url"],
+.undt-app .undt-frow__control input[type="tel"],
+.undt-app .undt-frow__control select,
+.undt-app .undt-frow__control textarea,
+.undt-app .undt-question-row select {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 40px;
+	padding: 0 12px;
+	border: 1px solid var(--undt-input-border);
+	border-radius: var(--undt-radius-control);
+	color: var(--undt-text);
+	font-size: 14px;
+}
+
+/* WordPress gibt Textbereichen mit der Klasse code eine Festbreitenschrift. */
+.undt-app .undt-frow__control textarea {
+	padding: 9px 12px;
+	font-family: inherit;
+	line-height: 1.5;
+}
+
+.undt-app .undt-frow__control select,
+.undt-app .undt-question-row select {
+	padding-right: 28px;
+}
+
+.undt-app .undt-frow__control input:focus,
+.undt-app .undt-frow__control select:focus,
+.undt-app .undt-frow__control textarea:focus {
+	border-color: var(--undt-blue);
+	outline: 2px solid var(--undt-blue);
+	outline-offset: -1px;
+	box-shadow: none;
+}
+
+/* Leere Pflicht: Bernstein am Rand, nie als Flaeche. */
+.undt-app .undt-frow.is-missing [data-undt-required] .undt-frow__control input,
+.undt-app .undt-frow.is-missing [data-undt-required] .undt-frow__control select,
+.undt-app .undt-frow.is-missing [data-undt-required] .undt-frow__control textarea {
+	border-color: var(--undt-amber);
+}
+
+.undt-frow .undt-amber {
+	margin: 0;
+}
+
+.undt-frow__help {
+	margin: 0;
+	color: var(--undt-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-frow__copied {
+	color: var(--undt-petrol);
+	font-size: 12px;
+}
+
+.undt-frow__copied:empty {
+	display: none;
+}
+
+/* Das graue Kopier-Symbol am Feld. */
+.undt-app .undt-copy.undt-fcopy {
+	display: flex !important;
+	flex: 0 0 40px;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 40px;
+	height: 40px !important;
+	padding: 0 !important;
+	border: 1px solid var(--undt-tile-border);
+	border-radius: var(--undt-radius-control);
+	background: #fff;
+	color: var(--undt-grey);
+	cursor: pointer;
+}
+
+.undt-app .undt-copy.undt-fcopy:hover {
+	border-color: var(--undt-blue);
+	color: var(--undt-blue);
+}
+
+.undt-fcopy__done,
+.undt-fcopy.undt-copy--ok .undt-fcopy__idle {
+	display: none;
+}
+
+.undt-app .undt-copy.undt-fcopy.undt-copy--ok {
+	border-color: var(--undt-petrol);
+	color: var(--undt-petrol);
+}
+
+.undt-fcopy.undt-copy--ok .undt-fcopy__done {
+	display: block;
+}
+
+.undt-fmore .undt-details {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-fmore .undt-details__body {
+	padding-bottom: 4px;
+}
+
+@media screen and (max-width: 782px) {
+	.undt-company .undt-panel,
+	.undt-legalform__head,
+	.undt-legalform__body {
+		padding-right: 16px;
+		padding-left: 16px;
+	}
+
+	.undt-company .undt-tabs {
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		padding: 0 8px;
+	}
+
+	.undt-frow__label {
+		flex-basis: 100%;
+		padding-top: 0;
+	}
+
+	.undt-app .undt-copy.undt-fcopy {
+		flex-basis: 44px;
+		width: 44px;
+		height: 44px !important;
+	}
+
+	.undt-question-row--select {
+		flex-wrap: wrap;
+	}
+
+	.undt-question-row--select .undt-question-row__control,
+	.undt-question-row--select .undt-question-row__control select {
+		width: 100%;
+		max-width: none;
+	}
+}
+
+/* ============================================================ Einbinden */
+
+.undt-embed-page {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+
+.undt-embed-page .undt-section > .undt-box,
+.undt-embed-page > .undt-box {
+	margin: 0;
+}
+
+.undt-embed-head .undt-head {
+	margin-bottom: 6px;
+}
+
+.undt-embed-head__intro {
+	margin: 0 0 18px;
+	color: var(--undt-text-2);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.undt-embed-head__tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 20px;
+}
+
+.undt-embed-head__format {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.undt-embed-head__label {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-embed-head__help {
+	margin: 10px 0 0;
+	color: var(--undt-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-search {
+	position: relative;
+	display: flex;
+	flex: 1 1 260px;
+}
+
+.undt-search__icon {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	color: var(--undt-grey);
+}
+
+.undt-app .undt-search input {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 40px;
+	padding: 0 12px 0 36px;
+	border: 1px solid var(--undt-input-border);
+	border-radius: var(--undt-radius-control);
+	font-size: 14px;
+}
+
+.undt-section__note {
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+/* Rechtsseiten. */
+.undt-pagerow {
+	display: grid;
+	grid-template-columns: 150px minmax(0, 220px) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 12px 20px;
+	padding: 14px 24px;
+}
+
+.undt-pagerow + .undt-pagerow {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-pagerow__label {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-pagerow__control {
+	min-width: 0;
+}
+
+.undt-app .undt-pagerow__control select,
+.undt-app .undt-pagerow__control input {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 40px;
+	border: 1px solid var(--undt-input-border);
+	border-radius: var(--undt-radius-control);
+}
+
+.undt-pagerow__status {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-pagerow__status--open {
+	color: var(--undt-amber-text);
+}
+
+.undt-pagerow__status--missing .undt-dot-s {
+	background: var(--undt-grey);
+}
+
+.undt-pagerow__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 4px 12px;
+}
+
+/* Bausteine in Gruppen. */
+.undt-blockgroup + .undt-blockgroup {
+	margin-top: 12px;
+}
+
+.undt-blockgroup__head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 24px 4px;
+}
+
+.undt-wrap .undt-blockgroup__title {
+	margin: 0;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-eblock {
+	margin: 0 24px;
+}
+
+.undt-eblock + .undt-eblock {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-eblock__row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 130px auto minmax(0, 250px);
+	align-items: center;
+	gap: 12px 16px;
+	padding: 14px 0;
+}
+
+.undt-eblock__text {
+	min-width: 0;
+}
+
+.undt-eblock__row .undt-embed__usage,
+.undt-eblock__row .undt-embed__code {
+	flex: none;
+	min-width: 0;
+}
+
+.undt-eblock__title {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-eblock__desc {
+	margin-top: 2px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.undt-eblock__more {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	padding: 0 0 18px;
+}
+
+.undt-preview {
+	flex: 1 1 380px;
+	min-width: 0;
+	padding: 16px 18px;
+	border: 1px solid var(--undt-border);
+	border-radius: var(--undt-radius-info);
+	background: var(--undt-foot);
+}
+
+.undt-preview__label {
+	margin-bottom: 10px;
+	color: var(--undt-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.undt-preview__body {
+	font-size: 15px;
+	line-height: 1.6;
+}
+
+.undt-preview__body[aria-busy="true"] {
+	opacity: 0.5;
+}
+
+.undt-preview__body > :first-child {
+	margin-top: 0;
+}
+
+.undt-preview__body > :last-child {
+	margin-bottom: 0;
+}
+
+.undt-preview__empty {
+	color: var(--undt-muted);
+	font-style: italic;
+}
+
+.undt-eblock__options {
+	display: flex;
+	flex: 0 1 260px;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.undt-eblock__options-title {
+	margin-bottom: 4px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.undt-eblock__option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 36px;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.undt-eblock__options-hint {
+	margin: 4px 0 0;
+	color: var(--undt-muted);
+	font-size: 12px;
+	line-height: 1.45;
+}
+
+/* Einzelne Angaben. */
+.undt-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 14px 24px;
+	border-bottom: 1px solid var(--undt-line);
+}
+
+.undt-filter {
+	min-height: 32px;
+	padding: 0 12px;
+	border: 1px solid #dcdcd7;
+	border-radius: 16px;
+	background: #fff;
+	color: var(--undt-text-2);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.undt-filter[aria-pressed="true"] {
+	border-color: var(--undt-dark);
+	background: var(--undt-dark);
+	color: #fff;
+}
+
+.undt-value {
+	display: grid;
+	grid-template-columns: 180px minmax(0, 1fr) minmax(0, 260px);
+	align-items: center;
+	gap: 8px 20px;
+	padding: 10px 24px;
+}
+
+.undt-value .undt-embed__code {
+	flex: none;
+	min-width: 0;
+}
+
+.undt-value + .undt-value {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-value__label {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-value__value {
+	overflow: hidden;
+	min-width: 0;
+	color: var(--undt-text-2);
+	font-size: 13px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.undt-value__value--empty {
+	color: var(--undt-muted);
+	font-style: italic;
+}
+
+.undt-embed-empty {
+	margin: 0;
+	color: var(--undt-muted);
+	font-size: 14px;
+}
+
+.undt-embed-empty--values {
+	padding: 16px 24px;
+}
+
+.undt-devbox {
+	padding: 0 24px;
+}
+
+.undt-devbox > .undt-details {
+	border-top: 0;
+}
+
+.undt-dev {
+	display: grid;
+	grid-template-columns: minmax(200px, 280px) 1fr;
+	margin: 0;
+}
+
+.undt-dev dt,
+.undt-dev dd {
+	margin: 0;
+	padding: 10px 0;
+	border-top: 1px solid var(--undt-line);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-dev dd {
+	padding-left: 20px;
+	color: var(--undt-text-2);
+}
+
+@media screen and (max-width: 782px) {
+	.undt-pagerow,
+	.undt-value,
+	.undt-filters,
+	.undt-blockgroup__head {
+		padding-right: 16px;
+		padding-left: 16px;
+	}
+
+	.undt-eblock {
+		margin: 0 16px;
+	}
+
+	.undt-pagerow,
+	.undt-value {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.undt-pagerow__actions {
+		justify-content: flex-start;
+	}
+
+	.undt-filter {
+		min-height: 44px;
+	}
+
+	.undt-dev {
+		grid-template-columns: 1fr;
+	}
+
+	.undt-dev dd {
+		padding-top: 0;
+		padding-left: 0;
+		border-top: 0;
+	}
+}
+
+@media screen and (max-width: 1100px) {
+	.undt-eblock__row {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.undt-eblock__row .undt-eblock__text {
+		grid-column: 1 / -1;
+	}
+
+	.undt-eblock__row .undt-embed__code {
+		grid-column: 1 / -1;
+		justify-content: flex-start;
+	}
+}
+
+/* Rollen in den Einstellungen. */
+.undt-roles {
+	margin: 4px 0 8px;
+	padding: 0;
+	border: 0;
+}
+
+.undt-roles__item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 0;
+}
+
+.undt-roles__item + .undt-roles__item {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-roles__name {
+	flex: 1;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-roles__note {
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.undt-nav__item,
+	.undt-linkcard,
+	.undt-switch-button,
+	.undt-switch-button__knob,
+	.undt-details__chevron {
+		transition: none;
+	}
 }
 
 /* Eine gemeinsame Lesebreite fuer alle Seiten des Plugins. Ueber die volle
    Bildschirmbreite gezogene Formulare und Fliesstexte werden sonst unlesbar
    lang, und das Auge verliert beim Zeilenwechsel den Anschluss. */
 .undt-wrap {
-	--undt-width: 960px;
+	--undt-width: 1000px;
 	max-width: var(--undt-width);
-}
-
-.undt-wrap .undt-context {
-	font-size: 14px;
-}
-
-.undt-wrap .undt-disclaimer {
-	margin: 1.5em 0;
 }
 
 /* ------------------------------------------------------------------ Karte */
@@ -37,11 +2404,10 @@
    des Backends bleibt als Rahmen stehen, die Karte fasst zusammen, was
    zusammengehoert, und alle Felder darin enden an derselben Kante. */
 .undt-box {
-	margin: 1em 0;
-	border: 1px solid #dcdcde;
-	border-radius: 6px;
+	margin: 0 0 24px;
+	border: 1px solid var(--undt-border, #e4e4e1);
+	border-radius: var(--undt-radius-card, 16px);
 	background: #fff;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .undt-box__body {
@@ -56,9 +2422,9 @@
 	align-items: center;
 	gap: 12px;
 	padding: 14px 24px;
-	border-top: 1px solid #f0f0f1;
-	border-radius: 0 0 6px 6px;
-	background: #f6f7f7;
+	border-top: 1px solid var(--undt-border, #e4e4e1);
+	border-radius: 0 0 15px 15px;
+	background: var(--undt-foot, #fafaf9);
 }
 
 .undt-box__footer p,
@@ -139,17 +2505,6 @@
 	padding-top: 0;
 }
 
-.undt-section-title {
-	margin: 1.5em 0 0.25em;
-	padding-bottom: 0.35em;
-	border-bottom: 1px solid #dcdcde;
-	font-size: 1.05em;
-}
-
-.undt-section-hint {
-	margin-top: 0.5em;
-}
-
 /* Rechtsgrundlage als unaufdringliche Fussnote unter der Beschriftung. */
 .undt-basis {
 	display: block;
@@ -160,7 +2515,7 @@
 }
 
 .undt-required {
-	color: #d63638;
+	color: #8a4a12;
 	font-weight: 700;
 }
 
@@ -172,8 +2527,8 @@
 .undt-switch {
 	position: relative;
 	display: inline-block;
-	width: 36px;
-	height: 20px;
+	width: 40px;
+	height: 24px;
 	vertical-align: middle;
 }
 
@@ -191,7 +2546,7 @@
 	margin: 0;
 	padding: 0;
 	border: 0;
-	border-radius: 10px;
+	border-radius: 12px;
 	box-shadow: none;
 	opacity: 0;
 	cursor: pointer;
@@ -204,7 +2559,7 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
-	border-radius: 10px;
+	border-radius: 12px;
 	background: #8c8f94;
 	transition: background-color 0.15s ease-in-out;
 }
@@ -212,10 +2567,10 @@
 .undt-switch__track::after {
 	content: "";
 	position: absolute;
-	top: 2px;
-	left: 2px;
-	width: 16px;
-	height: 16px;
+	top: 3px;
+	left: 3px;
+	width: 18px;
+	height: 18px;
 	border-radius: 50%;
 	background: #fff;
 	transition: transform 0.15s ease-in-out;
@@ -272,13 +2627,13 @@
 }
 
 .undt-copy--ok {
-	border-color: #00a32a !important;
-	color: #00a32a !important;
+	border-color: #0f6e68 !important;
+	color: #0f6e68 !important;
 }
 
 .undt-copy--fail {
-	border-color: #d63638 !important;
-	color: #d63638 !important;
+	border-color: #8a4a12 !important;
+	color: #8a4a12 !important;
 }
 
 /* Schlanke Auspraegung unter der Feldbeschriftung. Randlos und zurueckhaltend,
@@ -333,7 +2688,7 @@
 }
 
 .undt-copy--inline.undt-copy--fail {
-	color: #d63638 !important;
+	color: #8a4a12 !important;
 }
 
 /* Kopierzeile unter einem Feld: der Shortcode, daneben die Kuerzel fuer
@@ -422,7 +2777,7 @@
 }
 
 .undt-copy--icon.undt-copy--fail {
-	color: #d63638 !important;
+	color: #8a4a12 !important;
 }
 
 /* --------------------------------------------------------- Formularzeilen */
@@ -478,21 +2833,6 @@
 
 .undt-table .description {
 	margin: 0.25em 0 0;
-}
-
-.undt-table .undt-atts {
-	color: #646970;
-	font-size: 12px;
-}
-
-/* Fuenf Spalten auf 960 Pixel: die Schreibweisen duerfen umbrechen, sie sind
-   lang. Die Beschriftung des Blocks nicht, sie ist kurz und ein Wort. */
-.undt-table--dynamic td:last-child code {
-	white-space: nowrap;
-}
-
-.undt-empty {
-	color: #8c8f94;
 }
 
 .undt-search {
@@ -687,13 +3027,13 @@
 
 .undt-icon-button--danger:hover:not(:disabled),
 .undt-icon-button--danger:focus-visible {
-	border-color: #d63638;
+	border-color: #8a4a12;
 	background: #fcf0f1;
-	color: #d63638;
+	color: #8a4a12;
 }
 
 .undt-icon-button--danger:focus-visible {
-	box-shadow: 0 0 0 1px #d63638;
+	box-shadow: 0 0 0 1px #8a4a12;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1032,112 +3372,1484 @@
 	}
 }
 
-/* --------------------------------------------------------- Tab-Zähler */
+/* ================================================ Seiten der Bereiche */
 
-/* Ein Punkt statt einer Zahl: er sagt „hier fehlt noch etwas“, ohne die
-   Beschriftung des Reiters zu zerreissen. Die Zahl steht im title-Attribut. */
-.undt-tab-dot {
-	display: inline-block;
-	width: 6px;
-	height: 6px;
-	margin-left: 6px;
-	border-radius: 50%;
-	background: #d63638;
-	vertical-align: 3px;
+/* Einleitung unter dem Seitentitel. */
+.undt-wrap .undt-intro {
+	max-width: 640px;
+	margin: -8px 0 20px;
+	color: var(--undt-text-2);
+	font-size: 14px;
+	line-height: 1.5;
 }
 
-/* ---------------------------------------------------------- Prüfseite */
+/* Statuszeile ueber dem Formular, etwa „Heute 08:00–17:00 Uhr.“ */
+.undt-module-page [data-undt-part="today"] {
+	margin: 0 0 20px;
+}
 
-.undt-audit-summary {
+/* Abschnitt innerhalb einer Karte, durch eine Linie getrennt. */
+.undt-box__section {
+	padding: 14px 24px 18px;
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-box__head + .undt-box__section,
+.undt-box__section--first {
+	border-top: 0;
+}
+
+.undt-box__section--tight {
+	padding-top: 0;
+	border-top: 0;
+}
+
+.undt-box__section > p {
+	margin: 0 0 12px;
+}
+
+.undt-box__section > p:last-child {
+	margin-bottom: 0;
+}
+
+/* Zugeklappte Abschnitte am Fuss einer Karte. */
+.undt-box__fold {
+	padding: 0 24px;
+}
+
+/* Eine Karte, die nur aus einem zugeklappten Abschnitt besteht. */
+.undt-mfold {
+	padding: 0 24px;
+}
+
+.undt-mfold > .undt-details,
+.undt-box__fold > .undt-details:first-child {
+	border-top: 0;
+}
+
+.undt-box__fold > .undt-details:first-child {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-box__footer--note a {
+	color: var(--undt-blue);
+}
+
+/* Zwei Karten nebeneinander: Formular und Vorschau. */
+.undt-mgrid {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.5em 1.75em;
-	margin: 1em 0;
+	align-items: flex-start;
+	gap: 20px;
+	margin: 0 0 24px;
 }
 
-.undt-audit-tally {
+.undt-mgrid > .undt-box {
+	margin: 0;
+}
+
+.undt-mgrid__main {
+	flex: 999 1 640px;
+	min-width: 0;
+}
+
+.undt-mgrid__side {
+	flex: 1 1 280px;
+	min-width: 0;
+}
+
+.undt-mpreview {
+	padding: 4px 24px 18px;
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.undt-mpreview > :first-child {
+	margin-top: 0;
+}
+
+.undt-mpreview .undt-preview__empty {
+	margin: 0;
+	color: var(--undt-muted);
+}
+
+/* Beschriftung ueber einem Feld, ohne Zeilenraster. */
+.undt-mlabel {
+	display: block;
+	margin: 6px 0 6px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-app .undt-mpage input[type="text"],
+.undt-app .undt-mpage input[type="url"],
+.undt-app .undt-mpage input[type="date"],
+.undt-app .undt-mpage input[type="time"],
+.undt-app .undt-mpage select,
+.undt-app .undt-mpage textarea {
+	box-sizing: border-box;
+	min-height: 40px;
+	border: 1px solid var(--undt-input-border);
+	border-radius: var(--undt-radius-control);
+	color: var(--undt-text);
+	font-size: 14px;
+}
+
+.undt-app .undt-mpage textarea {
+	width: 100%;
+	padding: 9px 12px;
+	font-family: inherit;
+	line-height: 1.5;
+}
+
+.undt-app .undt-mpage input:focus,
+.undt-app .undt-mpage select:focus,
+.undt-app .undt-mpage textarea:focus {
+	border-color: var(--undt-blue);
+	outline: 2px solid var(--undt-blue);
+	outline-offset: -1px;
+	box-shadow: none;
+}
+
+/* Leer-Zustand einer Liste. */
+.undt-mempty {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 4px 24px 10px;
+	color: var(--undt-muted);
+	font-size: 14px;
+}
+
+.undt-mactions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: 0 0 24px;
+}
+
+.undt-box .undt-mactions {
+	margin: 0;
+}
+
+/* Knoepfe nur mit Symbol: hoch, runter, entfernen. */
+.undt-ibtn {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--undt-radius-control);
+	background: transparent;
+	color: var(--undt-muted);
+	cursor: pointer;
+}
+
+.undt-ibtn:hover,
+.undt-ibtn:focus-visible {
+	background: var(--undt-surface);
+	color: var(--undt-text);
+}
+
+.undt-ibtn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.undt-ibtn:disabled:hover {
+	background: transparent;
+}
+
+.undt-ibtn--bordered {
+	width: 40px;
+	height: 40px;
+	border: 1px solid var(--undt-tile-border);
+	background: #fff;
+	color: var(--undt-grey);
+}
+
+/* Textknopf mit Plus, etwa „Leistung hinzufügen“. */
+.undt-textbtn,
+.undt-day__add {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.4em;
+	gap: 5px;
+	min-height: 40px;
+	padding: 0 4px;
+	border: 0;
+	background: none;
+	color: var(--undt-blue);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
 }
 
-.undt-dot {
-	display: inline-block;
-	width: 10px;
-	height: 10px;
-	border-radius: 50%;
-	background: #8c8f94;
+.undt-textbtn:hover,
+.undt-day__add:hover {
+	color: var(--undt-blue-hover);
+}
+
+/* Zeile mit Beschriftung links und Schalter rechts. */
+.undt-srow-set {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 10px 0;
+}
+
+.undt-srow-set + .undt-srow-set {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-srow-set__label {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-srow-set__desc {
+	color: var(--undt-muted);
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1.5;
+}
+
+.undt-srow-set--indent {
+	padding-left: 20px;
+}
+
+.undt-frow__inline-help {
+	align-self: center;
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+/* Mehrere Moeglichkeiten mit Erklaerung, als Radioknoepfe. */
+.undt-choices {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.undt-choice {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 6px 0;
+	cursor: pointer;
+}
+
+.undt-choice input[type="radio"] {
+	margin: 2px 0 0;
+}
+
+.undt-choice__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.undt-choice__label {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-choice__desc {
+	color: var(--undt-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.undt-choices__extra {
+	padding: 6px 0 0 26px;
+}
+
+/* ------------------------------------------------------- Öffnungszeiten */
+
+.undt-days {
+	padding: 0 24px;
+}
+
+.undt-day {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 8px 16px;
+	padding: 12px 0;
+}
+
+.undt-day + .undt-day {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-day__switch {
+	display: flex;
+	align-self: flex-start;
+	padding-top: 1px;
+}
+
+.undt-day.is-open .undt-day__switch {
+	align-self: flex-end;
+	padding: 0 0 8px;
+}
+
+.undt-day__col {
+	display: flex;
+	flex: 0 0 232px;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.undt-day__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 22px;
+}
+
+.undt-day__name {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.undt-day__state,
+.undt-day__and {
+	display: inline-flex;
+	align-items: center;
+	height: 20px;
+	padding: 0 8px;
+	border-radius: 10px;
+	background: var(--undt-surface);
+	color: var(--undt-muted);
+	font-size: 12px;
+}
+
+.undt-day.is-open .undt-day__state {
+	color: var(--undt-petrol);
+}
+
+.undt-day__and {
+	gap: 2px;
+	padding-right: 2px;
+	color: var(--undt-text-2);
+}
+
+.undt-day__remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	margin: -6px -8px -6px -6px;
+	padding: 0;
+	border: 0;
+	border-radius: 16px;
+	background: transparent;
+	color: var(--undt-muted);
+	cursor: pointer;
+}
+
+.undt-day__remove:hover {
+	color: var(--undt-text);
+}
+
+.undt-day__times,
+.undt-srow__times {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.undt-app .undt-mpage input.undt-time {
+	width: 105px;
+	padding: 0 8px;
+}
+
+.undt-day__dash {
+	color: var(--undt-muted);
+}
+
+/* Termine unter „Feiertage und Urlaub“. */
+.undt-special .undt-repeater__rows {
+	padding: 0 24px;
+}
+
+/* Die Zeilen der neuen Seiten trennt eine Linie, kein Rahmen wie im allgemeinen Wiederholungsfeld. */
+.undt-mpage .undt-repeater__row.undt-srow,
+.undt-mpage .undt-repeater__row.undt-prow,
+.undt-mpage .undt-repeater__row.undt-faqitem {
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+}
+
+.undt-mpage .undt-repeater__row.undt-prow,
+.undt-mpage .undt-repeater__row.undt-faqitem {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-mpage .undt-repeater__row.undt-faqitem {
+	display: block;
+	padding: 0;
+}
+
+.undt-mpage .undt-repeater__row.undt-srow + .undt-srow {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-srow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 14px;
+	padding: 10px 0;
+}
+
+.undt-srow + .undt-srow {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-app .undt-mpage input.undt-srow__date {
+	width: 150px;
+	padding: 0 8px;
+}
+
+.undt-app .undt-mpage input.undt-srow__label {
+	flex: 1 1 200px;
+	min-width: 0;
+	padding: 0 12px;
+}
+
+.undt-app .undt-mpage .undt-srow__kind {
+	width: 170px;
+}
+
+.undt-srow .undt-ibtn {
+	margin-left: auto;
+}
+
+/* ---------------------------------------------------------- Social Media */
+
+.undt-addbar__row {
+	display: flex;
+	gap: 10px;
+}
+
+.undt-app .undt-mpage .undt-addbar__row input {
+	flex: 1;
+	min-width: 0;
+	padding: 0 12px;
+}
+
+.undt-addbar__row .undt-btn:disabled {
+	border-color: var(--undt-surface-2);
+	background: var(--undt-surface-2);
+	color: var(--undt-muted);
+	cursor: default;
+}
+
+.undt-addbar__hint {
+	min-height: 20px;
+	margin: 8px 0 0;
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-addbar__hint strong {
+	color: var(--undt-petrol);
+}
+
+.undt-profiles .undt-repeater__rows {
+	padding: 0 24px;
+}
+
+.undt-prow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-prow__icon {
+	display: flex;
+	flex: 0 0 36px;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border: 1px solid var(--undt-tile-border);
+	border-radius: 10px;
+	background: var(--undt-tile);
+	color: var(--undt-text);
+}
+
+.undt-prow__icon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.undt-prow__text {
+	display: flex;
+	flex: 1 1 160px;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.undt-prow__name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-prow__url {
+	overflow: hidden;
+	color: var(--undt-muted);
+	font-size: 13px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.undt-app .undt-mpage input.undt-prow__label {
+	flex: 0 1 200px;
+	min-width: 0;
+	padding: 0 12px;
+}
+
+.undt-prow__controls {
+	display: flex;
 	flex: 0 0 auto;
 }
 
-.undt-dot--error {
-	background: #d63638;
+/* Darstellung: Vorschau links, Einstellungen rechts. */
+.undt-split {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+	padding: 6px 24px 20px;
 }
 
-.undt-dot--warning {
-	background: #dba617;
+.undt-split__preview {
+	flex: 1 1 240px;
+	min-width: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--undt-line);
+	border-radius: var(--undt-radius-info);
+	background: var(--undt-foot);
 }
 
-.undt-dot--notice {
-	background: #72aee6;
+.undt-split__preview .undt-mpreview {
+	padding: 0;
 }
 
-.undt-audit__level {
-	width: 8em;
+.undt-split__label {
+	margin-bottom: 10px;
+	color: var(--undt-muted);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.undt-split__settings {
+	flex: 1 1 300px;
+	min-width: 0;
+}
+
+.undt-split__settings > .undt-srow-set:first-child {
+	padding-top: 0;
+}
+
+.undt-details--inner {
+	margin-top: 4px;
+}
+
+/* ------------------------------------------------------------ Infobanner */
+
+.undt-bhead {
+	align-items: center;
+	padding-bottom: 14px;
+}
+
+.undt-bhead .undt-tile {
+	flex-basis: 40px;
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+}
+
+.undt-bhead .undt-box__aside {
+	align-self: center;
+}
+
+.undt-bsite {
+	overflow: hidden;
+	border: 1px solid var(--undt-border);
+	border-radius: var(--undt-radius-info);
+	background: #fff;
+}
+
+.undt-bsite__banner .undt-banner {
+	font-size: 14px;
+}
+
+.undt-bsite__banner .undt-banner__inner {
+	max-width: none;
+}
+
+.undt-bsite__gone {
+	margin: 0;
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--undt-line);
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-bsite__page {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px 16px 18px;
+}
+
+.undt-bsite__nav {
+	display: flex;
+	gap: 10px;
+}
+
+.undt-bsite__nav span {
+	width: 46px;
+	height: 8px;
+	border-radius: 4px;
+	background: var(--undt-surface-2);
+}
+
+.undt-bsite__nav span:first-child {
+	width: 72px;
+	margin-right: auto;
+	background: #d6d6d2;
+}
+
+.undt-bsite__hero {
+	height: 60px;
+	border-radius: 8px;
+	background: var(--undt-surface);
+}
+
+.undt-bsite__line {
+	height: 8px;
+	border-radius: 4px;
+	background: var(--undt-surface);
+}
+
+.undt-bsite__line--short {
+	width: 60%;
+}
+
+.undt-bsite__note {
+	margin: 8px 0 0;
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+/* Zaehler unter dem Text. */
+.undt-counted {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.undt-counted__foot {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 6px 16px;
+}
+
+.undt-counted__foot .undt-amber {
+	margin: 0;
+}
+
+.undt-counted__num {
+	margin-left: auto;
+	color: var(--undt-muted);
+	font-size: 12px;
+}
+
+.undt-period {
+	max-width: 420px;
+}
+
+/* Felder mit eigener Beschriftung darueber, etwa Linktext und Ziel. */
+.undt-app .undt-mpage .undt-frow__field input[type="text"],
+.undt-app .undt-mpage .undt-frow__field input[type="url"],
+.undt-app .undt-mpage .undt-frow__field input[type="date"] {
+	width: 100%;
+	padding: 0 12px;
+}
+
+/* -------------------------------------------------------------- Preise */
+
+.undt-pgroups {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 0 0 16px;
+}
+
+.undt-pgroups > .undt-box {
+	margin: 0;
+}
+
+.undt-pgroup__head {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 14px 16px 8px 24px;
+}
+
+.undt-app .undt-mpage input.undt-pgroup__name {
+	flex: 1;
+	min-width: 0;
+	margin-left: -10px;
+	padding: 0 10px;
+	border-color: transparent;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.undt-app .undt-mpage input.undt-pgroup__name:hover {
+	border-color: var(--undt-tile-border);
+}
+
+.undt-pgroup__cols,
+.undt-pitem {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 140px 32px;
+	gap: 10px;
+	align-items: center;
+}
+
+.undt-pgroup__cols {
+	padding: 0 24px 4px;
+	color: var(--undt-muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.undt-pgroup__items {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 0 24px;
+}
+
+.undt-app .undt-mpage .undt-pitem input[type="text"] {
+	width: 100%;
+	padding: 0 12px;
+}
+
+.undt-pgroup__add {
+	margin: 0;
+	padding: 4px 20px 10px;
+}
+
+/* ----------------------------------------------------------------- FAQ */
+
+.undt-faqs .undt-repeater__rows {
+	padding: 0 24px;
+}
+
+.undt-faqitem {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-faqitem__head {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	min-height: 52px;
+}
+
+.undt-faqitem__toggle {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	min-height: 44px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--undt-text);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+}
+
+.undt-faqitem__chevron {
+	flex: 0 0 auto;
+	color: var(--undt-grey);
+	transition: transform 0.14s;
+}
+
+.undt-faqitem__toggle[aria-expanded="true"] .undt-faqitem__chevron {
+	transform: rotate(90deg);
+}
+
+.undt-faqitem__title {
+	overflow: hidden;
 	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
-.undt-audit__level-text {
-	margin-left: 0.4em;
+.undt-faqitem__body {
+	display: flex;
+	flex-direction: column;
+	padding: 0 0 16px 22px;
 }
 
-.undt-audit__action {
-	width: 12em;
+.undt-app .undt-mpage .undt-faqitem__body input[type="text"] {
+	width: 100%;
+	padding: 0 12px;
 }
 
-.undt-audit td {
-	vertical-align: top;
+/* ------------------------------------------------------- Suchmaschinen */
+
+.undt-geo {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
 }
 
-@media screen and (max-width: 782px) {
-	.undt-audit__level,
-	.undt-audit__action {
-		width: auto;
-	}
+.undt-app .undt-mpage .undt-geo input {
+	width: 100%;
+	padding: 0 12px;
 }
 
-/* Waehrend einer Suche zaehlen nur die Treffer. Einleitungen und Hinweiskaesten
-   erklaeren die Reiter und stehen der Trefferliste im Weg. */
-.undt-wrap.is-searching .undt-section-hint,
-.undt-wrap.is-searching .undt-disclaimer {
+.undt-geo .undt-amber,
+.undt-geo__ok,
+.undt-geo .undt-frow__help {
+	margin: 0;
+}
+
+.undt-geo__ok {
+	color: var(--undt-petrol);
+	font-size: 13px;
+}
+
+/* Statuszeile oben auf „Suchmaschinen“: Symbol im Kreis, Titel, Satz darunter. */
+[data-undt-part="seostatus"] .undt-status {
+	align-items: center;
+}
+
+[data-undt-part="seostatus"] .undt-status__icon {
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	margin: 0;
+	border-radius: 18px;
+	background: var(--undt-tile);
+}
+
+[data-undt-part="seostatus"] .undt-status--ok .undt-status__icon {
+	background: var(--undt-petrol-soft);
+}
+
+[data-undt-part="seostatus"] .undt-status__title {
+	display: block;
+	font-size: 15px;
+}
+
+[data-undt-part="seostatus"] .undt-status__more {
+	display: block;
+	margin-top: 2px;
+	color: var(--undt-text-2);
+	font-size: 13px;
+}
+
+[data-undt-part="seostatus"] .undt-amber {
+	margin: 12px 0 0 48px;
+}
+
+.undt-jsonld {
+	overflow: auto;
+	max-height: 420px;
+	margin: 0;
+	padding: 14px 16px;
+	border-radius: var(--undt-radius-info);
+	background: var(--undt-surface);
+	font-size: 12px;
+	line-height: 1.5;
+	white-space: pre;
+}
+
+.undt-slim > .undt-slim__row,
+.undt-slim .undt-details__body > .undt-slim__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	padding: 8px 0;
+}
+
+.undt-slim__row + .undt-slim__row {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-slim__label {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* --------------------------------------------------------- Einstellungen */
+
+.undt-arealist {
+	padding: 0 24px;
+}
+
+.undt-arealist__row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 12px 0;
+}
+
+.undt-arealist__row + .undt-arealist__row {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-arealist__row .undt-tile {
+	flex-basis: 36px;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+}
+
+.undt-arealist__text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	cursor: pointer;
+}
+
+.undt-arealist__label {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-arealist__desc {
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-update {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 16px;
+}
+
+.undt-update__state {
+	flex: 1 1 320px;
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.undt-update__checked {
+	color: var(--undt-muted);
+}
+
+.undt-update--info {
+	margin-top: 12px;
+}
+
+.undt-update--info .undt-info {
+	flex: 1 1 320px;
+	margin: 0;
+}
+
+/* --------------------------------------------- Sichern und Einspielen */
+
+.undt-thead {
+	align-items: center;
+	padding-bottom: 14px;
+}
+
+.undt-thead .undt-tile {
+	flex-basis: 40px;
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+}
+
+.undt-thead .undt-box__aside {
+	align-self: center;
+	margin: 0;
+}
+
+.undt-box__section > .undt-info {
+	margin: 0;
+}
+
+.undt-idone {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 16px;
+	background: var(--undt-petrol-soft);
+}
+
+.undt-idone__text {
+	flex: 1 1 320px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.undt-idone__more {
+	color: var(--undt-text-2);
+}
+
+.undt-iform {
+	padding-top: 4px;
+}
+
+.undt-isteps__done {
 	display: none;
 }
 
-/* ---------------------------------------------------------- Updater */
-
-.undt-dot--ok {
-	background: #00a32a;
+.undt-steps__item--done .undt-isteps__num {
+	display: none;
 }
 
-.undt-update-state {
+.undt-steps__item--done .undt-isteps__done {
 	display: flex;
+}
+
+/* Die Ablage: der ganze Kasten waehlt die Datei. */
+.undt-drop {
+	position: relative;
+	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 0.5em;
-	margin: 0 0 0.4em;
+	gap: 4px;
+	padding: 22px 16px;
+	border: 1.5px dashed #c9c9c4;
+	border-radius: var(--undt-radius-info);
+	background: var(--undt-foot);
+	color: var(--undt-text-2);
+	text-align: center;
+	cursor: pointer;
 }
 
-.undt-recheck {
-	margin: 1em 0 2em;
+.undt-drop:hover,
+.undt-drop.is-over,
+.undt-drop:focus-within {
+	border-color: var(--undt-blue);
+	background: var(--undt-blue-soft);
 }
 
-/* ------------------------------------------------ Sichern und Einspielen */
-
-.undt-import input[type="file"] {
-	display: block;
-	max-width: 100%;
-	margin-bottom: 8px;
+/* Das Dateifeld selbst ist unsichtbar, den Fokus zeigt der ganze Kasten. */
+.undt-drop:focus-within {
+	outline: 2px solid var(--undt-blue);
+	outline-offset: 2px;
 }
 
-.undt-import__confirm {
-	margin: 0 0 10px;
+.undt-drop[aria-busy="true"] {
+	opacity: 0.6;
+}
+
+/* Unsichtbar, aber mit Tastatur erreichbar: der Rahmen zeigt den Fokus. */
+.undt-drop__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+}
+
+.undt-drop__text strong {
+	color: var(--undt-blue);
+}
+
+.undt-drop__hint {
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-ifile {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	padding: 10px 14px;
+	border: 1px solid var(--undt-border);
+	border-radius: var(--undt-radius-info);
+	font-size: 14px;
+}
+
+.undt-ifile > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.undt-ifile__meta {
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-steps__action > .undt-amber {
+	margin: 10px 0 0;
+}
+
+.undt-iarea {
+	padding: 10px 0;
+}
+
+.undt-iarea + .undt-iarea {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-iarea__label {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 10px;
+	cursor: pointer;
+}
+
+.undt-iarea__name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.undt-iarea__sum {
+	margin-left: auto;
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+.undt-iarea--change .undt-iarea__sum {
+	color: var(--undt-text-2);
+}
+
+.undt-iarea--same,
+.undt-iarea--missing {
+	color: var(--undt-muted);
+}
+
+.undt-iarea--same .undt-iarea__label,
+.undt-iarea--missing .undt-iarea__label {
+	cursor: default;
+}
+
+.undt-iarea__diff {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 8px 0 0 26px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	background: var(--undt-foot);
+	font-size: 13px;
+}
+
+.undt-iarea__line {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+}
+
+.undt-iarea__key {
+	flex: 0 0 170px;
+	color: var(--undt-text-2);
+}
+
+.undt-iarea__old {
+	color: var(--undt-muted);
+	text-decoration: line-through;
+}
+
+.undt-iarea__new {
+	font-weight: 600;
+}
+
+.undt-irun {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 16px;
+}
+
+.undt-irun .undt-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.undt-irun__note {
+	color: var(--undt-text-2);
+	font-size: 13px;
+}
+
+.undt-cli__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 16px;
+	padding: 8px 0;
+}
+
+.undt-cli__row + .undt-cli__row {
+	border-top: 1px solid var(--undt-line);
+}
+
+.undt-cli__row code {
+	padding: 4px 8px;
+	border-radius: 6px;
+	background: var(--undt-surface);
+	font-size: 12.5px;
+}
+
+.undt-cli__row span {
+	color: var(--undt-muted);
+	font-size: 13px;
+}
+
+/* ------------------------------------------------ Beruf und Kammer */
+
+/* Berufsbezeichnung: Auswahl, darunter bei Bedarf das Textfeld. */
+.undt-profession {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+}
+
+/* Vorschlag fuer Kammer und Berufsrecht, Hilfe zur Aufsichtsbehoerde. */
+.undt-csuggest {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 6px 0 4px;
+	padding: 14px 16px;
+	border-radius: var(--undt-radius-info);
+	background: var(--undt-surface);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.undt-csuggest .undt-mlabel {
+	margin: 0;
+}
+
+.undt-csuggest .undt-amber,
+.undt-csuggest__text {
+	margin: 0;
+}
+
+.undt-csuggest__rules {
+	margin: 0 0 0 1.2em;
+	padding: 0;
+	list-style: disc;
+}
+
+.undt-csuggest__rules li {
+	margin: 0 0 2px;
+}
+
+.undt-csuggest__check {
+	color: var(--undt-muted);
+	font-size: 12px;
+}
+
+.undt-app .undt-csuggest__choice {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 560px;
+	min-height: 40px;
+	border: 1px solid var(--undt-input-border);
+	border-radius: var(--undt-radius-control);
+	font-size: 14px;
+}
+
+.undt-csuggest__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+}
+
+.undt-csuggest__actions:empty {
+	display: none;
+}
+
+/* Der Hinweis steht unter der Auswahl, nicht daneben. */
+.undt-frow__control:has(> .undt-typehint) {
+	flex-wrap: wrap;
+}
+
+.undt-typehint {
+	flex: 1 1 100%;
+	margin: 4px 0 0;
+	color: var(--undt-text-2);
+	font-size: 13px;
+}
+
+/* --------------------------------------------------- Schmale Bildschirme */
+
+@media screen and (max-width: 782px) {
+	.undt-days,
+	.undt-special .undt-repeater__rows,
+	.undt-profiles .undt-repeater__rows,
+	.undt-faqs .undt-repeater__rows,
+	.undt-arealist,
+	.undt-pgroup__items,
+	.undt-pgroup__cols,
+	.undt-box__fold,
+	.undt-mfold,
+	.undt-mempty {
+		padding-right: 16px;
+		padding-left: 16px;
+	}
+
+	.undt-box__section,
+	.undt-split,
+	.undt-mpreview {
+		padding-right: 16px;
+		padding-left: 16px;
+	}
+
+	.undt-pgroup__head {
+		padding-left: 16px;
+	}
+
+	.undt-day__col {
+		flex-basis: 100%;
+	}
+
+	.undt-day__switch,
+	.undt-day.is-open .undt-day__switch {
+		align-self: flex-start;
+		padding: 0;
+	}
+
+	.undt-day {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: start;
+	}
+
+	.undt-day__col--second,
+	.undt-day__add {
+		grid-column: 2;
+	}
+
+	.undt-day__add {
+		justify-self: start;
+	}
+
+	.undt-app .undt-mpage input.undt-time {
+		flex: 1;
+		width: auto;
+		min-width: 0;
+	}
+
+	.undt-app .undt-mpage input.undt-srow__date,
+	.undt-app .undt-mpage .undt-srow__kind {
+		flex: 1 1 140px;
+		width: auto;
+	}
+
+	.undt-prow {
+		flex-wrap: wrap;
+	}
+
+	.undt-app .undt-mpage input.undt-prow__label {
+		flex: 1 1 100%;
+		order: 3;
+	}
+
+	/* Symbol, Name und Knoepfe in einer Zeile, die Beschriftung darunter. */
+	.undt-prow__text {
+		flex: 1 1 0;
+	}
+
+	.undt-prow__controls {
+		order: 2;
+		margin-left: auto;
+	}
+
+	.undt-pgroup__cols,
+	.undt-pitem {
+		grid-template-columns: minmax(0, 1fr) 96px 32px;
+	}
+
+	.undt-addbar__row {
+		flex-wrap: wrap;
+	}
+
+	.undt-addbar__row .undt-btn {
+		flex: 1 1 100%;
+		justify-content: center;
+		min-height: 44px;
+	}
+
+	.undt-ibtn {
+		width: 40px;
+		height: 40px;
+	}
+
+	.undt-day__remove {
+		width: 40px;
+		height: 40px;
+		margin: -10px -12px -10px -8px;
+	}
+
+	/* Der Knopf im Kopf von „Sichern“ bekommt eine eigene Zeile, sonst wird der Text eine schmale Spalte. */
+	.undt-thead {
+		flex-wrap: wrap;
+	}
+
+	.undt-thead .undt-box__aside {
+		flex: 1 1 100%;
+	}
+
+	.undt-thead .undt-box__aside .undt-btn {
+		justify-content: center;
+		width: 100%;
+		min-height: 44px;
+	}
+
+	.undt-iarea__key {
+		flex-basis: 100%;
+	}
+
+	.undt-iarea__sum {
+		flex-basis: 100%;
+		margin-left: 26px;
+	}
 }

@@ -87,6 +87,15 @@ final class UNDT_Cli {
 
 		WP_CLI::confirm( 'Die vorhandenen Angaben dieses Plugins werden überschrieben. Fortfahren?', $assoc_args );
 
+		$checked = UNDT_Transfer::check( $payload );
+
+		if ( is_wp_error( $checked ) ) {
+			WP_CLI::error( $checked->get_error_message() );
+		}
+
+		// Wie auf der Seite: der Stand davor laesst sich dort zurueckspielen.
+		UNDT_Transfer::backup();
+
 		$report = UNDT_Transfer::import( $payload );
 
 		if ( is_wp_error( $report ) ) {

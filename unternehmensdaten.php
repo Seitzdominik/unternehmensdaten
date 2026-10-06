@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Unternehmensdaten
  * Description:       Zentrale Verwaltung aller Unternehmensangaben: rechtliche Pflichtangaben, Oeffnungszeiten, Preise, Social, FAQ, Infobanner und strukturierte Daten. Mit Shortcode fuer jedes Feld und fertigen Bloecken fuer Impressum und Footer.
- * Version:           0.5.8
+ * Version:           0.6.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Seitz
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UNDT_VERSION', '0.5.8' );
+define( 'UNDT_VERSION', '0.6.0' );
 define( 'UNDT_FILE', __FILE__ );
 define( 'UNDT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UNDT_URL', plugin_dir_url( __FILE__ ) );
@@ -80,6 +80,12 @@ function undt_bootstrap() {
 	UNDT_Dynamic::register();
 	UNDT_Updater::register();
 	UNDT_Modules::register();
+
+	// Das Recht zur Pflege der Angaben gilt ueberall, auch fuer WP-CLI.
+	UNDT_Access::register();
+
+	// Auch ausserhalb des Backends: der Block-Editor speichert ueber die REST-API.
+	UNDT_Usage::register();
 
 	if ( is_admin() ) {
 		UNDT_Admin::instance()->init();

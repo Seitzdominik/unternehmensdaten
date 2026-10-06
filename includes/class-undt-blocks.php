@@ -368,11 +368,47 @@ final class UNDT_Blocks {
 			$out .= '</tbody></table>';
 		}
 
-		if ( '0' !== (string) $atts['footnote'] && UNDT_Content::has( 'prices', 'footnote' ) ) {
-			$out .= '<div class="undt-prices__footnote">' . self::paragraphs( UNDT_Content::value( 'prices', 'footnote' ) ) . '</div>';
+		$note = '0' !== (string) $atts['footnote'] ? self::prices_note() : '';
+
+		if ( '' !== $note ) {
+			$out .= '<div class="undt-prices__footnote">' . self::paragraphs( $note ) . '</div>';
 		}
 
 		return $out . '</div>';
+	}
+
+	/**
+	 * Der Hinweis zur Umsatzsteuer unter der Preisliste.
+	 *
+	 * Ist der Schalter an, gilt der eigene Text, sonst der passende Satz aus
+	 * „Firma“: bei Kleinunternehmern deren Hinweis nach § 19 UStG, bei
+	 * Regelbesteuerung der Hinweis auf Gesamtpreise (§ 3 PAngV). Ohne Angabe
+	 * zur Umsatzsteuer gibt es keinen Satz, etwa bei steuerfreien Heilberufen.
+	 *
+	 * @return string
+	 */
+	public static function prices_note() {
+		if ( ! UNDT_Content::value( 'prices', 'vat_note' ) ) {
+			return '';
+		}
+
+		$own = trim( (string) UNDT_Content::value( 'prices', 'footnote' ) );
+
+		if ( '' !== $own ) {
+			return $own;
+		}
+
+		switch ( (string) UNDT_Store::profile_value( 'vat_status' ) ) {
+			case 'small_business':
+				$note = trim( (string) UNDT_Store::get( 'small_business_note' ) );
+
+				return '' !== $note ? $note : 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.';
+
+			case 'standard':
+				return 'Alle Preise verstehen sich als Gesamtpreise inklusive der gesetzlichen Umsatzsteuer.';
+		}
+
+		return '';
 	}
 
 	/* --------------------------------------------------------------- Social */
@@ -585,7 +621,47 @@ final class UNDT_Blocks {
 	public static function banner_active() {
 		return UNDT_Modules::is_active( 'banner' )
 			&& UNDT_Content::value( 'banner', 'enabled' )
-			&& UNDT_Content::has( 'banner', 'text' );
+			&& UNDT_Content::has( 'banner', 'text' )
+			&& self::banner_in_period();
+	}
+
+	/**
+	 * Ob heute im Zeitraum des Banners liegt.
+	 *
+	 * Beide Grenzen gelten einschliesslich, gerechnet in der Zeitzone der
+	 * Website. Ohne Datum gilt die Grenze nicht.
+	 *
+	 * @param string $today Heutiges Datum, YYYY-MM-DD; leer fuer jetzt.
+	 * @return bool
+	 */
+	public static function banner_in_period( $today = '' ) {
+		$today = '' === $today ? wp_date( 'Y-m-d' ) : (string) $today;
+		$from  = UNDT_Hours::date( UNDT_Content::value( 'banner', 'date_from' ) );
+		$to    = UNDT_Hours::date( UNDT_Content::value( 'banner', 'date_to' ) );
+
+		return ( '' === $from || $today >= $from ) && ( '' === $to || $today <= $to );
+	}
+
+	/**
+	 * Die Art des Banners: neutral, info oder warning.
+	 *
+	 * Bis 0.5.8 gab es vier Arten; success zeigt sich jetzt als info, urgent als
+	 * warning. Rot und Gruen gibt es nicht mehr.
+	 *
+	 * @return string
+	 */
+	public static function banner_type() {
+		$type = (string) UNDT_Content::value( 'banner', 'type' );
+		$map  = array(
+			'success' => 'info',
+			'urgent'  => 'warning',
+		);
+
+		if ( isset( $map[ $type ] ) ) {
+			$type = $map[ $type ];
+		}
+
+		return in_array( $type, array( 'neutral', 'info', 'warning' ), true ) ? $type : 'neutral';
 	}
 
 	/**
@@ -642,14 +718,27 @@ final class UNDT_Blocks {
 
 		self::$banner_done = true;
 
-		$type = (string) UNDT_Content::value( 'banner', 'type' );
+		return self::banner_markup();
+	}
 
-		if ( ! in_array( $type, array( 'info', 'success', 'warning', 'urgent' ), true ) ) {
-			$type = 'info';
-		}
-
+	/**
+	 * Das Markup des Banners, unabhaengig davon, ob es gerade erscheint.
+	 *
+	 * Die Vorschau im Backend nutzt es ohne Skript und mit einem Platzhalter,
+	 * solange noch kein Text da ist.
+	 *
+	 * @param bool $preview Fuer die Vorschau im Backend.
+	 * @return string
+	 */
+	public static function banner_markup( $preview = false ) {
+		$type        = self::banner_type();
 		$dismissible = (bool) UNDT_Content::value( 'banner', 'dismissible' );
 		$key         = self::banner_key();
+		$text        = (string) UNDT_Content::value( 'banner', 'text' );
+
+		if ( $preview && '' === trim( $text ) ) {
+			$text = __( 'Hier steht dein Hinweis.', 'unternehmensdaten' );
+		}
 
 		$out = sprintf(
 			'<div class="undt-banner undt-banner--%1$s" role="region" aria-label="%2$s" data-undt-banner="%3$s">',
@@ -659,7 +748,7 @@ final class UNDT_Blocks {
 		);
 
 		$out .= '<div class="undt-banner__inner">';
-		$out .= '<div class="undt-banner__text">' . self::paragraphs( UNDT_Content::value( 'banner', 'text' ) ) . '</div>';
+		$out .= '<div class="undt-banner__text">' . self::paragraphs( $text ) . '</div>';
 
 		if ( UNDT_Content::has( 'banner', 'link_url' ) ) {
 			$label = trim( (string) UNDT_Content::value( 'banner', 'link_text' ) );
@@ -684,7 +773,7 @@ final class UNDT_Blocks {
 
 		$out .= '</div></div>';
 
-		if ( $dismissible ) {
+		if ( $dismissible && ! $preview ) {
 			$out .= self::banner_script( $key );
 		}
 
@@ -795,12 +884,11 @@ final class UNDT_Blocks {
 			 * nicht mit der Seite selbst konkurriert. em statt rem, weil viele
 			 * Builder-Setups die Wurzelgroesse auf 62,5 % setzen.
 			 */
-			$css .= '.undt-banner{--undt-bg:#eef2f7;--undt-fg:#1d2939;--undt-accent:#2563eb;'
+			$css .= '.undt-banner{--undt-bg:#f2f2f1;--undt-fg:#1d2327;--undt-accent:#8e8e98;'
 				. 'background:var(--undt-bg);color:var(--undt-fg);border-left:4px solid var(--undt-accent);'
 				. 'font-size:var(--undt-banner-font-size,.875em);line-height:1.5}'
-				. '.undt-banner--success{--undt-bg:#e7f6ec;--undt-fg:#14532d;--undt-accent:#15803d}'
-				. '.undt-banner--warning{--undt-bg:#fdf4e3;--undt-fg:#713f12;--undt-accent:#c2820e}'
-				. '.undt-banner--urgent{--undt-bg:#fdeaea;--undt-fg:#7f1d1d;--undt-accent:#c81e1e}'
+				. '.undt-banner--info{--undt-bg:#eaf2fa;--undt-fg:#12395c;--undt-accent:#2271b1}'
+				. '.undt-banner--warning{--undt-bg:#fdf3e7;--undt-fg:#5c3108;--undt-accent:#e0923a}'
 				. '.undt-banner__inner{display:flex;flex-wrap:wrap;align-items:center;gap:.5em 1em;'
 				. 'max-width:72em;margin:0 auto;padding:.75em 1em}'
 				. '.undt-banner__text{flex:1 1 16em}'

@@ -229,7 +229,8 @@ undt_ok( false === strpos( $html, 'previousElementSibling' ), 'Keine Abhängigke
 
 undt_head( 'JSON-LD' );
 
-undt_seed_module( 'seo', array( 'schema_type' => 'MedicalClinic', 'output_mode' => 'auto', 'with_hours' => 1, 'with_social' => 1, 'geo_lat' => '52,520008', 'geo_lng' => '13.404954', 'logo' => 7 ) );
+undt_seed_module( 'seo', array( 'schema_type' => 'MedicalClinic', 'output_mode' => 'auto', 'with_hours' => 1, 'with_social' => 1, 'geo_lat' => '52,520008', 'geo_lng' => '13.404954' ) );
+$GLOBALS['undt_theme_mods']['custom_logo'] = 7;
 
 $org = UNDT_SchemaOrg::organization();
 undt_ok( 'MedicalClinic' === $org['@type'], 'Gewählter Typ wird übernommen' );
@@ -265,8 +266,9 @@ undt_ok( '' === UNDT_Shortcodes::hours( array() ), 'Abgeschaltetes Modul gibt ni
 undt_ok( false === strpos( UNDT_Blocks::css(), 'undt-hours__table' ), 'CSS des abgeschalteten Moduls entfällt' );
 undt_ok( false !== strpos( UNDT_Blocks::css(), 'undt-prices__table' ), 'CSS des aktiven Moduls bleibt' );
 
-$codes = wp_json_encode( array_column( UNDT_Shortcodes::module_catalog(), 'code' ) );
-undt_ok( false === strpos( $codes, '[undt_hours]' ), 'Abgeschaltetes Modul fehlt in der Referenz' );
+// Die Referenz ist seit 0.6.0 die Seite Einbinden.
+$codes = (string) wp_json_encode( UNDT_Embed::groups() );
+undt_ok( false === strpos( $codes, 'undt_hours' ), 'Abgeschaltetes Modul fehlt auf Einbinden' );
 
 undt_set_modules( array( 'hours' => 1, 'prices' => 1, 'social' => 1, 'faq' => 1, 'banner' => 1, 'seo' => 1 ) );
 undt_ok( true === UNDT_Modules::is_active( 'hours' ), 'Wieder eingeschaltet ist das Modul zurück' );
