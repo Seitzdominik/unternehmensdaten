@@ -294,6 +294,38 @@ final class UNDT_Store {
 	}
 
 	/**
+	 * Leert alle Laufzeit-Caches, sobald sich eine der eigenen Optionen aendert.
+	 *
+	 * Sonst liefert undt_field() bis zum Ende der Anfrage den alten Wert, wenn
+	 * jemand update_option() selbst aufruft, etwa in einem eigenen Skript.
+	 *
+	 * @return void
+	 */
+	public static function register() {
+		$options = array( self::OPTION_PROFILE, self::OPTION_COMPANY, UNDT_Modules::OPTION_SETTINGS );
+
+		foreach ( UNDT_Modules::all() as $module ) {
+			$options[] = $module['option'];
+		}
+
+		foreach ( $options as $option ) {
+			add_action( 'add_option_' . $option, array( __CLASS__, 'flush_all' ) );
+			add_action( 'update_option_' . $option, array( __CLASS__, 'flush_all' ) );
+			add_action( 'delete_option_' . $option, array( __CLASS__, 'flush_all' ) );
+		}
+	}
+
+	/**
+	 * Leert die Caches von Stammdaten, Inhaltsbereichen und Bausteinen.
+	 *
+	 * @return void
+	 */
+	public static function flush_all() {
+		self::flush();
+		UNDT_Content::flush();
+	}
+
+	/**
 	 * Die Berechtigung, die zum Bearbeiten noetig ist.
 	 *
 	 * @return string

@@ -473,6 +473,13 @@ final class UNDT_Modules {
 						'label' => __( 'Erste Frage aufgeklappt zeigen', 'unternehmensdaten' ),
 						'type'  => 'checkbox',
 					),
+					// front, block oder die ID einer Seite, siehe UNDT_Content::sanitize().
+					'schema_page' => array(
+						'label'   => __( 'Auszeichnung auf', 'unternehmensdaten' ),
+						'type'    => 'text',
+						'default' => 'front',
+						'help'    => __( 'Wo der FAQ-Baustein steht, kommt die Auszeichnung immer mit. Zusätzlich hier, auch ohne Baustein, etwa wenn die Fragen in Bricks oder Etch gebaut sind. Die Fragen sollten auf dieser Seite auch zu lesen sein.', 'unternehmensdaten' ),
+					),
 					'schema' => array(
 						'label' => __( 'FAQPage-Auszeichnung ausgeben', 'unternehmensdaten' ),
 						'type'  => 'checkbox',
@@ -493,7 +500,7 @@ final class UNDT_Modules {
 						'label'   => __( 'Banner anzeigen', 'unternehmensdaten' ),
 						'type'    => 'checkbox',
 						'dynamic' => 'banner_show',
-						'help'    => __( 'In Bricks und Etch ist der Wert nur dann „ja“, wenn das Banner auch einen Text hat. So lässt sich ein selbst gestaltetes Banner über eine Bedingung ein- und ausblenden.', 'unternehmensdaten' ),
+						'help'    => __( 'In Bricks und Etch ist der Wert nur dann „ja“, wenn das Banner auch einen Text hat und heute im Zeitraum liegt. So lässt sich ein selbst gestaltetes Banner über eine Bedingung ein- und ausblenden.', 'unternehmensdaten' ),
 					),
 					'type'        => array(
 						'label'   => __( 'Art', 'unternehmensdaten' ),
@@ -536,13 +543,13 @@ final class UNDT_Modules {
 						'type'    => 'checkbox',
 						'default' => 1,
 						'dynamic' => 'banner_dismissible',
-						'help'    => __( 'Die Entscheidung wird lokal im Browser gespeichert. Ändert sich der Text, erscheint das Banner erneut.', 'unternehmensdaten' ),
+						'help'    => __( 'Die Entscheidung wird lokal im Browser gespeichert. Ändert sich der Text, erscheint das Banner erneut. Ein Banner aus Bricks oder Etch schließt das Plugin mit: Gib dem Banner das Attribut data-undt-banner mit dem Wert banner_key und dem Knopf das Attribut data-undt-banner-close.', 'unternehmensdaten' ),
 					),
 					'auto_output' => array(
 						'label'   => __( 'Automatisch am Seitenanfang ausgeben', 'unternehmensdaten' ),
 						'type'    => 'checkbox',
 						'default' => 1,
-						'help'    => __( 'Nutzt wp_body_open. Themes ohne diesen Haken benötigen stattdessen den Shortcode. Ist die Option aus, erscheint das Banner nur dort, wo der Shortcode steht, oder so, wie es in Bricks oder Etch aus den Werten unter den Feldern gebaut ist.', 'unternehmensdaten' ),
+						'help'    => __( 'Nutzt wp_body_open. Themes ohne diesen Haken benötigen stattdessen den Shortcode. Ist die Option aus, erscheint das Banner nur dort, wo der Shortcode steht, oder so, wie es in Bricks oder Etch aus den Werten unter den Feldern gebaut ist. Baust du das Banner selbst, schalte die Option aus, sonst erscheint es zweimal.', 'unternehmensdaten' ),
 					),
 				),
 			),

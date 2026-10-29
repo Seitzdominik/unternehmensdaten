@@ -55,6 +55,12 @@ function apply_filters( $tag, $value, ...$args ) {
 	}
 	return $value;
 }
+function do_action( $tag, ...$args ) {
+	$callbacks = isset( $GLOBALS['undt_filters'][ $tag ] ) ? $GLOBALS['undt_filters'][ $tag ] : array();
+	foreach ( $callbacks as $cb ) {
+		call_user_func_array( $cb, $args );
+	}
+}
 function __return_true() { return true; }
 function __return_false() { return false; }
 
@@ -95,11 +101,24 @@ function serialize_block_attributes( $attributes ) {
 function date_i18n( $f, $t = null ) { return date( $f, null === $t ? time() : $t ); }
 function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['undt_options'] ) ? $GLOBALS['undt_options'][ $k ] : $d; }
 // Wie WordPress: angemeldete Sanitizer laufen beim Speichern mit, siehe register_setting.
-function update_option( $k, $v, $a = null ) { $GLOBALS['undt_options'][ $k ] = apply_filters( 'sanitize_option_' . $k, $v, $k, $v ); return true; }
+// Die Aktion danach wie in WordPress nur, wenn sich der Wert aendert.
+function update_option( $k, $v, $a = null ) {
+	$old = get_option( $k );
+	$GLOBALS['undt_options'][ $k ] = apply_filters( 'sanitize_option_' . $k, $v, $k, $v );
+	if ( $old !== $GLOBALS['undt_options'][ $k ] ) {
+		do_action( 'update_option_' . $k, $old, $GLOBALS['undt_options'][ $k ], $k );
+	}
+	return true;
+}
 function get_permalink( $id ) { return 'https://example.test/?p=' . (int) $id; }
 function get_post_status( $id ) { return isset( $GLOBALS['undt_posts'][ $id ] ) ? $GLOBALS['undt_posts'][ $id ]['status'] : false; }
 function get_the_title( $id ) { return isset( $GLOBALS['undt_posts'][ $id ] ) ? $GLOBALS['undt_posts'][ $id ]['title'] : ''; }
 function get_post( $id ) { return null; }
+// Seitenauswahl und aktuelle Seite fuer die FAQ-Auszeichnung (0.6.1).
+function get_pages( $args = array() ) { $out = array(); foreach ( $GLOBALS['undt_posts'] ?? array() as $id => $p ) { if ( 'publish' === $p['status'] ) { $out[] = (object) array( 'ID' => $id ); } } return $out; }
+function is_front_page() { return ! empty( $GLOBALS['undt_front'] ); }
+function is_singular( $t = '' ) { return ! empty( $GLOBALS['undt_queried'] ); }
+function get_queried_object_id() { return (int) ( $GLOBALS['undt_queried'] ?? 0 ); }
 function get_edit_post_link( $id, $c = null ) { return 'https://example.test/edit?p=' . (int) $id; }
 
 function shortcode_atts( $pairs, $atts, $shortcode = '' ) {
@@ -334,8 +353,8 @@ $GLOBALS['undt_theme_mods'] = array();
 function get_theme_mod( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['undt_theme_mods'] ) ? $GLOBALS['undt_theme_mods'][ $k ] : $d; }
 function wp_date( $f, $t = null ) { $d = null === $t ? current_datetime() : ( new DateTimeImmutable( '@' . (int) $t ) )->setTimezone( new DateTimeZone( 'Europe/Berlin' ) ); return $d->format( $f ); }
 function sanitize_title( $t ) { return trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( strtr( (string) $t, array( 'ä' => 'ae', 'ö' => 'oe', 'ü' => 'ue', 'ß' => 'ss', 'Ä' => 'ae', 'Ö' => 'oe', 'Ü' => 'ue' ) ) ) ), '-' ); }
-function add_option( $k, $v = '', $dep = '', $a = null ) { if ( array_key_exists( $k, $GLOBALS['undt_options'] ) ) { return false; } $GLOBALS['undt_options'][ $k ] = $v; return true; }
-if ( ! function_exists( 'delete_option' ) ) { function delete_option( $k ) { unset( $GLOBALS['undt_options'][ $k ] ); return true; } }
+function add_option( $k, $v = '', $dep = '', $a = null ) { if ( array_key_exists( $k, $GLOBALS['undt_options'] ) ) { return false; } $GLOBALS['undt_options'][ $k ] = $v; do_action( 'add_option_' . $k, $k, $v ); return true; }
+if ( ! function_exists( 'delete_option' ) ) { function delete_option( $k ) { unset( $GLOBALS['undt_options'][ $k ] ); do_action( 'delete_option_' . $k, $k ); return true; } }
 
 require $base . 'includes/class-undt-holidays.php';
 require $base . 'includes/class-undt-professions.php';

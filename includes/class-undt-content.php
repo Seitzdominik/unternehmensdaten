@@ -223,6 +223,11 @@ final class UNDT_Content {
 			$clean['special'] = UNDT_Hours::normalize_special( $clean['special'] );
 		}
 
+		// Startseite, nur beim Baustein oder eine bestimmte Seite.
+		if ( 'faq' === $slug && isset( $clean['schema_page'] ) && ! in_array( $clean['schema_page'], array( 'front', 'block' ), true ) ) {
+			$clean['schema_page'] = absint( $clean['schema_page'] ) > 0 ? (string) absint( $clean['schema_page'] ) : 'front';
+		}
+
 		// Ohne gewaehlte Plattform zaehlt, was die Adresse verraet.
 		if ( 'social' === $slug && ! empty( $clean['items'] ) && is_array( $clean['items'] ) ) {
 			foreach ( $clean['items'] as $index => $item ) {
@@ -304,6 +309,11 @@ final class UNDT_Content {
 						$clean_row[ $sub_key ] = self::sanitize_value( $raw, $sub_field );
 					}
 
+					// Eine gerade angelegte, noch leere Zeile speichert das automatische Speichern nicht mit.
+					if ( self::row_empty( $clean_row ) ) {
+						continue;
+					}
+
 					$rows[] = $clean_row;
 				}
 
@@ -345,6 +355,23 @@ final class UNDT_Content {
 			default:
 				return sanitize_text_field( (string) $value );
 		}
+	}
+
+	/**
+	 * Ob in einer Zeile nichts steht: alle Werte leer, 0 oder ein leeres Array.
+	 * Ein nicht gesetzter Haken zaehlt dabei nicht als Angabe.
+	 *
+	 * @param array $row Bereinigte Zeile.
+	 * @return bool
+	 */
+	private static function row_empty( array $row ) {
+		foreach ( $row as $value ) {
+			if ( is_array( $value ) ? ! empty( $value ) : ! in_array( trim( (string) $value ), array( '', '0' ), true ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

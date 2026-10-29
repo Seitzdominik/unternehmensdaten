@@ -161,12 +161,11 @@ final class UNDT_Todo {
 			);
 		}
 
-		$phrases  = self::phrases();
-		$sections = UNDT_Schema::sections();
-		$phrase   = isset( $phrases[ $section ] )
+		$phrases = self::phrases();
+		$phrase  = isset( $phrases[ $section ] )
 			? $phrases[ $section ]
 			/* translators: %s: Name des Abschnitts. */
-			: sprintf( __( 'Angaben im Abschnitt „%s“', 'unternehmensdaten' ), isset( $sections[ $section ] ) ? $sections[ $section ] : $section );
+			: sprintf( __( 'Angaben im Abschnitt „%s“', 'unternehmensdaten' ), UNDT_Company_View::section_title( $section ) );
 
 		return array(
 			'tone'    => 'open',

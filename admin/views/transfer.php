@@ -25,7 +25,14 @@ $undt_backup = UNDT_Transfer::last_backup();
 		<?php if ( isset( $undt_report['error'] ) ) : ?>
 			<?php UNDT_Ui::amber( UNDT_Transfer::summary( $undt_report ) ); ?>
 		<?php else : ?>
-			<?php UNDT_Ui::info( esc_html( UNDT_Transfer::summary( $undt_report ) ), 'check' ); ?>
+			<?php
+			$undt_relink = UNDT_Transfer::relink_url( $undt_report );
+			UNDT_Ui::info(
+				esc_html( UNDT_Transfer::summary( $undt_report ) )
+					. ( '' === $undt_relink ? '' : ' <a href="' . esc_url( $undt_relink ) . '">' . esc_html__( 'Seiten neu wählen', 'unternehmensdaten' ) . '</a>' ),
+				'check'
+			);
+			?>
 		<?php endif; ?>
 	<?php endif; ?>
 
@@ -74,6 +81,7 @@ $undt_backup = UNDT_Transfer::last_backup();
 					?>
 				</strong>
 				<span class="undt-idone__more"><?php esc_html_e( 'Den Stand davor haben wir automatisch gesichert.', 'unternehmensdaten' ); ?></span>
+				<span class="undt-idone__more" data-undt-import-dropped hidden><span data-undt-import-summary></span> <a href="#" data-undt-import-relink><?php esc_html_e( 'Seiten neu wählen', 'unternehmensdaten' ); ?></a></span>
 			</div>
 			<button type="button" class="undt-btn undt-btn--secondary undt-btn--small" data-undt-import-undo><?php UNDT_Ui::icon( 'undo', 14 ); ?><?php esc_html_e( 'Rückgängig machen', 'unternehmensdaten' ); ?></button>
 		</div>

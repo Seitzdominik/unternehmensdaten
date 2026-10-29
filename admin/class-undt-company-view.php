@@ -38,13 +38,16 @@ final class UNDT_Company_View {
 			'contact'    => array( __( 'Kontakt', 'unternehmensdaten' ), array( 'contact' ) ),
 			'tax'        => array( __( 'Steuer', 'unternehmensdaten' ), array( 'register', 'register2', 'representation', 'capital', 'tax' ) ),
 			'profession' => array( __( 'Beruf', 'unternehmensdaten' ), array( 'profession', 'chamber', 'authority', 'insurance' ) ),
-			'content'    => array( __( 'Inhalte & Datenschutz', 'unternehmensdaten' ), array( 'editorial', 'vsbg', 'privacy', 'other' ) ),
+			'content'    => array( __( 'Inhalte & Datenschutz', 'unternehmensdaten' ), array( 'editorial', 'vsbg', 'privacy' ) ),
+			// Nur sichtbar, wenn ein Theme oder Plugin ueber undt_fields Felder ergaenzt.
+			'custom'     => array( __( 'Eigene Angaben', 'unternehmensdaten' ), array( 'other' ) ),
 		);
 	}
 
 	/**
 	 * Die Karte eines Abschnitts. Unbekannte Abschnitte, etwa aus dem Filter
-	 * undt_fields, landen auf der letzten Karte.
+	 * undt_fields, landen bei den eigenen Angaben. So sieht man auf einen Blick,
+	 * was nicht vom Plugin kommt.
 	 *
 	 * @param string $section Abschnitt.
 	 * @return string
@@ -56,7 +59,30 @@ final class UNDT_Company_View {
 			}
 		}
 
-		return 'content';
+		return 'custom';
+	}
+
+	/**
+	 * Der Titel eines Abschnitts. Ein eigener Abschnitt aus undt_fields nennt
+	 * seinen Titel im Feld als section_label, sonst steht sein Schluessel da.
+	 *
+	 * @param string $section Abschnitt.
+	 * @return string
+	 */
+	public static function section_title( $section ) {
+		$sections = UNDT_Schema::sections();
+
+		if ( isset( $sections[ $section ] ) ) {
+			return $sections[ $section ];
+		}
+
+		foreach ( UNDT_Schema::fields() as $field ) {
+			if ( $section === $field['section'] && ! empty( $field['section_label'] ) ) {
+				return (string) $field['section_label'];
+			}
+		}
+
+		return $section;
 	}
 
 	/**
@@ -355,7 +381,6 @@ final class UNDT_Company_View {
 	public static function form() {
 		$state       = self::state();
 		$company     = UNDT_Store::company();
-		$sections    = UNDT_Schema::sections();
 		$suggestions = self::suggestions();
 		$copy        = UNDT_Access::is_admin();
 		$first       = '';
@@ -397,7 +422,7 @@ final class UNDT_Company_View {
 			);
 
 			foreach ( $tab_sections as $section => $fields ) {
-				self::section( $section, isset( $sections[ $section ] ) ? $sections[ $section ] : $section, $fields, $company, $state['applies'], $suggestions, $copy );
+				self::section( $section, self::section_title( $section ), $fields, $company, $state['applies'], $suggestions, $copy );
 			}
 
 			echo '</div>';

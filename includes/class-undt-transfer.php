@@ -722,6 +722,8 @@ final class UNDT_Transfer {
 					count( $areas )
 				),
 				'summary' => self::summary( $report ),
+				'dropped' => count( $report['dropped'] ),
+				'relink'  => self::relink_url( $report ),
 			)
 		);
 	}
@@ -910,12 +912,29 @@ final class UNDT_Transfer {
 		if ( ! empty( $report['dropped'] ) ) {
 			$text .= ' ' . sprintf(
 				/* translators: %s: Liste der Feldnamen. */
-				__( 'Nicht übernommen wurden die Verknüpfungen zu Seiten und Bildern: %s. Wähle sie hier neu aus.', 'unternehmensdaten' ),
+				__( 'Nicht übernommen wurden die Verknüpfungen zu Seiten und Bildern: %s. Wähle sie neu aus.', 'unternehmensdaten' ),
 				implode( ', ', array_map( array( __CLASS__, 'dropped_label' ), $report['dropped'] ) )
 			);
 		}
 
 		return $text;
+	}
+
+	/**
+	 * Wohin es nach dem Import geht, wenn Seiten neu zu waehlen sind: auf
+	 * Einbinden zu den Rechtsseiten. Leer, wenn keine Seite verworfen wurde.
+	 *
+	 * @param array $report Bericht aus import().
+	 * @return string
+	 */
+	public static function relink_url( array $report ) {
+		foreach ( isset( $report['dropped'] ) ? (array) $report['dropped'] : array() as $key ) {
+			if ( 0 === strpos( (string) $key, 'page_' ) ) {
+				return admin_url( 'admin.php?page=' . UNDT_Admin::SLUG_EMBED ) . '#undt-pages-title';
+			}
+		}
+
+		return '';
 	}
 
 	/**

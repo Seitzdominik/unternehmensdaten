@@ -2813,6 +2813,18 @@
 
 				reset();
 				done.querySelector( '[data-undt-import-title]' ).textContent = json.data.title;
+
+				// Verworfene Verknuepfungen nennen, mit dem Weg zu den Rechtsseiten.
+				var dropped = done.querySelector( '[data-undt-import-dropped]' );
+				var relink  = done.querySelector( '[data-undt-import-relink]' );
+
+				if ( dropped ) {
+					dropped.hidden = ! json.data.dropped;
+					dropped.querySelector( '[data-undt-import-summary]' ).textContent = json.data.summary;
+					relink.hidden = ! json.data.relink;
+					relink.setAttribute( 'href', json.data.relink || '#' );
+				}
+
 				done.hidden = false;
 				done.querySelector( '[data-undt-import-undo]' ).focus();
 				announce( json.data.title );

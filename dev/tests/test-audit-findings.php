@@ -98,6 +98,15 @@ undt_ok( 1 === $clean['special'][0]['closed'], 'Ein Termin ohne Uhrzeiten wird b
 $clean = UNDT_Content::sanitize( 'hours', array( 'special' => array( array( 'date' => '2026-10-04', 'closed' => 0, 'from' => '10:00', 'to' => '14:00', 'note' => '' ) ) ) );
 undt_ok( 0 === $clean['special'][0]['closed'], 'Mit Uhrzeiten bleibt der Schalter aus' );
 
+// Seit 0.6.1: „Termin hinzufügen“ und gleich danach automatisch gespeichert.
+$empty = array( 'date' => '', 'closed' => 0, 'from' => '', 'to' => '', 'note' => '' );
+$clean = UNDT_Content::sanitize( 'hours', array( 'special' => array( array( 'date' => '2026-10-04', 'from' => '10:00', 'to' => '14:00' ), $empty ) ) );
+undt_ok( 1 === count( $clean['special'] ) && '2026-10-04' === $clean['special'][0]['date'], 'Eine leere neue Zeile wird nicht mitgespeichert' );
+$clean = UNDT_Content::sanitize( 'prices', array( 'items' => array( array( 'group' => '', 'label' => '', 'price' => '', 'note' => '' ), array( 'label' => 'Erstgespräch', 'price' => '0' ) ) ) );
+undt_ok( 1 === count( $clean['items'] ) && '0' === $clean['items'][0]['price'], 'Auch bei den Preisen; ein Preis 0 mit Bezeichnung bleibt' );
+$clean = UNDT_Content::sanitize( 'hours', array( 'special' => array( array( 'date' => '', 'note' => 'Betriebsausflug' ) ) ) );
+undt_ok( 1 === count( $clean['special'] ), 'Eine Zeile mit nur einer Notiz bleibt stehen, sie geht nicht verloren' );
+
 /* ------------------------------------------- Arrays statt Strings ------ */
 
 undt_head( 'F-10: Arrays statt Strings in der Eingabe' );

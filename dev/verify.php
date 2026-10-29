@@ -397,9 +397,11 @@ undt_t( in_array( (string) $faq_autoload, array( 'no', 'off' ), true ), 'Neu ang
 
 undt_h( 'Seitenfelder, Sprache und dynamische Daten' );
 
-// Ein eigener Inhaltstyp fuer Rechtstexte und einer, der nicht in Menues erscheint.
+// Ein eigener Inhaltstyp fuer Rechtstexte, einer, der nicht in Menues erscheint
+// (so halten es Plugins fuer Rechtstexte oft), und einer ohne Eintraege.
 register_post_type( 'undt_recht', array( 'public' => true, 'label' => 'Rechtstexte' ) );
-register_post_type( 'undt_vorlage', array( 'public' => true, 'label' => 'Vorlagen', 'show_in_nav_menus' => false ) );
+register_post_type( 'undt_ohnemenue', array( 'public' => true, 'label' => 'Rechtstexte ohne Menü', 'show_in_nav_menus' => false ) );
+register_post_type( 'undt_leer', array( 'public' => true, 'label' => 'Leer' ) );
 
 // So registriert Bricks 2.4 seine Vorlagen: oeffentlich und fuer Menues freigegeben.
 if ( ! post_type_exists( 'bricks_template' ) ) {
@@ -407,11 +409,12 @@ if ( ! post_type_exists( 'bricks_template' ) ) {
 }
 
 $recht_id = wp_insert_post( array( 'post_type' => 'undt_recht', 'post_status' => 'publish', 'post_title' => 'AGB als Rechtstext' ) );
-wp_insert_post( array( 'post_type' => 'undt_vorlage', 'post_status' => 'publish', 'post_title' => 'Nur eine Vorlage' ) );
+wp_insert_post( array( 'post_type' => 'undt_ohnemenue', 'post_status' => 'publish', 'post_title' => 'Datenschutz ohne Menü' ) );
+wp_insert_post( array( 'post_type' => 'bricks_template', 'post_status' => 'publish', 'post_title' => 'Nur eine Vorlage' ) );
 
 $link_types = UNDT_Controls::link_post_types();
-undt_t( isset( $link_types['page'], $link_types['undt_recht'] ), 'Seitenfelder wählen aus Seiten und eigenen Inhaltstypen: ' . implode( ', ', array_keys( $link_types ) ) );
-undt_t( ! isset( $link_types['undt_vorlage'] ) && ! isset( $link_types['bricks_template'] ) && ! isset( $link_types['post'] ) && ! isset( $link_types['attachment'] ), 'Vorlagen, Bricks-Vorlagen, Beiträge und Medien fehlen in der Auswahl' );
+undt_t( isset( $link_types['page'], $link_types['undt_recht'], $link_types['undt_ohnemenue'] ), 'Seitenfelder wählen aus Seiten und eigenen Inhaltstypen, auch ohne Menü-Freigabe: ' . implode( ', ', array_keys( $link_types ) ) );
+undt_t( ! isset( $link_types['undt_leer'] ) && ! isset( $link_types['bricks_template'] ) && ! isset( $link_types['post'] ) && ! isset( $link_types['attachment'] ), 'Leere Typen, Bricks-Vorlagen, Beiträge und Medien fehlen in der Auswahl' );
 
 $company = call_user_func(
 	$registered['undt_company']['sanitize_callback'],
@@ -449,7 +452,7 @@ $terms_select = undt_select_of( $pages_html, 'page_terms' );
 
 undt_t( (bool) preg_match( '/<optgroup label="Rechtstexte">[^<]*<option[^>]*value="' . (int) $recht_id . '"[^>]*selected/', $terms_select ), 'Auswahl zeigt den Rechtstext in eigener Gruppe und wählt ihn' );
 undt_t( false !== strpos( $terms_select, '<optgroup label="' . esc_attr( get_post_type_object( 'page' )->labels->name ) . '">' ), 'Seiten stehen in eigener Gruppe' );
-undt_t( false === strpos( $pages_html, 'Nur eine Vorlage' ), 'Vorlagen stehen nicht in der Auswahl' );
+undt_t( false === strpos( $pages_html, 'Nur eine Vorlage' ) && false !== strpos( $pages_html, 'Datenschutz ohne Menü' ), 'Vorlagen stehen nicht in der Auswahl, Rechtstexte ohne Menü schon' );
 undt_t( (bool) preg_match( '/name="undt_company\[page_terms\]\[url\]" value=""[^>]*data-undt-link-url hidden/', $pages_html ), 'Adressfeld neben einer Auswahl ist leer und verborgen' );
 undt_t( (bool) preg_match( '/name="undt_company\[page_accessibility\]\[url\]" value="\/barrierefreiheit"[^>]*data-undt-link-url \/>/', $pages_html ), 'Adressfeld zeigt die eigene Adresse und ist sichtbar' );
 undt_t( false !== strpos( undt_select_of( $pages_html, 'page_accessibility' ), '<option value="url" selected' ), '„Eigene Adresse …“ ist gewählt' );

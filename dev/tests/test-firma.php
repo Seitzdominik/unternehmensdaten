@@ -55,9 +55,34 @@ undt_seed( array( 'legal_form' => 'sole', 'vat_status' => 'none' ), array( 'comp
 
 undt_head( 'Registerkarten aus dem Register' );
 
-undt_ok( array( 'address', 'contact', 'tax', 'profession', 'content' ) === array_keys( UNDT_Company_View::tabs() ), 'Anschrift, Kontakt, Steuer, Beruf, Inhalte & Datenschutz' );
+undt_ok( array( 'address', 'contact', 'tax', 'profession', 'content', 'custom' ) === array_keys( UNDT_Company_View::tabs() ), 'Anschrift, Kontakt, Steuer, Beruf, Inhalte & Datenschutz, Eigene Angaben' );
 undt_ok( 'address' === UNDT_Company_View::tab_of( 'identity' ) && 'profession' === UNDT_Company_View::tab_of( 'chamber' ) && 'content' === UNDT_Company_View::tab_of( 'privacy' ), 'Jeder Abschnitt gehoert zu einer Karte' );
-undt_ok( 'content' === UNDT_Company_View::tab_of( 'eigener_abschnitt' ), 'Eigene Abschnitte aus undt_fields landen auf der letzten Karte' );
+undt_ok( 'custom' === UNDT_Company_View::tab_of( 'eigener_abschnitt' ) && 'custom' === UNDT_Company_View::tab_of( 'other' ), 'Eigene Abschnitte aus undt_fields landen bei den eigenen Angaben' );
+undt_ok( ! UNDT_Company_View::state()['tabs']['custom']['visible'], 'Ohne eigene Felder bleibt die Karte verborgen' );
+
+// Eigene Felder ueber den Filter (0.6.1): ohne Abschnitt, mit eigenem und mit vorhandenem.
+$undt_schema_cache = new ReflectionProperty( 'UNDT_Schema', 'fields' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$undt_schema_cache->setAccessible( true ); // Ab 8.1 ohne Wirkung, ab 8.5 veraltet.
+}
+add_filter(
+	'undt_fields',
+	static function ( $fields ) {
+		$fields['shop_note']   = array( 'label' => 'Hinweis' );
+		$fields['shop_street'] = array( 'label' => 'Straße Laden', 'section' => 'shop', 'section_label' => 'Ladengeschäft' );
+		$fields['branch_city'] = array( 'label' => 'Ort der Filiale', 'section' => 'address' );
+		return $fields;
+	}
+);
+$undt_schema_cache->setValue( null, null );
+$grouped = UNDT_Company_View::grouped();
+undt_ok( isset( $grouped['custom']['other']['shop_note'], $grouped['custom']['shop']['shop_street'], $grouped['address']['address']['branch_city'] ), 'Ohne Abschnitt und mit neuem Abschnitt: Eigene Angaben; mit vorhandenem Abschnitt: dort' );
+undt_ok( UNDT_Company_View::state()['tabs']['custom']['visible'] && 'Eigene Angaben' === UNDT_Company_View::state()['tabs']['custom']['label'], 'Mit eigenen Feldern erscheint die Karte' );
+undt_ok( 'Ladengeschäft' === UNDT_Company_View::section_title( 'shop' ) && 'Eigene Felder' === UNDT_Company_View::section_title( 'other' ) && 'Anschrift' === UNDT_Company_View::section_title( 'address' ), 'Titel aus section_label, sonst aus dem Register' );
+$undt_form = undt_html( static function () { UNDT_Company_View::form(); } );
+undt_ok( false !== strpos( $undt_form, 'id="undt-panel-custom"' ) && false !== strpos( $undt_form, 'Ladengeschäft</h2>' ), 'Die Seite zeigt Karte und Abschnitt' );
+remove_all_filters( 'undt_fields' );
+$undt_schema_cache->setValue( null, null );
 
 $grouped = UNDT_Company_View::grouped();
 $all     = array();

@@ -4,7 +4,7 @@ Tags: impressum, datenschutz, dsgvo, ddg, oeffnungszeiten
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,9 +82,9 @@ Slim SEO, Bricks, Etch und der Block-Editor bekommen die Stammdaten als dynamisc
 * **Etch** `{options.undt.phone}` in Texten und Attributen, auch mit Modifikatoren wie `{options.undt.company_name.toUpperCase()}`
 * **Gutenberg** ein fertiger Absatz zum Einfügen, siehe unten
 
-Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
+Enthalten sind alle Stammdaten, die beim eingestellten Profil gelten, die Anschrift in einer Zeile und die Rechtsseiten als Adresse. Bricks und Etch bekommen zusätzlich fertige Links wie `{undt_phone_link}` und `{undt_email_link}`, die heutige Öffnungszeit `{undt_hours_today}`, den Geöffnet-Status `{undt_open_now}` und `{undt_is_open}` sowie alle Angaben des Infobanners: `banner_show`, `banner_type`, `banner_text`, `banner_link_text`, `banner_link_url` und `banner_dismissible`. Damit lässt sich das Banner in Bricks oder Etch selbst gestalten und über eine Bedingung auf `banner_show` ein- und ausblenden. `banner_show` setzt Haken, Text und Zeitraum voraus. `banner_type` liefert `neutral`, `info` oder `warning`, auch für alte Werte. Beim Nachbau die automatische Ausgabe abschalten; zum Schließen `data-undt-banner` mit `banner_key` ans Banner, `data-undt-banner-close` an den Knopf. Ja-Nein-Werte liefert Bricks als 1 oder leer, Etch als true oder false. Öffnungsangaben und Banner fehlen bei Slim SEO.
 
-In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu einige, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus dem Theme, ersatzweise des Website-Icons. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
+In den Schema-Einstellungen von Slim SEO Pro stehen dieselben Werte in derselben Schreibweise, dazu einige, die nur dort sinnvoll sind: `{{ undt.social_profiles }}` liefert die Adressen aller Social-Profile und `{{ undt.logo_url }}` die Adresse des Logos aus dem Theme, ersatzweise des Website-Icons. Dazu `geo_lat`, `geo_lng`, `price_range` und `area_served` aus Suchmaschinen. In einem Feld, das sich vervielfältigen lässt, etwa `sameAs`, wird aus jedem Profil ein eigener Eintrag. So stehen die Profile nur einmal im Plugin und nicht zusätzlich in den Schema-Einstellungen.
 
 Für `openingHoursSpecification` gibt es drei Listen, die zusammengehören: `{{ undt.hours_days }}`, `{{ undt.hours_opens }}` und `{{ undt.hours_closes }}`. In die drei Felder der Gruppe eingesetzt, entsteht je Tag und Zeitfenster ein Eintrag — eine Mittagspause also zwei, ein geschlossener Tag keinen. Die Gruppe muss dafür vervielfältigbar sein, angelegt wird sie nur einmal.
 
@@ -111,9 +111,9 @@ Für Bricks, Breakdance und Etch stehen die Daten zusätzlich als PHP-Funktionen
 * `undt_hours_special` — nur künftige Sondertermine: date, date_label, closed, from, to, times, note
 * `undt_prices` — group, label, price, note
 * `undt_faq` — group, question, answer
-* `undt_social` — platform, platform_label, label, url
+* `undt_social` — platform, platform_label, label, url, icon, new_tab
 
-Jede Zeile enthält neben den Rohwerten ein fertig formatiertes `times`, weil Page Builder mit verschachtelten Arrays wenig anfangen können.
+Jede Zeile enthält neben den Rohwerten ein fertig formatiertes `times`, weil Page Builder mit verschachtelten Arrays wenig anfangen können. `closed` und `new_tab` sind Wahrheitswerte.
 
 = Funktionen =
 
@@ -128,7 +128,7 @@ Jede Zeile enthält neben den Rohwerten ein fertig formatiertes `times`, weil Pa
 
 **Bricks** zeigt die Query-Namen im Schleifen-Dialog unter „Unternehmensdaten“. Einzelwerte kommen am einfachsten über die dynamischen Daten, siehe oben. In der Schleife liest `{echo:undt_loop('question')}` das Feld der aktuellen Zeile. Das Plugin gibt seine Funktionen für das echo-Tag selbst frei. In Bricks muss dafür zusätzlich unter Einstellungen › Custom code die Code-Ausführung für die eigene Benutzerrolle eingeschaltet sein. Geprüft mit Bricks 2.4.
 
-**Etch** bekommt Einzelwerte unter `{options.undt.…}`. Schleifen entstehen in einem Code-Element über `undt_query()`. Geprüft mit Etch 1.6.
+**Etch** bekommt Einzelwerte unter `{options.undt.…}` und jede Schleifen-Quelle ohne `undt_` als Liste: Eine Schleife mit dem Ziel `options.undt.prices` liefert `{item.label}`, einzeln geht `{options.undt.prices.0.label}`. Geprüft mit Etch 1.6.
 
 **Breakdance** führt PHP in einem Code-Element aus. Einzelwerte liefert `undt_get()`, Schleifen `undt_query()`.
 
@@ -142,7 +142,7 @@ Ein REST-Endpunkt fehlt bewusst: Page Builder laufen auf dem Server und brauchen
 
 **Keine Markenlogos für Social Media.** Plattformlogos sind geschützte Zeichen, die ein Plugin nicht ungefragt mitbringen sollte. Jeder Link trägt stattdessen eine eigene Klasse und ein `data-platform`-Attribut, an die sich ein Icon-Set des Themes per CSS anhängen lässt.
 
-**FAQPage-Auszeichnung standardmäßig aus.** Google hat FAQ-Rich-Results am 07.05.2026 vollständig eingestellt, auch für die bis dahin noch berechtigten Behörden- und Gesundheitsseiten. Die Auszeichnung bleibt gültiges schema.org und kann für die maschinelle Auswertung nützlich sein, ist aber kein SEO-Vorteil mehr.
+**FAQPage-Auszeichnung standardmäßig aus.** Google hat FAQ-Rich-Results am 07.05.2026 vollständig eingestellt, auch für die bis dahin noch berechtigten Behörden- und Gesundheitsseiten. Die Auszeichnung bleibt gültiges schema.org und kann für die maschinelle Auswertung nützlich sein, ist aber kein SEO-Vorteil mehr. Eingeschaltet steht sie beim Shortcode und, auch ohne ihn, auf der Startseite oder einer gewählten Seite.
 
 **`[undt_open_now]` und Seiten-Caches.** Der Status wird auf dem Server in der Zeitzone der Website berechnet. Auf Seiten, die aus einem Seiten-Cache ausgeliefert werden, kann er deshalb veralten. Die Ausgabe trägt ein `data-undt-checked`-Attribut mit dem Zeitpunkt der Berechnung. Wer den Status prominent einsetzt, sollte die betreffende Seite vom Cache ausnehmen oder auf `[undt_hours_today]` ausweichen, das nur tagesgenau sein muss.
 
@@ -177,7 +177,7 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 
 == Filter ==
 
-* `undt_fields` ergänzt eigene Stammdaten-Felder, die automatisch Sanitisierung, Escaping und Shortcode-Auflösung durchlaufen
+* `undt_fields` ergänzt eigene Stammdaten-Felder, die automatisch Sanitisierung, Escaping und Shortcode-Auflösung durchlaufen, auf Firma unter „Eigene Angaben“. `'section' => 'address'` stellt ein Feld in einen vorhandenen Abschnitt, `'section_label'` benennt einen neuen
 * `undt_modules` ergänzt eigene Inhaltsbereiche
 * `undt_capability` ändert die Berechtigung für Admin-Aufgaben, Standard `manage_options`. Wer zusätzlich die Angaben pflegen darf, legt Einstellungen über Rollen fest (Recht `undt_edit_data`)
 * `undt_css` passt das strukturelle CSS an
@@ -189,7 +189,7 @@ Das Plugin ist keine Rechtsberatung. Es verwaltet Angaben und gibt sie strukturi
 * `undt_update_allow_prerelease` bietet Vorabversionen als Aktualisierung an, etwa auf einer Testseite
 * `undt_social_icon` ersetzt das Symbol einer Plattform, etwa für Xing oder kununu, die WordPress nicht mitbringt
 * `undt_auto_banner` legt fest, wo das Banner automatisch am Seitenanfang erscheint. Standard ist überall außer in der Oberfläche von Etch und Bricks
-* `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und eigene Inhaltstypen, die in Menüs erscheinen dürfen, ohne Beiträge und Produkte
+* `undt_link_post_types` legt fest, aus welchen Inhaltstypen die Rechtsseiten gewählt werden. Standard sind Seiten und öffentliche eigene Inhaltstypen mit veröffentlichten Einträgen, ohne Beiträge, Produkte und Vorlagen
 
 == Sichern und übertragen ==
 
@@ -205,6 +205,20 @@ Mit WP-CLI geht dasselbe ohne Backend:
 * `wp undt import firma.json` spielt sie ein, mit `--yes` ohne Rückfrage, und sichert vorher wie die Seite
 
 == Changelog ==
+
+= 0.6.1 =
+Rückmeldungen aus dem ersten Einsatz mit Etch und Slim SEO Pro.
+
+* Neu: Etch bekommt neben den Einzelwerten jede Schleifen-Quelle als Liste: `options.undt.prices`, `faq`, `hours`, `hours_grouped`, `hours_special` und `social`. Eine Etch-Schleife läuft direkt darüber, einzelne Zeilen gibt es mit `{options.undt.prices.0.label}`. Bisher ging das nur in einem Code-Element
+* Neu: Die Schema-Einstellungen von Slim SEO Pro bekommen Breiten- und Längengrad, Preisniveau und Einzugsgebiet aus Suchmaschinen
+* Neu: Die FAQ-Auszeichnung steht auf Wunsch auch ohne Shortcode im Kopf der Startseite oder einer gewählten Seite, etwa wenn die Fragen in Bricks oder Etch gebaut sind. Auf einer Seite erscheint sie höchstens einmal
+* Neu: Ein in Bricks oder Etch nachgebautes Banner lässt sich schließen wie das mitgelieferte: `data-undt-banner` mit dem neuen Wert `banner_key` am Banner, `data-undt-banner-close` am Knopf. Ein geschlossenes Banner blitzt beim nächsten Aufruf nicht auf
+* Neu: Felder aus `undt_fields` stehen auf Firma in einer eigenen Karte „Eigene Angaben“ statt am Ende von Inhalte & Datenschutz. Ein Feld kann über `section` in einen vorhandenen Abschnitt gehen oder über `section_label` einen eigenen bekommen
+* Rechtsseiten lassen sich auch aus Inhaltstypen wählen, die nicht für Menüs freigegeben sind, wie es Plugins für Rechtstexte oft halten. Leere Typen, Blöcke und Vorlagen bleiben draußen. Nach einem Import führt der Bericht mit „Seiten neu wählen“ direkt zu den Rechtsseiten
+* Behoben: Die Übersicht meldete ein falsch verknüpftes Impressum, wenn die Seite das Impressum ohne Baustein enthielt. Jetzt zählen auch der Titel und „Angaben gemäß § 5 DDG“, auch in Bricks
+* Behoben: Wer `update_option()` selbst aufrief, bekam von `undt_field()` und `undt_get()` bis zum Ende der Anfrage den alten Wert
+* Behoben: Eine gerade angelegte, noch leere Zeile, etwa nach „Termin hinzufügen“, wurde beim automatischen Speichern mitgespeichert
+* Hinweise an den Feldern des Infobanners für den Nachbau: was `banner_show` voraussetzt und dass die automatische Ausgabe dann aus gehört. Achtung beim Vergleich auf `banner_type`: die Arten heißen seit 0.6.0 `neutral`, `info` und `warning`, ein Vergleich auf `success` oder `urgent` greift nicht mehr
 
 = 0.6.0 =
 Die Oberfläche ist neu, die Ausgabe auf der Website bleibt, wie sie war. Shortcodes, dynamische Daten und Schleifen-Quellen funktionieren unverändert.

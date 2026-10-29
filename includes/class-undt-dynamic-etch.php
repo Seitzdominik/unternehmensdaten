@@ -5,6 +5,7 @@
  * Etch setzt die Werte ueber ihren Namen ein, `{options.undt.phone}`, und
  * bekommt sie ueber einen einzigen Haken. Ja-Nein-Werte gehen als echte
  * Wahrheitswerte hinaus, damit sich Bedingungen darauf stuetzen koennen.
+ * Seit 0.6.1 stehen daneben die Listen fuer Schleifen, `options.undt.prices`.
  *
  * Die Werte selbst liefert UNDT_Dynamic. Diese Klasse kennt nur Etch.
  *
@@ -47,8 +48,25 @@ final class UNDT_Dynamic_Etch {
 			}
 		}
 
-		$data['undt'] = $values;
+		$data['undt'] = $values + self::lists();
 
 		return $data;
+	}
+
+	/**
+	 * Die Schleifen-Quellen als Listen, ohne den Vorsatz undt_: Eine Etch-Schleife
+	 * mit dem Ziel options.undt.prices laeuft ueber die Preise, einzelne Zeilen gibt
+	 * es mit {options.undt.prices.0.label}. Dieselben Zeilen wie in Bricks.
+	 *
+	 * @return array Schluessel => Zeilen.
+	 */
+	public static function lists() {
+		$lists = array();
+
+		foreach ( array_keys( UNDT_Api::sources() ) as $source ) {
+			$lists[ substr( $source, strlen( 'undt_' ) ) ] = UNDT_Api::query( $source );
+		}
+
+		return $lists;
 	}
 }

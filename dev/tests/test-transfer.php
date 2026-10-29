@@ -133,6 +133,14 @@ $undt_text = UNDT_Transfer::summary( $undt_bericht );
 undt_ok( false !== strpos( $undt_text, 'Bereiche eingespielt' ), 'Der Bericht nennt die Zahl der Bereiche' );
 undt_ok( false !== strpos( $undt_text, 'Seite: Impressum' ) && false === strpos( $undt_text, 'page_imprint' ), 'Und was neu auszuwaehlen ist, mit Bezeichnung statt Schluessel' );
 undt_ok( 'Kaputt.' === UNDT_Transfer::summary( array( 'error' => 'Kaputt.' ) ), 'Ein Fehler steht als Satz darin' );
+undt_ok( false === strpos( $undt_text, 'hier neu' ), 'Kein „hier“: der Satz steht auch in der Kommandozeile' );
+
+// Seit 0.6.1 fuehrt der Bericht direkt zu den Rechtsseiten.
+undt_ok( false !== strpos( UNDT_Transfer::relink_url( $undt_bericht ), 'page=undt-embed#undt-pages-title' ), 'Mit verworfener Seite: Link auf Einbinden › Rechtsseiten' );
+undt_ok( '' === UNDT_Transfer::relink_url( array( 'dropped' => array( 'seo.logo' ) ) ) && '' === UNDT_Transfer::relink_url( array( 'error' => 'x' ) ), 'Ohne verworfene Seite kein Link' );
+$undt_view = (string) file_get_contents( UNDT_TEST_BASE . 'admin/views/transfer.php' );
+$undt_js   = (string) file_get_contents( UNDT_TEST_BASE . 'admin/assets/admin.js' );
+undt_ok( false !== strpos( $undt_view, 'data-undt-import-relink' ) && false !== strpos( $undt_js, "relink.setAttribute( 'href', json.data.relink || '#' )" ), 'Auch nach dem Einspielen ohne Neuladen' );
 
 /* ---------------------------------------------------------- Ergebnis ---- */
 

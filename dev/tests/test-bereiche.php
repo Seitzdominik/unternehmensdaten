@@ -239,6 +239,35 @@ undt_ok( false !== strpos( $undt_page, 'aria-expanded="true"' ), 'Eine neue Frag
 undt_ok( false !== strpos( $undt_page, 'name="undt_faq[items][0][group]" value="Allgemein"' ), 'Die Gruppe bleibt erhalten' );
 undt_ok( false !== strpos( $undt_page, 'Für Suchmaschinen' ) && false !== strpos( $undt_page, 'name="undt_faq[schema]" value="1" />' ), 'FAQ-Auszeichnung zugeklappt und aus' );
 
+// Seit 0.6.1 auch ohne Shortcode, standardmaessig auf der Startseite.
+undt_ok( false !== strpos( $undt_page, 'name="undt_faq[schema_page]"' ) && false !== strpos( $undt_page, '<option value="front" selected="selected">Startseite</option>' ), 'Auswahl der Seite, voreingestellt die Startseite' );
+undt_ok( 'front' === UNDT_Content::sanitize( 'faq', array( 'schema_page' => 'irgendwas' ) )['schema_page'] && '42' === UNDT_Content::sanitize( 'faq', array( 'schema_page' => '42' ) )['schema_page'] && 'block' === UNDT_Content::sanitize( 'faq', array( 'schema_page' => 'block' ) )['schema_page'], 'Gespeichert wird front, block oder eine Seiten-ID' );
+
+$undt_faq_head = static function () {
+	UNDT_SchemaOrg::reset_faq();
+	ob_start();
+	UNDT_SchemaOrg::faq_head();
+	return (string) ob_get_clean();
+};
+undt_seed_module( 'faq', array( 'schema' => 1, 'items' => array( array( 'group' => '', 'question' => 'Gibt es Parkplätze?', 'answer' => 'Ja.' ) ) ) );
+$GLOBALS['undt_front'] = true;
+$undt_head_html = $undt_faq_head();
+undt_ok( false !== strpos( $undt_head_html, '"@type":"FAQPage"' ) && false !== strpos( $undt_head_html, 'Gibt es Parkplätze?' ), 'Auf der Startseite im Kopf, ohne Shortcode' );
+undt_ok( '' === UNDT_SchemaOrg::faq_script( UNDT_Content::group_rows( UNDT_Content::rows( 'faq', 'items' ) ) ), 'Steht dort auch der Shortcode, kommt sie nicht ein zweites Mal' );
+$GLOBALS['undt_front'] = false;
+undt_ok( '' === $undt_faq_head(), 'Auf anderen Seiten nicht' );
+undt_seed_module( 'faq', array( 'schema' => 1, 'schema_page' => '42', 'items' => array( array( 'group' => '', 'question' => 'Gibt es Parkplätze?', 'answer' => 'Ja.' ) ) ) );
+$GLOBALS['undt_queried'] = 42;
+undt_ok( '' !== $undt_faq_head(), 'Auf der gewählten Seite' );
+undt_seed_module( 'faq', array( 'schema' => 1, 'schema_page' => 'block', 'items' => array( array( 'group' => '', 'question' => 'Gibt es Parkplätze?', 'answer' => 'Ja.' ) ) ) );
+undt_ok( '' === $undt_faq_head(), '„Nur wo der Baustein steht“: im Kopf nichts' );
+undt_seed_module( 'faq', array( 'schema' => 0, 'items' => array( array( 'group' => '', 'question' => 'Gibt es Parkplätze?', 'answer' => 'Ja.' ) ) ) );
+$GLOBALS['undt_front']   = true;
+undt_ok( '' === $undt_faq_head(), 'Ohne den Schalter nirgends' );
+$GLOBALS['undt_front']   = false;
+$GLOBALS['undt_queried'] = 0;
+UNDT_SchemaOrg::reset_faq();
+
 /* -------------------------------------------------- 7. Suchmaschinen ---- */
 
 undt_head( 'Suchmaschinen' );
@@ -437,6 +466,20 @@ undt_ok( (bool) preg_match( '/\.undt-value__value--empty \{\n\tcolor: var\(--und
 undt_ok( false === strpos( $undt_css, '.undt-dot {' ) && false === strpos( $undt_css, '.undt-section-title' ), 'Keine Regeln mehr für Klassen, die keine Seite verwendet' );
 undt_ok( ! method_exists( 'UNDT_Shortcodes', 'catalog' ) && ! method_exists( 'UNDT_Copy', 'table' ) && ! method_exists( 'UNDT_Fields', 'question_card' ), 'Die Reste der alten Seiten sind fort' );
 undt_ok( 'Seite: Impressum' === UNDT_Transfer::dropped_label( 'page_imprint' ) && 'Suchmaschinen: Typ' === UNDT_Transfer::dropped_label( 'seo.schema_type' ), 'Der Importbericht nennt Bezeichnungen statt Schlüssel' );
+
+/* ------------------------------- Neuer Wert in derselben Anfrage (0.6.1) --- */
+
+undt_head( 'Eigenes update_option: der neue Wert gilt sofort' );
+
+UNDT_Store::register();
+update_option( 'undt_banner', array( 'text' => 'Alt' ) );
+undt_ok( 'Alt' === undt_field( 'banner', 'text' ), 'Ausgangswert gelesen und zwischengespeichert' );
+update_option( 'undt_banner', array( 'text' => 'Neu' ) );
+undt_ok( 'Neu' === undt_field( 'banner', 'text' ), 'Nach update_option ohne eigenes flush() der neue Wert' );
+update_option( 'undt_company', array_merge( (array) get_option( 'undt_company', array() ), array( 'company_name' => 'Sofort GmbH' ) ) );
+undt_ok( 'Sofort GmbH' === undt_get( 'company_name' ), 'Auch bei den Stammdaten' );
+delete_option( 'undt_banner' );
+undt_ok( '' === undt_field( 'banner', 'text' ), 'Und nach delete_option der leere Stand' );
 
 /* ---------------------------------------------------------- Ergebnis ---- */
 

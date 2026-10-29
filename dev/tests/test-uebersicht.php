@@ -206,6 +206,12 @@ foreach ( UNDT_Audit::run() as $issue ) {
 }
 undt_ok( ! $still, 'Steht der Baustein dort, entfaellt die Warnung' );
 
+// Ohne Baustein: ein Impressum als eigener Text gilt auch (Fehlalarm aus 0.6.0).
+undt_ok( UNDT_Audit::names_imprint( 'Impressum' ), 'Titel „Impressum“ genuegt' );
+undt_ok( UNDT_Audit::names_imprint( '<h2>Angaben gemäß § 5 DDG</h2>' ), '„Angaben gemäß § 5 DDG“ genuegt' );
+undt_ok( UNDT_Audit::names_imprint( 'Angaben nach §&nbsp;5 TMG' ) && UNDT_Audit::names_imprint( "Angaben gem\u{00e4}\u{00df} \u{00a7}\u{00a0}5 DDG" ), 'Auch mit geschuetztem Leerzeichen und altem TMG' );
+undt_ok( ! UNDT_Audit::names_imprint( 'Danke für deine Nachricht. § 15 DDG' ), 'Eine Danke-Seite bleibt ein Fehler, § 15 ist nicht § 5' );
+
 /* ---------------------------------------------------- 5. Erststart ---- */
 
 undt_head( 'Erststart' );

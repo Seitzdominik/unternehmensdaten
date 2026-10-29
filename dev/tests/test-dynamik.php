@@ -44,6 +44,8 @@ foreach (
 		'bricks_template' => array( 'Templates', false, true ),
 		'ohne_menue'      => array( 'Ohne Menü', false, false ),
 		'legal'           => array( 'Rechtstexte', false, true ),
+		// Ohne einen veroeffentlichten Eintrag (0.6.1).
+		'leer'            => array( 'Leer', false, true ),
 	) as $undt_type => $undt_meta
 ) {
 	$GLOBALS['undt_post_types'][ $undt_type ] = (object) array(
@@ -82,6 +84,13 @@ function get_posts( $args ) {
 			}
 		)
 	);
+}
+function wp_count_posts( $type ) {
+	$publish = 0;
+	foreach ( $GLOBALS['undt_all_posts'] as $post ) {
+		$publish += ( $post->post_type === $type && 'publish' === $post->post_status ) ? 1 : 0;
+	}
+	return (object) array( 'publish' => $publish );
 }
 function wp_list_pluck( $list, $field ) {
 	return array_map( static function ( $item ) use ( $field ) { return is_object( $item ) ? $item->$field : $item[ $field ]; }, $list );
@@ -184,7 +193,9 @@ undt_ok( 1 === count( array_filter( $undt_issues, static function ( $i ) { retur
 
 undt_head( 'Seitenfeld: Auswahl im Formular' );
 
-undt_ok( array( 'page' => 'Seiten', 'legal' => 'Rechtstexte' ) === UNDT_Controls::link_post_types(), 'Seiten und eigene Typen, ohne Beitraege, Produkte, Medien, Bricks-Vorlagen und nicht verlinkbare Typen' );
+undt_ok( array( 'page' => 'Seiten', 'ohne_menue' => 'Ohne Menü', 'legal' => 'Rechtstexte' ) === UNDT_Controls::link_post_types(), 'Seiten und eigene Typen, ohne Beitraege, Produkte, Medien und Bricks-Vorlagen' );
+undt_ok( ! isset( UNDT_Controls::link_post_types()['leer'] ), 'Ein Typ ohne veroeffentlichten Eintrag fehlt' );
+undt_ok( in_array( 'wp_block', UNDT_Controls::LINK_EXCLUDED_TYPES, true ) && in_array( 'wp_template', UNDT_Controls::LINK_EXCLUDED_TYPES, true ), 'Blöcke und Vorlagen des Block-Editors nie' );
 
 add_filter(
 	'undt_link_post_types',
@@ -194,7 +205,7 @@ add_filter(
 		return $types;
 	}
 );
-undt_ok( array( 'page' => 'Seiten', 'legal' => 'Rechtstexte', 'post' => 'Beiträge' ) === UNDT_Controls::link_post_types(), 'Filter ergaenzt Typen, unbekannte fallen weg' );
+undt_ok( array( 'page' => 'Seiten', 'ohne_menue' => 'Ohne Menü', 'legal' => 'Rechtstexte', 'post' => 'Beiträge' ) === UNDT_Controls::link_post_types(), 'Filter ergaenzt Typen, unbekannte fallen weg' );
 remove_all_filters( 'undt_link_post_types' );
 
 $undt_html = undt_render_control( 'page_terms', '12' );
@@ -202,7 +213,7 @@ undt_ok( false !== strpos( $undt_html, '<select id="undt-page_terms" name="undt_
 undt_ok( false !== strpos( $undt_html, '<optgroup label="Rechtstexte"><option class="level-0" value="12" selected="selected">AGB</option></optgroup>' ), 'Eintrag des eigenen Typs steht in seiner Gruppe und ist gewaehlt' );
 undt_ok( false !== strpos( $undt_html, '<optgroup label="Seiten">' ), 'Seiten stehen in eigener Gruppe' );
 undt_ok( false === strpos( $undt_html, 'Vorlage' ), 'Builder-Vorlagen fehlen' );
-undt_ok( false === strpos( $undt_html, 'Nicht verlinkbar' ), 'Nicht fuer Menues freigegebene Typen fehlen' );
+undt_ok( false !== strpos( $undt_html, 'Nicht verlinkbar' ), 'Auch nicht fuer Menues freigegebene Typen stehen zur Wahl, etwa aus Plugins fuer Rechtstexte (0.6.1)' );
 undt_ok( false !== strpos( $undt_html, 'Datenschutz alt (Entwurf)' ), 'Entwurf traegt seinen Status' );
 undt_ok( false === strpos( $undt_html, 'Papierkorb' ), 'Eintraege im Papierkorb fehlen' );
 undt_ok( (bool) preg_match( '/name="undt_company\[page_terms\]\[url\]" value=""[^>]*data-undt-link-url hidden/', $undt_html ), 'Adressfeld ist leer und verborgen' );
@@ -222,7 +233,7 @@ undt_ok( false !== strpos( $undt_html, '<option value="0" selected="selected">' 
 $undt_html = undt_render_control( 'page_imprint', '999' );
 undt_ok( false !== strpos( $undt_html, '<optgroup label="Bisherige Auswahl"><option value="999" selected="selected">Nicht mehr vorhanden (ID 999)</option></optgroup>' ), 'Geloeschter Eintrag bleibt als solcher sichtbar und gewaehlt' );
 
-undt_ok( 2 === $GLOBALS['undt_get_posts_calls'], 'Eintraege werden je Typ nur einmal geladen (' . $GLOBALS['undt_get_posts_calls'] . ' Abfragen)' );
+undt_ok( 3 === $GLOBALS['undt_get_posts_calls'], 'Eintraege werden je Typ nur einmal geladen (' . $GLOBALS['undt_get_posts_calls'] . ' Abfragen)' );
 undt_ok( array( 'publish', 'private', 'draft', 'pending', 'future' ) === $GLOBALS['undt_get_posts_args']['post_status'], 'Auch Unveroeffentlichtes wird geladen' );
 undt_ok( ! empty( $GLOBALS['undt_get_posts_args']['no_found_rows'] ), 'Abfrage verzichtet auf die Gesamtzahl' );
 
@@ -408,6 +419,17 @@ undt_ok( 2 === count( $undt_vars ) && 'Unternehmensdaten' === $undt_last['label'
 undt_ok( isset( $undt_last['options']['undt.social_profiles'] ), 'Die Profile stehen als undt.social_profiles in der Auswahl' );
 undt_ok( 'kaputt' === UNDT_Dynamic_SlimSeo::schema_variables( 'kaputt' ), 'Fremder Typ wird durchgereicht' );
 
+// Seit 0.6.1 die Angaben aus Suchmaschinen, die nur die eigene Auszeichnung kannte.
+undt_seed_module( 'seo', array( 'geo_lat' => '47,8571', 'geo_lng' => '12,1181', 'price_range' => '€€', 'area_served' => 'Landkreis Rosenheim' ) );
+undt_ok( isset( $undt_last['options']['undt.geo_lat'], $undt_last['options']['undt.geo_lng'], $undt_last['options']['undt.price_range'], $undt_last['options']['undt.area_served'] ), 'Koordinaten, Preisniveau und Einzugsgebiet in der Auswahl' );
+$undt_values = UNDT_Dynamic::values( UNDT_Dynamic::CONTEXT_SCHEMA );
+undt_ok( '47.8571' === $undt_values['geo_lat'] && '12.1181' === $undt_values['geo_lng'], 'Koordinaten mit Punkt statt Komma' );
+undt_ok( '€€' === $undt_values['price_range'] && 'Landkreis Rosenheim' === $undt_values['area_served'], 'Preisniveau und Einzugsgebiet wie eingegeben' );
+undt_ok( ! isset( $undt_seo['geo_lat'] ) && ! isset( UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_BUILDER )['area_served'] ), 'Nur in den Schema-Einstellungen' );
+undt_set_modules( array( 'hours' => 1, 'social' => 1, 'seo' => 0 ) );
+undt_ok( ! isset( UNDT_Dynamic::fields( UNDT_Dynamic::CONTEXT_SCHEMA )['geo_lat'] ), 'Ohne Bereich Suchmaschinen fehlen sie' );
+undt_set_modules( array( 'hours' => 1, 'social' => 1, 'seo' => 1 ) );
+
 $undt_data = UNDT_Dynamic_SlimSeo::schema_data( array( 'post' => array( 'title' => 'X' ) ) );
 undt_ok( 'X' === $undt_data['post']['title'] && 'Müller & Söhne' === $undt_data['undt']['company_name'], 'Werte stehen unter undt bereit' );
 undt_ok( array( 'https://linkedin.test/firma', 'https://instagram.test/firma' ) === $undt_data['undt']['social_profiles'], 'Die Profile kommen als Liste, leere Zeilen fallen weg' );
@@ -512,6 +534,16 @@ $undt_etch = UNDT_Dynamic_Etch::options( array( 'andere' => 1 ) );
 undt_ok( 1 === $undt_etch['andere'] && 'Müller & Söhne' === $undt_etch['undt']['company_name'], 'Werte stehen unter options.undt bereit' );
 undt_ok( 'tel:+493012345' === $undt_etch['undt']['phone_link'], 'Mit den Builder-Links' );
 undt_ok( false === UNDT_Dynamic_Etch::options( false ), 'Fremder Typ wird durchgereicht' );
+
+// Seit 0.6.1 die Listen fuer Etch-Schleifen, dieselben Zeilen wie in Bricks.
+undt_set_modules( array( 'hours' => 1, 'social' => 1, 'prices' => 1, 'faq' => 0, 'seo' => 1 ) );
+undt_seed_module( 'prices', array( 'items' => array( array( 'group' => '', 'label' => 'Erstgespräch', 'price' => '0 €', 'note' => '' ), array( 'group' => '', 'label' => 'Behandlung', 'price' => '80 €', 'note' => '' ) ) ) );
+$undt_etch = UNDT_Dynamic_Etch::options( array() );
+undt_ok( array( 'hours', 'hours_grouped', 'hours_special', 'prices', 'faq', 'social' ) === array_values( array_intersect( array_keys( $undt_etch['undt'] ), array( 'hours', 'hours_grouped', 'hours_special', 'prices', 'faq', 'social' ) ) ), 'Alle sechs Quellen als Listen, ohne undt_' );
+undt_ok( 2 === count( $undt_etch['undt']['prices'] ) && 'Behandlung' === $undt_etch['undt']['prices'][1]['label'], 'options.undt.prices.1.label: Zeilen mit Index' );
+undt_ok( UNDT_Api::query( 'undt_hours' ) === $undt_etch['undt']['hours'] && is_bool( $undt_etch['undt']['hours'][0]['closed'] ), 'Dieselben Zeilen wie die Schleifen-Quelle, closed als Wahrheitswert' );
+undt_ok( array() === $undt_etch['undt']['faq'], 'Abgeschalteter Bereich: leere Liste' );
+undt_ok( is_string( $undt_etch['undt']['company_name'] ) && ! is_array( $undt_etch['undt']['phone'] ), 'Die Einzelwerte bleiben' );
 
 /* ------------------------------------------ 9. Banner und Page Builder --- */
 

@@ -61,6 +61,11 @@ final class UNDT_Dynamic {
 	const LISTS = array( 'social_profiles', 'hours_days', 'hours_opens', 'hours_closes' );
 
 	/**
+	 * Angaben aus dem Bereich Suchmaschinen, die die Schema-Einstellungen bekommen.
+	 */
+	const SEO_FIELDS = array( 'geo_lat', 'geo_lng', 'price_range', 'area_served' );
+
+	/**
 	 * Meldet die Werte bei allen Werkzeugen an.
 	 *
 	 * @return void
@@ -120,6 +125,13 @@ final class UNDT_Dynamic {
 			$fields['logo_url'] = __( 'Logo (Link)', 'unternehmensdaten' );
 		}
 
+		// Die Angaben aus Suchmaschinen, die Slim SEO Pro sonst nicht kennt.
+		if ( $schema && UNDT_Modules::is_active( 'seo' ) ) {
+			foreach ( self::SEO_FIELDS as $key ) {
+				$fields[ $key ] = UNDT_Modules::get( 'seo' )['fields'][ $key ]['label'];
+			}
+		}
+
 		if ( $schema && UNDT_Modules::is_active( 'social' ) ) {
 			$fields['social_profiles'] = __( 'Social-Profile, alle Adressen (Link)', 'unternehmensdaten' );
 		}
@@ -149,6 +161,7 @@ final class UNDT_Dynamic {
 			$fields['banner_link_text']   = __( 'Banner: Link-Text', 'unternehmensdaten' );
 			$fields['banner_link_url']    = __( 'Banner: Link-Ziel', 'unternehmensdaten' );
 			$fields['banner_dismissible'] = __( 'Banner: schließbar (ja/nein)', 'unternehmensdaten' );
+			$fields['banner_key']         = __( 'Banner: Kennung zum Schließen', 'unternehmensdaten' );
 		}
 
 		return $fields;
@@ -203,6 +216,15 @@ final class UNDT_Dynamic {
 
 			case 'is_open':
 				return self::flag( UNDT_Modules::is_active( 'hours' ) && UNDT_Hours::has_data() && UNDT_Hours::is_open_now() );
+
+			case 'geo_lat':
+			case 'geo_lng':
+				// Mit Punkt, wie es schema.org erwartet; eingegeben wird oft mit Komma.
+				return UNDT_Modules::is_active( 'seo' ) ? str_replace( ',', '.', trim( (string) UNDT_Content::value( 'seo', $key ) ) ) : '';
+
+			case 'price_range':
+			case 'area_served':
+				return UNDT_Modules::is_active( 'seo' ) ? trim( (string) UNDT_Content::value( 'seo', $key ) ) : '';
 
 			case 'logo_url':
 				if ( ! UNDT_Modules::is_active( 'seo' ) ) {
@@ -372,6 +394,10 @@ final class UNDT_Dynamic {
 
 			case 'dismissible':
 				return self::flag( (bool) UNDT_Content::value( 'banner', 'dismissible' ) );
+
+			case 'key':
+				// Gehoert als data-undt-banner an den Nachbau, siehe UNDT_Blocks::banner_script().
+				return UNDT_Blocks::banner_key();
 		}
 
 		return '';

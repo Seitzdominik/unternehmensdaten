@@ -198,6 +198,24 @@ $etch = UNDT_Dynamic_Etch::options( array() );
 undt_ok( true === $etch['undt']['banner_show'] && false === $etch['undt']['banner_dismissible'], 'Etch bekommt echte Wahrheitswerte' );
 undt_ok( 'warning' === $etch['undt']['banner_type'] && is_string( $etch['undt']['banner_text'] ), 'Die uebrigen Werte bleiben Text' );
 
+// Seit 0.6.1: ein nachgebautes Banner schliesst das Skript des Plugins mit.
+undt_seed_module( 'banner', array( 'enabled' => 1, 'text' => 'Betriebsferien', 'dismissible' => 1 ) );
+$key = UNDT_Dynamic::value( 'banner_key' );
+undt_ok( isset( $fields['banner_key'] ) && (bool) preg_match( '/^[a-f0-9]{12}$/', $key ), 'banner_key liefert die Kennung des Banners' );
+undt_ok( false !== strpos( UNDT_Blocks::banner_markup(), 'data-undt-banner="' . $key . '"' ), 'Dieselbe Kennung wie am mitgelieferten Banner' );
+ob_start();
+UNDT_Blocks::banner_footer();
+$js = (string) ob_get_clean();
+undt_ok( false !== strpos( $js, "var k='" . $key . "'" ) && false !== strpos( $js, 'querySelectorAll(\'[data-undt-banner="\'+k+\'"]\')' ), 'Das Skript im Footer sucht alle Elemente mit der Kennung' );
+undt_ok( false !== strpos( $js, "'.undt-banner__close,[data-undt-banner-close]'" ) && false !== strpos( $js, "e.style.display='none'" ), 'Eigener Knopf oder data-undt-banner-close; versteckt auch gegen das CSS des Builders' );
+undt_ok( false !== strpos( $js, 'b.undtBound' ) && false !== strpos( $js, 'v.preventDefault()' ), 'Kein doppeltes Binden, ein Link als Knopf springt nicht' );
+ob_start();
+UNDT_Blocks::banner_head();
+$head = (string) ob_get_clean();
+undt_ok( false !== strpos( $head, "localStorage.getItem('undt-banner-" . $key . "')" ) && false !== strpos( $head, '.undt-banner-closed [data-undt-banner]{display:none!important}' ), 'Im Kopf: ein geschlossenes Banner blitzt nicht auf' );
+$help = UNDT_Modules::get( 'banner' )['fields'];
+undt_ok( false !== strpos( $help['dismissible']['help'], 'data-undt-banner-close' ) && false !== strpos( $help['auto_output']['help'], 'sonst erscheint es zweimal' ), 'Hilfetexte fuer den Nachbau' );
+
 undt_seed_module( 'banner', array( 'enabled' => 1, 'text' => '' ) );
 undt_ok( '' === UNDT_Dynamic::value( 'banner_show' ), 'Ohne Text gilt das Banner als aus' );
 undt_ok( 'neutral' === UNDT_Dynamic::value( 'banner_type' ) && '' === UNDT_Dynamic::value( 'banner_link_text' ), 'Voreinstellungen ohne Link' );

@@ -184,13 +184,19 @@ final class UNDT_Controls {
 		'breakdance_footer',
 		'breakdance_popup',
 		'breakdance_block',
+		'wp_block',
+		'wp_template',
+		'wp_template_part',
+		'wp_navigation',
 	);
 
 	/**
 	 * Die Inhaltstypen, aus denen Seitenfelder waehlen.
 	 *
-	 * Neben Seiten alle eigenen Inhaltstypen, die sich in Menues verlinken
-	 * lassen, denn Rechtstexte liegen oft in einem eigenen Typ.
+	 * Neben Seiten alle oeffentlichen eigenen Inhaltstypen mit veroeffentlichten
+	 * Eintraegen, denn Rechtstexte liegen oft in einem eigenen Typ. Seit 0.6.1
+	 * auch, wenn der Typ nicht fuer Menues freigegeben ist: Plugins fuer
+	 * Rechtstexte lassen das oft weg.
 	 *
 	 * @return array Name => Bezeichnung.
 	 */
@@ -198,7 +204,12 @@ final class UNDT_Controls {
 		$types = array();
 
 		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type => $object ) {
-			if ( in_array( $type, self::LINK_EXCLUDED_TYPES, true ) || empty( $object->show_in_nav_menus ) ) {
+			if ( in_array( $type, self::LINK_EXCLUDED_TYPES, true ) ) {
+				continue;
+			}
+
+			// Leere Typen machten die Liste nur lang. Seiten stehen immer da.
+			if ( 'page' !== $type && empty( wp_count_posts( $type )->publish ) ) {
 				continue;
 			}
 

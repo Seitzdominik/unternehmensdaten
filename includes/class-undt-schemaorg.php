@@ -22,6 +22,7 @@ final class UNDT_SchemaOrg {
 	 */
 	public static function register() {
 		add_action( 'wp_head', array( __CLASS__, 'output' ), 20 );
+		add_action( 'wp_head', array( __CLASS__, 'faq_head' ), 20 );
 	}
 
 	/**
@@ -437,17 +438,68 @@ final class UNDT_SchemaOrg {
 	}
 
 	/**
+	 * Ob die FAQ-Auszeichnung in diesem Request schon ausgegeben wurde.
+	 *
+	 * @var bool
+	 */
+	private static $faq_done = false;
+
+	/**
+	 * Setzt den Merker zurueck, fuer die Pruefungen.
+	 *
+	 * @return void
+	 */
+	public static function reset_faq() {
+		self::$faq_done = false;
+	}
+
+	/**
+	 * Die FAQ-Auszeichnung im Kopf der eingestellten Seite, auch ohne Shortcode.
+	 *
+	 * Standard ist die Startseite. Steht dort zusaetzlich der Shortcode, gibt er
+	 * die Auszeichnung nicht ein zweites Mal aus.
+	 *
+	 * @return void
+	 */
+	public static function faq_head() {
+		if ( ! UNDT_Modules::is_active( 'faq' ) || ! self::faq_here() ) {
+			return;
+		}
+
+		echo self::faq_script( UNDT_Content::group_rows( UNDT_Content::rows( 'faq', 'items' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD aus self::script().
+	}
+
+	/**
+	 * Ob die aktuelle Seite die eingestellte ist.
+	 *
+	 * @return bool
+	 */
+	private static function faq_here() {
+		$target = (string) UNDT_Content::value( 'faq', 'schema_page' );
+
+		if ( 'block' === $target ) {
+			return false;
+		}
+
+		if ( 'front' === $target || '' === $target ) {
+			return is_front_page();
+		}
+
+		return is_singular() && (int) $target === (int) get_queried_object_id();
+	}
+
+	/**
 	 * Die Auszeichnung der Fragen und Antworten.
 	 *
 	 * Wird unmittelbar an der Stelle ausgegeben, an der der Shortcode steht.
 	 * JSON-LD darf ueberall im Dokument stehen, und der Shortcode laeuft erst
-	 * nach dem Kopfbereich.
+	 * nach dem Kopfbereich. Je Seitenaufruf nur einmal.
 	 *
 	 * @param array $groups Gruppierte Zeilen.
 	 * @return string
 	 */
 	public static function faq_script( array $groups ) {
-		if ( ! UNDT_Content::value( 'faq', 'schema' ) ) {
+		if ( self::$faq_done || ! UNDT_Content::value( 'faq', 'schema' ) ) {
 			return '';
 		}
 
@@ -476,6 +528,8 @@ final class UNDT_SchemaOrg {
 		if ( empty( $entities ) ) {
 			return '';
 		}
+
+		self::$faq_done = true;
 
 		return self::script(
 			array(

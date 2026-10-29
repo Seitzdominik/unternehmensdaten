@@ -46,6 +46,12 @@ final class UNDT_Shortcodes {
 			add_action( 'wp_body_open', array( __CLASS__, 'auto_banner' ) );
 		}
 
+		// Schliessen auch fuer ein in Bricks oder Etch nachgebautes Banner.
+		if ( UNDT_Blocks::banner_active() && UNDT_Content::value( 'banner', 'dismissible' ) ) {
+			add_action( 'wp_head', array( 'UNDT_Blocks', 'banner_head' ) );
+			add_action( 'wp_footer', array( 'UNDT_Blocks', 'banner_footer' ) );
+		}
+
 		UNDT_SchemaOrg::register();
 	}
 
@@ -479,21 +485,29 @@ final class UNDT_Shortcodes {
 	 * @return void
 	 */
 	public static function auto_banner() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur gelesen, genau so erkennt Etch seinen Builder.
-		$etch    = isset( $_GET['etch'] ) && 'magic' === sanitize_key( wp_unslash( $_GET['etch'] ) );
-		$builder = $etch || ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() );
-
 		/**
 		 * Ob das Banner automatisch am Seitenanfang erscheint.
 		 *
 		 * @param bool $show Standard: ueberall ausser in der Oberflaeche eines Page Builders.
 		 */
-		if ( ! apply_filters( 'undt_auto_banner', ! $builder ) ) {
+		if ( ! apply_filters( 'undt_auto_banner', ! self::in_builder() ) ) {
 			return;
 		}
 
 		self::need_style();
 
 		echo UNDT_Blocks::banner(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- im Renderer escaped.
+	}
+
+	/**
+	 * Ob die Seite in der Oberflaeche von Etch oder Bricks laeuft.
+	 *
+	 * @return bool
+	 */
+	public static function in_builder() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur gelesen, genau so erkennt Etch seinen Builder.
+		$etch = isset( $_GET['etch'] ) && 'magic' === sanitize_key( wp_unslash( $_GET['etch'] ) );
+
+		return $etch || ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() );
 	}
 }

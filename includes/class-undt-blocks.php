@@ -673,7 +673,7 @@ final class UNDT_Blocks {
 	 *
 	 * @return string
 	 */
-	private static function banner_key() {
+	public static function banner_key() {
 		$parts = array(
 			(string) UNDT_Content::value( 'banner', 'text' ),
 			(string) UNDT_Content::value( 'banner', 'type' ),
@@ -790,6 +790,11 @@ final class UNDT_Blocks {
 	 * im DOM: steht der Shortcode im Beitragsinhalt, kann wpautop Absaetze
 	 * einziehen und die Geschwisterbeziehung zerreissen.
 	 *
+	 * Seit 0.6.1 greift es auf jedes Element mit der Kennung, auch auf ein in
+	 * Bricks oder Etch nachgebautes Banner: data-undt-banner="{banner_key}" am
+	 * Banner, data-undt-banner-close am Knopf. Versteckt wird zusaetzlich ueber
+	 * style, weil das CSS eines Builders das Attribut hidden oft ueberstimmt.
+	 *
 	 * @param string $key Kennung des Bannerinhalts.
 	 * @return string
 	 */
@@ -808,19 +813,53 @@ final class UNDT_Blocks {
 		 * wer mit Tastatur oder Screenreader unterwegs ist, muesste von vorn
 		 * beginnen.
 		 */
-		$js = "(function(){var k='%s',e=document.querySelector('[data-undt-banner=\"'+k+'\"]');"
-			. "if(!e)return;var s='undt-banner-'+k;"
-			. "try{if(window.localStorage&&localStorage.getItem(s)){e.hidden=true;return;}}catch(x){}"
-			. "var b=e.querySelector('.undt-banner__close');if(!b)return;"
-			. "b.addEventListener('click',function(){"
-			. "var l=document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]'),i,t;"
-			. "e.hidden=true;try{localStorage.setItem(s,'1');}catch(x){}"
-			. "for(i=0;i<l.length;i++){t=l[i];"
+		$js = "(function(){var k='%s',s='undt-banner-'+k,c=false,i,"
+			. "l=document.querySelectorAll('[data-undt-banner=\"'+k+'\"]');"
+			. "try{c=!!(window.localStorage&&localStorage.getItem(s));}catch(x){}"
+			. "function h(e){e.hidden=true;e.style.display='none';}"
+			. "for(i=0;i<l.length;i++){(function(e){"
+			. "if(c){h(e);return;}"
+			. "var b=e.querySelector('.undt-banner__close,[data-undt-banner-close]');if(!b||b.undtBound)return;b.undtBound=1;"
+			. "b.addEventListener('click',function(v){"
+			. "var f=document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]'),j,t;"
+			. "v.preventDefault();for(j=0;j<l.length;j++){h(l[j]);}try{localStorage.setItem(s,'1');}catch(x){}"
+			. "for(j=0;j<f.length;j++){t=f[j];"
 			. "if(e.contains(t)||!(e.compareDocumentPosition(t)&4)||t.disabled||t.getAttribute('tabindex')==='-1'||!t.getClientRects().length)continue;"
 			. "t.focus();if(document.activeElement===t)return;}"
-			. "});})();";
+			. "});})(l[i]);}})();";
 
 		return '<script>' . sprintf( $js, $key ) . '</script>';
+	}
+
+	/**
+	 * Im Kopf der Seite: ein bereits geschlossenes Banner bleibt von Anfang an
+	 * verborgen, auch ein nachgebautes, dessen Skript erst im Footer laeuft.
+	 *
+	 * @return void
+	 */
+	public static function banner_head() {
+		if ( UNDT_Shortcodes::in_builder() ) {
+			return;
+		}
+
+		$key = preg_replace( '/[^a-f0-9]/', '', self::banner_key() );
+
+		echo "<script>try{if(window.localStorage&&localStorage.getItem('undt-banner-" . $key . "')){document.documentElement.classList.add('undt-banner-closed');}}catch(x){}</script>"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Kennung nur hexadezimal.
+		echo '<style>.undt-banner-closed [data-undt-banner]{display:none!important}</style>';
+	}
+
+	/**
+	 * Im Footer: das Skript zum Schliessen fuer nachgebaute Banner. Das
+	 * mitgelieferte bringt es selbst mit, doppelt gebunden wird nichts.
+	 *
+	 * @return void
+	 */
+	public static function banner_footer() {
+		if ( UNDT_Shortcodes::in_builder() ) {
+			return;
+		}
+
+		echo self::banner_script( self::banner_key() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- festes Skript, Kennung nur hexadezimal.
 	}
 
 	/**

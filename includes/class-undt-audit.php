@@ -327,9 +327,7 @@ final class UNDT_Audit {
 			return null;
 		}
 
-		$post = get_post( $id );
-
-		if ( $post instanceof WP_Post && false !== stripos( $post->post_content, 'impressum' ) ) {
+		if ( self::looks_like_imprint( $id ) ) {
 			return null;
 		}
 
@@ -345,5 +343,35 @@ final class UNDT_Audit {
 			'tab'    => 'consumer',
 			'field'  => 'page_imprint',
 		);
+	}
+
+	/**
+	 * Ob eine Seite nach einem Impressum aussieht, auch ohne den Baustein: Titel, Inhalt oder
+	 * Bricks-Inhalt nennen es. Das Impressum steht oft als eigener Text im Builder.
+	 *
+	 * @param WP_Post|int|null $post Seite.
+	 * @return bool
+	 */
+	public static function looks_like_imprint( $post ) {
+		$post = get_post( $post );
+
+		if ( ! $post instanceof WP_Post ) {
+			return false;
+		}
+
+		$bricks = get_post_meta( $post->ID, '_bricks_page_content_2', true );
+
+		return self::names_imprint( $post->post_title . ' ' . $post->post_content . ' ' . ( $bricks ? wp_json_encode( $bricks, JSON_UNESCAPED_UNICODE ) : '' ) );
+	}
+
+	/**
+	 * Ob ein Text ein Impressum nennt: das Wort selbst oder die Angaben nach § 5 DDG
+	 * (früher TMG), auch mit geschütztem Leerzeichen.
+	 *
+	 * @param string $text Text.
+	 * @return bool
+	 */
+	public static function names_imprint( $text ) {
+		return (bool) preg_match( '/impressum|§(\s|&nbsp;)*5(\s|&nbsp;)*(DDG|TMG)|Angaben(\s|&nbsp;)+gemäß/iu', (string) $text );
 	}
 }

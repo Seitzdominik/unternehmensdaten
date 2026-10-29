@@ -1321,6 +1321,30 @@ final class UNDT_Module_View {
 		echo '<section class="undt-box undt-mfold">';
 		UNDT_Ui::details_open( __( 'Für Suchmaschinen', 'unternehmensdaten' ) );
 		self::switch_row( 'faq', 'schema', __( 'Als FAQ für Google auszeichnen', 'unternehmensdaten' ), __( 'Standardmäßig aus: Google zeigt für FAQ-Auszeichnungen seit Mai 2026 keine Zusatzanzeige mehr. Schaden tut es nicht.', 'unternehmensdaten' ) );
+		self::row(
+			__( 'Auch ohne Baustein auf', 'unternehmensdaten' ),
+			'undt-faq-schema-page',
+			static function () {
+				$current = (string) self::value( 'faq', 'schema_page' );
+				$choices = array(
+					'front' => __( 'Startseite', 'unternehmensdaten' ),
+					'block' => __( 'Nirgends, nur wo der Baustein steht', 'unternehmensdaten' ),
+				);
+
+				foreach ( get_pages( array( 'post_status' => 'publish' ) ) as $page ) {
+					$choices[ (string) $page->ID ] = get_the_title( $page->ID );
+				}
+
+				echo '<select id="undt-faq-schema-page" name="' . esc_attr( self::name( 'faq', 'schema_page' ) ) . '">';
+
+				foreach ( $choices as $key => $label ) {
+					printf( '<option value="%1$s"%2$s>%3$s</option>', esc_attr( (string) $key ), selected( $current, (string) $key, false ), esc_html( $label ) );
+				}
+
+				echo '</select>';
+			},
+			array( 'help' => $module['fields']['schema_page']['help'] )
+		);
 		UNDT_Ui::details_close();
 		echo '</section>';
 

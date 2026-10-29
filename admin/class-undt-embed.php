@@ -29,7 +29,7 @@ final class UNDT_Embed {
 	 */
 	public static function format_help() {
 		return array(
-			'etch'      => __( 'In Etch schreibst du die Angabe als {options.undt.…} in einen Text oder ein Attribut. Fertige Bausteine bleiben Shortcodes.', 'unternehmensdaten' ),
+			'etch'      => __( 'In Etch schreibst du die Angabe als {options.undt.…} in einen Text oder ein Attribut. Listen wie options.undt.prices sind Ziele für Schleifen. Fertige Bausteine bleiben Shortcodes.', 'unternehmensdaten' ),
 			'bricks'    => __( 'In Bricks stehen die Angaben unter „Dynamic Data“. Fertige Bausteine bleiben Shortcodes.', 'unternehmensdaten' ),
 			'shortcode' => __( 'Shortcodes funktionieren in jedem Editor, in Widgets und in Page Buildern.', 'unternehmensdaten' ),
 			'gutenberg' => __( 'Für den Block-Editor kopierst du einen fertigen Absatz, der die Angabe anzeigt. Füge ihn mit Strg+V in den Editor ein.', 'unternehmensdaten' ),
@@ -80,6 +80,8 @@ final class UNDT_Embed {
 				if ( 'imprint' === $block ) {
 					if ( UNDT_Usage::on_post( $id, 'imprint' ) ) {
 						$row['status'] = __( 'Enthält das Impressum', 'unternehmensdaten' );
+					} elseif ( UNDT_Audit::looks_like_imprint( $id ) ) {
+						$row['status'] = __( 'Impressum ohne Baustein', 'unternehmensdaten' );
 					} else {
 						$row['tone']   = 'open';
 						/* translators: %s: Titel der Seite. */

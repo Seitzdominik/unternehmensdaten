@@ -312,7 +312,7 @@ final class UNDT_Schema {
 			'vsbg'           => __( 'Verbraucherstreitbeilegung', 'unternehmensdaten' ),
 			'privacy'        => __( 'Datenschutz', 'unternehmensdaten' ),
 			'pages'          => __( 'Verknüpfte Seiten', 'unternehmensdaten' ),
-			'other'          => __( 'Weitere Angaben', 'unternehmensdaten' ),
+			'other'          => __( 'Eigene Felder', 'unternehmensdaten' ),
 		);
 	}
 
